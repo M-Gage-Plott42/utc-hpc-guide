@@ -54,6 +54,12 @@ This guide is intentionally general and works as a baseline SLURM/OOD/SSH guide.
 See [SECURITY.md](SECURITY.md).  
 Do not commit credentials, usernames, internal hostnames, or allocation IDs.
 
+## Release Workflow
+
+- [Public release checklist](RELEASE_CHECKLIST.md)
+- [LANL v15 update snippet](LANL_V15_SNIPPET.md)
+- [Agent guidance](AGENTS.md)
+
 ## Disclaimer
 
 This is not official HPC administrator documentation.  

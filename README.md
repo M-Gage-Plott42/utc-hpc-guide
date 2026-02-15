@@ -1,5 +1,8 @@
 # UTC HPC Guide
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Markdown Lint](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/markdown-lint.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/markdown-lint.yml)
+
 Practical HPC onboarding and workflows guide (SLURM + Open OnDemand + SSH + Python-first tooling).  
 Originally developed for a university research environment and sanitized for public release.
 
@@ -59,6 +62,7 @@ Do not commit credentials, usernames, internal hostnames, or allocation IDs.
 - [Public release checklist](RELEASE_CHECKLIST.md)
 - [LANL v15 update snippet](LANL_V15_SNIPPET.md)
 - [Agent guidance](AGENTS.md)
+- [Contributing guide](CONTRIBUTING.md)
 
 ## Disclaimer
 

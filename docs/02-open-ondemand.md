@@ -12,6 +12,12 @@ From your OOD dashboard:
 
 Use conservative resource requests first to reduce queue wait time.
 
+Illustrative example (sanitized):
+
+![Sanitized OOD desktop request form](../assets/ood/ood_desktop_request_form_sanitized.png)
+
+This screenshot is illustrative only. Labels and default values vary by institution.
+
 ## 2. CPU vs GPU Sessions
 
 - CPU workflows: use desktop/terminal sessions on a CPU partition.
@@ -26,6 +32,12 @@ Most OOD interfaces show the SLURM job ID directly. You can also discover it fro
 ```bash
 squeue -u "$USER" -o "%.18i %.30j %R" | egrep -i "desktop|ondemand|jupyter"
 ```
+
+Sanitized session card example:
+
+![Sanitized OOD session card](../assets/ood/ood_session_card_sanitized.png)
+
+Host and session metadata are redacted. Treat this as a UI reference, not a policy source.
 
 ## 4. Attach from SSH to an Existing OOD Allocation
 
@@ -53,3 +65,7 @@ The hostname should match your compute allocation, not the login node.
 - Public/shared space: site-specific path
 
 Keep large datasets and environments out of Home unless your site policy allows it.
+
+Sanitized storage shortcuts example:
+
+![Sanitized OOD storage shortcuts](../assets/ood/ood_storage_shortcuts_sanitized.png)

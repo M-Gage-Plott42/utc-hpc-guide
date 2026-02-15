@@ -1,0 +1,39 @@
+name: Docs Improvement
+description: Suggest improvements for clarity, structure, or examples.
+title: "[docs] "
+labels:
+  - documentation
+body:
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Improvement Proposal
+      description: What should change?
+      placeholder: Suggest the edit and why it improves usability/reproducibility.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Who benefits and how?
+      placeholder: New users, reviewers, maintainers, etc.
+    validations:
+      required: false
+  - type: textarea
+    id: files
+    attributes:
+      label: Candidate Files
+      description: List files that likely need edits.
+      placeholder: |
+        docs/01-access-ssh.md
+        docs/03-slurm-basics.md
+    validations:
+      required: false
+  - type: checkboxes
+    id: scrub
+    attributes:
+      label: Public Hygiene Check
+      options:
+        - label: I did not include private usernames, hostnames, account strings, or allocation IDs.
+          required: true

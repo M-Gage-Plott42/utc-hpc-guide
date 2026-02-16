@@ -2,6 +2,8 @@
 
 Thanks for improving the UTC HPC Guide.
 
+By participating, you agree to follow this repository's [Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## Contribution Scope
 
 This repository is public and cluster-agnostic. Keep examples and docs reusable across institutions.

@@ -19,10 +19,10 @@ Use placeholders for site-specific values:
 Run these commands from repo root:
 
 ```bash
-markdownlint "**/*.md" --config .markdownlint.yaml
-rg -n "@|/home/|login|partition|account|allocation|project|token|secret" .
-rg -n "utc|simcenter|research\\.utc\\.edu|epyc|abc123|Gage Plott" docs examples README.md || true
+make check
 ```
+
+Expected scrub output: for normal clean-state runs, `make scrub` should produce no match lines from the two scan commands (only the scan labels).
 
 If you change image assets, manually confirm screenshots do not expose usernames, hostnames, account/allocation IDs, or private paths.
 

@@ -1,8 +1,15 @@
 SHELL := /bin/bash
 
-.PHONY: lint scrub check-links check
+.PHONY: help lint scrub check-links check
 
 SCRUB_PATHS := README.md docs examples assets/ood/README.md
+
+help:
+	@echo "Available targets:"
+	@echo "  make lint        - Run markdown lint checks"
+	@echo "  make scrub       - Run high-signal public scrub scans"
+	@echo "  make check-links - Validate local Markdown links"
+	@echo "  make check       - Run lint + scrub + link checks"
 
 lint:
 	@command -v markdownlint >/dev/null || { echo "markdownlint not found; install it first."; exit 1; }

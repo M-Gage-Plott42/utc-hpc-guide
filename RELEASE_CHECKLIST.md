@@ -41,4 +41,4 @@ Inspect and generalize anything institution-specific that should not be public.
 For external materials (e.g., LANL package), include:
 
 - Repo URL: `https://github.com/M-Gage-Plott42/utc-hpc-guide`
-- One-line proof statement (see `LANL_V15_SNIPPET.md`)
+- One-line proof statement in your external materials package

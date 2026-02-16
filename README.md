@@ -11,7 +11,7 @@ Last updated: February 2026
 ## How to Use This Repo in 15 Minutes
 
 1. Read [Overview](docs/00-overview.md), [Access and SSH](docs/01-access-ssh.md), and [SLURM Basics](docs/03-slurm-basics.md).
-2. Review runnable templates in `examples/` and adapt placeholders (`<username>`, `<partition>`, `<account>`).
+2. Review runnable templates in `examples/` and adapt placeholders (`<username>`, `<cpu-partition>`, `<gpu-partition>`, `<account>`).
 3. Run quality checks from repo root:
 
 ```bash

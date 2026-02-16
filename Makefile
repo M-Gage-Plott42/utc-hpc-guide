@@ -2,13 +2,17 @@ SHELL := /bin/bash
 
 .PHONY: lint scrub check-links check
 
+SCRUB_PATHS := README.md docs examples assets/ood/README.md
+
 lint:
 	@command -v markdownlint >/dev/null || { echo "markdownlint not found; install it first."; exit 1; }
 	markdownlint "**/*.md" --config .markdownlint.yaml
 
 scrub:
-	rg -n "@|/home/|login|partition|account|allocation|project|token|secret" . || true
-	rg -n "utc|simcenter|research\\.utc\\.edu|epyc|abc123|Gage Plott" docs examples README.md || true
+	@echo "Scan 1/2: likely leaked internal cluster markers"
+	rg -n "simcenter|research\\.utc\\.edu|epyc[0-9]+|abc123" $(SCRUB_PATHS) || true
+	@echo "Scan 2/2: likely sensitive literals (keys, emails, concrete home paths)"
+	rg -n "(ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]+PRIVATE KEY-----|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}|/home/[A-Za-z0-9._-]+)" $(SCRUB_PATHS) || true
 
 check-links:
 	@set -euo pipefail; \

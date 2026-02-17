@@ -16,7 +16,7 @@ Use placeholders for site-specific values:
 - `<gpu-partition>`
 - `<account>`
 
-## Local Validation Before PR
+## Local Validation
 
 Run these commands from repo root:
 
@@ -41,9 +41,8 @@ If you change image assets, manually confirm screenshots do not expose usernames
 
 ## Branch Policy
 
-- Treat `main` as PR-only.
-- Create a topic branch for every change and open a pull request.
-- Do not push directly to `main`; use PR merge for auditable review/check history.
+- For a single maintainer, direct pushes to `main` are acceptable.
+- For larger or risky changes, prefer a topic branch and PR for reviewable history.
 
 ## Commit Guidance
 

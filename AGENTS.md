@@ -45,3 +45,4 @@ Then manually review `assets/` for redaction quality.
 
 - Use concise, descriptive commit messages.
 - Group related documentation and template changes into a single logical commit.
+- Use topic branches and PRs for updates to `main` (PR-only default flow).

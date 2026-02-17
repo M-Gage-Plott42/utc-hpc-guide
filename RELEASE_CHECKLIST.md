@@ -37,6 +37,7 @@ Review any manual-review matches and generalize anything institution-specific th
 - `git status` is clean before publishing.
 - Commit message clearly states scope.
 - Push only intended files.
+- Default to branch + PR merges into `main` (avoid direct pushes).
 
 ## 6. Publication Note
 

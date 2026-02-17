@@ -25,6 +25,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - `Makefile` scrub checks now include strict-fail patterns and manual-review patterns.
 - `make check` now enforces markdown linting, scrub checks, asset checks, and Markdown link checks.
 - `markdown-lint` workflow now uses full-SHA pinned actions.
+- sbatch templates updated to satisfy `shellcheck` (`SC1091`/`SC2086`) in CI.
 - Guidance docs updated for:
   - SLURM `#SBATCH` directive parsing behavior,
   - scheduler polling etiquette,

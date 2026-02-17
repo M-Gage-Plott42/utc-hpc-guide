@@ -18,8 +18,9 @@ set -euo pipefail
 
 cd "$SLURM_SUBMIT_DIR"
 
+# shellcheck source=/dev/null
 source "$(conda info --base)/etc/profile.d/conda.sh"
-conda activate /scratch/$USER/envs/py312-gpu
+conda activate "/scratch/$USER/envs/py312-gpu"
 
 # Confirm GPU visibility inside the allocation.
 nvidia-smi -L

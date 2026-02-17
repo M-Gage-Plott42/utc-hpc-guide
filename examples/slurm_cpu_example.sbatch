@@ -19,8 +19,9 @@ set -euo pipefail
 cd "$SLURM_SUBMIT_DIR"
 
 # Activate your Python environment.
+# shellcheck source=/dev/null
 source "$(conda info --base)/etc/profile.d/conda.sh"
-conda activate /scratch/$USER/envs/py312
+conda activate "/scratch/$USER/envs/py312"
 
 # Replace with your workload.
 python - <<'PY'

@@ -9,7 +9,12 @@ Use storage tiers intentionally to avoid quota and performance issues.
 - Group/project space: shared collaboration data
 - Public/shared space: data intended for broad access
 
-Use your institution's exact paths and retention policies.
+Default placement policy:
+
+- Keep Home as a control plane (code, configs, lightweight metadata).
+- Keep large datasets, environments, and job outputs in Scratch or project/group storage.
+
+Use your institution's exact paths, backup behavior, and retention policies.
 
 ## 2. Check Capacity and Quota
 
@@ -44,4 +49,6 @@ rsync -avhP <username>@<login-host>:/scratch/<username>/project/results/ ./resul
 - Keep raw, intermediate, and final artifacts separated
 - Compress/archive old runs
 - Avoid writing large outputs to Home by default
+- Stage active working sets to Scratch/project storage before large runs
 - Document where canonical outputs live
+- Size transfer and compute workflows from a short benchmark run, then scale deliberately

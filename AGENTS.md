@@ -36,8 +36,7 @@ This repository is a public, documentation-first HPC onboarding guide focused on
 Run before commit/push:
 
 ```bash
-rg -n "@|/home/|login|partition|account|allocation|project|token|secret" .
-rg -n "utc|simcenter|research\\.utc\\.edu|epyc|abc123|Gage Plott" docs examples README.md || true
+make check
 ```
 
 Then manually review `assets/` for redaction quality.

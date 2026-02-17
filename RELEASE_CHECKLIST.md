@@ -13,15 +13,16 @@ Use this checklist before tagging a release or major public update.
 Run:
 
 ```bash
-rg -n "@|/home/|login|partition|account|allocation|project|token|secret" .
-rg -n "utc|simcenter|research\\.utc\\.edu|epyc|abc123|Gage Plott" docs examples README.md || true
+make scrub
 ```
 
-Inspect and generalize anything institution-specific that should not be public.
+Fail release if the strict scan reports forbidden matches.
+Review any manual-review matches and generalize anything institution-specific that should not be public.
 
 ## 3. Screenshots and Assets
 
 - Verify each image in `assets/` has no usernames, hostnames, account IDs, job IDs, or private paths.
+- Run `make check-assets` and confirm `asset_policy_clean`.
 - Remove or re-export any image with residual metadata or identifying UI elements.
 
 ## 4. Documentation Integrity
@@ -29,6 +30,7 @@ Inspect and generalize anything institution-specific that should not be public.
 - Check that README links to all docs and examples.
 - Confirm commands render correctly in Markdown and copy/paste cleanly.
 - Confirm placeholders are consistent across docs.
+- Run `make check` from repo root and confirm all checks pass.
 
 ## 5. Git Hygiene
 

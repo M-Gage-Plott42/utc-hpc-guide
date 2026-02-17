@@ -21,6 +21,5 @@ Describe what changed and why.
 Paste the checks you ran (for example):
 
 ```bash
-rg -n "@|/home/|login|partition|account|allocation|project|token|secret" .
-rg -n "utc|simcenter|research\\.utc\\.edu|epyc|abc123|Gage Plott" docs examples README.md || true
+make check
 ```

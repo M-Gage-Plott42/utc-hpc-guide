@@ -24,7 +24,11 @@ Run these commands from repo root:
 make check
 ```
 
-Expected scrub output: for normal clean-state runs, `make scrub` should produce no match lines from the two scan commands (only the scan labels).
+Expected behavior:
+
+- `make scrub` strict scan prints `strict_scrub_clean` or fails on forbidden patterns.
+- `make scrub` manual-review scan may print contextual matches; review and confirm each one is placeholder-safe.
+- `make check-assets` prints `asset_policy_clean` or fails if naming/metadata policy is violated.
 
 If you change image assets, manually confirm screenshots do not expose usernames, hostnames, account/allocation IDs, or private paths.
 

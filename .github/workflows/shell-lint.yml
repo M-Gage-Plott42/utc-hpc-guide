@@ -1,0 +1,31 @@
+name: Shell Lint
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes shellcheck
+
+      - name: Run shellcheck on sbatch examples
+        run: |
+          mapfile -t shell_files < <(git ls-files 'examples/*.sbatch')
+          if [[ "${#shell_files[@]}" -eq 0 ]]; then
+            echo "No sbatch scripts found."
+            exit 0
+          fi
+          shellcheck -s bash "${shell_files[@]}"

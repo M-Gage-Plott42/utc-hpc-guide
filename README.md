@@ -1,7 +1,9 @@
 # UTC HPC Guide
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Quality Gate](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/quality.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/quality.yml)
 [![Markdown Lint](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/markdown-lint.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/markdown-lint.yml)
+[![Shell Lint](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/shell-lint.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/shell-lint.yml)
 
 Practical HPC onboarding and workflows guide (SLURM + Open OnDemand + SSH + Python-first tooling).  
 Originally developed for a university research environment and sanitized for public release.
@@ -18,7 +20,7 @@ Last updated: February 2026
 make check
 ```
 
-This runs markdown linting, scrub checks, and local Markdown link validation.
+This runs markdown linting, strict-fail scrub checks, asset hygiene checks, and local Markdown link validation.
 
 ## Purpose
 
@@ -71,6 +73,7 @@ Do not commit credentials, usernames, internal hostnames, or allocation IDs.
 
 ## Release Workflow
 
+- [Changelog](CHANGELOG.md)
 - [Public release checklist](RELEASE_CHECKLIST.md)
 - [Agent guidance](AGENTS.md)
 - [Contributing guide](CONTRIBUTING.md)

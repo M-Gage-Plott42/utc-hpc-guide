@@ -28,7 +28,13 @@ hostname
 nproc
 ```
 
-## 3. Submit a Batch Job
+## 3. Important: `#SBATCH` Parsing Behavior
+
+`#SBATCH` directives are parsed by `sbatch` before the shell executes your script body.
+Do not rely on shell variable expansion inside `#SBATCH` lines.
+Use explicit values/placeholders in directives, or pass dynamic values using `sbatch` CLI flags.
+
+## 4. Submit a Batch Job
 
 Use a script such as `examples/slurm_cpu_example.sbatch`:
 
@@ -36,20 +42,20 @@ Use a script such as `examples/slurm_cpu_example.sbatch`:
 sbatch examples/slurm_cpu_example.sbatch
 ```
 
-## 4. Monitor and Inspect Jobs
+## 5. Monitor and Inspect Jobs
 
 ```bash
 squeue -u "$USER"
 sacct -j <jobid> --format=JobID,JobName,Partition,AllocCPUS,Elapsed,State,ExitCode,NodeList,MaxRSS
 ```
 
-## 5. Cancel a Job
+## 6. Cancel a Job
 
 ```bash
 scancel <jobid>
 ```
 
-## 6. Useful Cluster Inspection Commands
+## 7. Useful Cluster Inspection Commands
 
 ```bash
 sinfo -s
@@ -57,7 +63,7 @@ scontrol show partition <partition-name>
 sinfo -N -p <gpu-partition> -o "%N %c %m %G"
 ```
 
-## 7. Log Files and Working Directory
+## 8. Log Files and Working Directory
 
 In sbatch scripts, these are common patterns:
 

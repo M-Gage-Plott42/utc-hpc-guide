@@ -12,12 +12,20 @@ Operational habits that make HPC workflows reproducible and reviewer-friendly.
 
 ## 2. Scheduler Etiquette
 
-- Request only needed cores, memory, and wall time
+- Request only needed cores, memory, wall time, and GPUs from measured baseline jobs
 - Start with small test jobs before scaling
+- Poll `squeue`/`sacct` at low frequency (for example every 30-60 seconds), not tight loops
 - Cancel stale or failed jobs quickly
 - Prefer batch execution for heavy workloads over login nodes
 
-## 3. Security and Privacy Hygiene
+## 3. Storage and Placement Hygiene
+
+- Keep Home focused on source code, configs, and lightweight metadata
+- Keep large datasets, environments, checkpoints, and logs in Scratch/project space
+- Stage data where jobs run to reduce unnecessary filesystem traffic
+- Archive or prune stale outputs to stay within quota and retention policies
+
+## 4. Security and Privacy Hygiene
 
 - Never commit credentials or tokens
 - Replace personal or internal identifiers with placeholders
@@ -30,7 +38,7 @@ Suggested scrub command:
 rg -n "@|/home/|login|partition|account|allocation|project|token|secret" .
 ```
 
-## 4. Minimal End-to-End Workflow
+## 5. Minimal End-to-End Workflow
 
 1. Connect to cluster network (VPN if needed).
 2. SSH to login host.
@@ -39,9 +47,10 @@ rg -n "@|/home/|login|partition|account|allocation|project|token|secret" .
 5. Submit production job with sbatch.
 6. Monitor with `squeue`/`sacct`, then archive outputs.
 
-## 5. Public-Release Checklist
+## 6. Public-Release Checklist
 
 - Confirm no internal hostnames or usernames remain
 - Confirm no allocation IDs or account strings remain
 - Confirm examples use placeholders only
 - Confirm README disclaimer and "Last updated" are current
+- Confirm `make check` passes in clean working tree state

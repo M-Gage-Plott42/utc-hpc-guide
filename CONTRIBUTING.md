@@ -39,6 +39,12 @@ If you change image assets, manually confirm screenshots do not expose usernames
 3. Include validation output in the PR body.
 4. Use the repository PR template and check all hygiene boxes.
 
+## Branch Policy
+
+- Treat `main` as PR-only.
+- Create a topic branch for every change and open a pull request.
+- Do not push directly to `main`; use PR merge for auditable review/check history.
+
 ## Commit Guidance
 
 - Prefer concise, descriptive commit messages.

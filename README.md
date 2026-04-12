@@ -4,6 +4,7 @@
 [![Quality Gate](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/quality.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/quality.yml)
 [![Markdown Lint](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/markdown-lint.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/markdown-lint.yml)
 [![Shell Lint](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/shell-lint.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/shell-lint.yml)
+[![Dependency Review](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/dependency-review.yml)
 
 Practical HPC onboarding and workflows guide (SLURM + Open OnDemand + SSH + Python-first tooling).  
 Originally developed for a university research environment and sanitized for public release.
@@ -77,6 +78,14 @@ Do not commit credentials, usernames, internal hostnames, or allocation IDs.
 - [Public release checklist](RELEASE_CHECKLIST.md)
 - [Agent guidance](AGENTS.md)
 - [Contributing guide](CONTRIBUTING.md)
+
+## GitHub automation
+
+- Required workflows now use workflow-level concurrency and `merge_group`
+  triggers so checks stay stable on pull requests and merge queues.
+- Dependency review runs by default on public repos and can be enabled for
+  private copies later with `ENABLE_DEPENDENCY_REVIEW=true` once GitHub Code
+  Security or GHAS is available.
 
 ## Disclaimer
 

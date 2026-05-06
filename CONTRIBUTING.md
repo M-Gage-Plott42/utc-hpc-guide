@@ -6,7 +6,7 @@ By participating, you agree to follow this repository's [Code of Conduct](CODE_O
 
 ## Contribution Scope
 
-This repository is public and cluster-agnostic. Keep examples and docs reusable across institutions.
+This repository is public and cluster-agnostic by default. Keep generic docs and examples reusable across institutions.
 
 Use placeholders for site-specific values:
 
@@ -15,6 +15,8 @@ Use placeholders for site-specific values:
 - `<cpu-partition>`
 - `<gpu-partition>`
 - `<account>`
+
+Public site-specific notes are allowed only under `docs/sites/`. Site notes should link to official public documentation where possible, label non-public operational observations as field notes, and use placeholders for user-specific values.
 
 ## Local Validation
 
@@ -27,7 +29,7 @@ make check
 Expected behavior:
 
 - `make scrub` strict scan prints `strict_scrub_clean` or fails on forbidden patterns.
-- `make scrub` manual-review scan may print contextual matches; review and confirm each one is placeholder-safe.
+- `make scrub` manual-review scan may print contextual matches; review and confirm each one is placeholder-safe or intentionally public site-note content.
 - `make check-assets` prints `asset_policy_clean` or fails if naming/metadata policy is violated.
 
 If you change image assets, manually confirm screenshots do not expose usernames, hostnames, account/allocation IDs, or private paths.
@@ -53,4 +55,4 @@ If you change image assets, manually confirm screenshots do not expose usernames
 
 - Keep sections short and command-oriented.
 - Treat institutional docs and live SLURM commands as source of truth.
-- Avoid institution-specific values unless clearly marked as placeholders.
+- Avoid institution-specific values in generic docs and examples unless clearly marked as placeholders.

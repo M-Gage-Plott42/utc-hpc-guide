@@ -70,3 +70,35 @@ module avail gcc
 module avail cuda
 module avail openmpi
 ```
+
+## 7. After Cluster Maintenance or Software Refresh
+
+Cluster rebuilds, OS updates, and module-stack changes can break binary packages that were compiled or installed against older libraries. Recreate an environment when imports fail, shared libraries are missing, or framework GPU probes fail after the refresh.
+
+Do not make environment rebuilds the first response to a job that only prints plain `Killed`. Check Slurm memory, GPU allocation, and job accounting first:
+
+```bash
+sacct -j <jobid> --format=JobID,ReqMem,AllocTRES,State,ExitCode,MaxRSS
+```
+
+Snapshot before rebuilding:
+
+```bash
+python --version
+python -m pip freeze
+conda env export --no-builds 2>/dev/null || true
+python - <<'PY'
+try:
+    import tensorflow as tf
+    print("tensorflow", tf.__version__)
+    print(tf.config.list_physical_devices("GPU"))
+except Exception as exc:
+    print(type(exc).__name__, exc)
+PY
+```
+
+For TensorFlow, the official install docs recommend `pip` because TensorFlow is officially released to PyPI, and they recommend verifying GPU visibility with `tf.config.list_physical_devices("GPU")`.
+
+Avoid blindly running `pip install --upgrade tensorflow` inside an old managed-HPC environment. Check the site CUDA module, NVIDIA driver, Python version, and TensorFlow compatibility first.
+
+Reference: TensorFlow [pip install](https://www.tensorflow.org/install/pip) documentation.

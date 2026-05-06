@@ -12,6 +12,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - GitHub dependency review for pull requests and merge-queue checks via
   `.github/workflows/dependency-review.yml` and
   `.github/dependency-review-config.yml`.
+- UTC MocsHPC site notes covering the March 2026 refresh, explicit memory
+  requests, GPU partition selection, CUDA module checks, and Jobstats usage.
+- TensorFlow GPU probe example for diagnosing Slurm allocation, framework GPU
+  visibility, and memory-related kills.
 
 ### Changed
 
@@ -20,6 +24,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Markdown lint config now allows repeated changelog subsection headings under
   different release versions so `make check` matches the repository's own
   changelog format.
+- Strengthened Slurm and GPU documentation to emphasize explicit `--mem`
+  requests and post-run memory inspection.
+- Expanded troubleshooting for plain `Killed` failures in Python and ML
+  workloads.
+- Clarified that Python environment rebuilds should follow allocation and
+  memory checks, not precede them.
 
 ## [1.1.0] - 2026-02-17
 

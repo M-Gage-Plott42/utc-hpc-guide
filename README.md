@@ -9,7 +9,7 @@
 Practical HPC onboarding and workflows guide (SLURM + Open OnDemand + SSH + Python-first tooling).  
 Originally developed for a university research environment and sanitized for public release.
 
-Last updated: February 2026
+Last updated: May 2026
 
 ## How to Use This Repo in 15 Minutes
 
@@ -56,16 +56,22 @@ This repository is a documentation-first guide for new and intermediate HPC user
 - [Troubleshooting](docs/07-troubleshooting.md)
 - [Best Practices](docs/08-best-practices.md)
 
+Site-specific notes:
+
+- [UTC MocsHPC](docs/sites/utc-mocshpc.md)
+
 ## Runnable Examples
 
 - [CPU batch script](examples/slurm_cpu_example.sbatch)
 - [GPU batch script](examples/slurm_gpu_example.sbatch)
 - [Job array script](examples/job_array_example.sbatch)
+- [TensorFlow GPU probe](examples/slurm_tensorflow_gpu_probe.sbatch)
 
 ## No Assumptions
 
 This guide is intentionally general and works as a baseline SLURM/OOD/SSH guide. Replace placeholders such as
 `<username>`, `<login-host>`, `<cpu-partition>`, `<gpu-partition>`, and `<account>` with your institution values.
+Site-specific notes, when present, are isolated under `docs/sites/` and should be verified against official institutional documentation.
 
 ## Security
 

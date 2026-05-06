@@ -46,24 +46,48 @@ sbatch examples/slurm_cpu_example.sbatch
 
 ```bash
 squeue -u "$USER"
-sacct -j <jobid> --format=JobID,JobName,Partition,AllocCPUS,Elapsed,State,ExitCode,NodeList,MaxRSS
+sacct -j <jobid> --format=JobID,JobName,Partition,ReqMem,AllocTRES,AllocCPUS,Elapsed,State,ExitCode,MaxRSS
 ```
 
-## 6. Cancel a Job
+Use `State`, `ExitCode`, `ReqMem`, and `MaxRSS` together when debugging failures. Site-local tools such as `jobstats`, `seff`, or reporting dashboards may present the same resource data in a more readable form.
+
+## 6. Explicit Memory Requests
+
+Request host RAM explicitly. Do not rely on site defaults, especially after scheduler changes, accounting changes, or cluster refreshes.
+
+```bash
+#SBATCH --mem=32G
+```
+
+Slurm defines `--mem=<size>` as real memory required per node. Suffixes such as `M`, `G`, and `T` are supported by Slurm, and `--mem`, `--mem-per-cpu`, and `--mem-per-gpu` are mutually exclusive request styles. Pick one style and keep it visible in every batch script.
+
+For Python and ML jobs:
+
+- Start with a conservative explicit memory request.
+- Run a small validation job before scaling.
+- Review `MaxRSS` or site job statistics after the job completes.
+- Tune memory down or up from measured usage.
+
+A job that ends with plain `Killed` and no Python traceback is often consistent with out-of-memory termination or memory enforcement. Check requested memory and job accounting before rebuilding Python environments or chasing nonfatal library warnings.
+
+Reference: Slurm [`sbatch`](https://slurm.schedmd.com/sbatch.html) and [`sacct`](https://slurm.schedmd.com/sacct.html) documentation.
+
+## 7. Cancel a Job
 
 ```bash
 scancel <jobid>
 ```
 
-## 7. Useful Cluster Inspection Commands
+## 8. Useful Cluster Inspection Commands
 
 ```bash
 sinfo -s
+scontrol show config | egrep -i "DefMem|MaxMem"
 scontrol show partition <partition-name>
 sinfo -N -p <gpu-partition> -o "%N %c %m %G"
 ```
 
-## 8. Log Files and Working Directory
+## 9. Log Files and Working Directory
 
 In sbatch scripts, these are common patterns:
 

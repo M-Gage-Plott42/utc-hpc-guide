@@ -6,7 +6,7 @@ This repository is a public, documentation-first HPC onboarding guide focused on
 
 ## Mandatory Content Rules
 
-- Keep content cluster-agnostic and reusable across institutions.
+- Keep generic docs and examples cluster-agnostic and reusable across institutions.
 - Do not commit credentials, usernames, internal hostnames, account strings, allocation IDs, or private paths.
 - Use placeholders for site-specific values:
   - `<username>`
@@ -16,9 +16,18 @@ This repository is a public, documentation-first HPC onboarding guide focused on
   - `<account>`
 - Treat official institutional HPC docs and live SLURM commands as source of truth for site-specific policy.
 
+## Site-Specific Notes
+
+- Public, official site-specific information is allowed only under `docs/sites/`.
+- Site notes must cite or link to official public docs where possible.
+- Label operational observations that are not in public docs as field notes.
+- Use placeholders for user-specific values even in site pages, for example `<your_utc_id>`.
+- Do not include personal usernames, job IDs, node-specific allocation hostnames from real jobs, GPU UUIDs, private paths, screenshots with identifiers, allocation/account strings, or private support emails.
+
 ## Repository Structure Expectations
 
 - `docs/`: narrative onboarding guide pages
+- `docs/sites/`: isolated public site-specific notes
 - `examples/`: runnable minimal sbatch templates
 - `assets/`: optional sanitized screenshots only
 - `README.md`: reviewer-friendly entry point and navigation
@@ -39,7 +48,7 @@ Run before commit/push:
 make check
 ```
 
-Then manually review `assets/` for redaction quality.
+Manual-review scrub hits such as `login`, `partition`, `account`, or `allocation` are expected in generic placeholders and may be expected in `docs/sites/`, but each hit must be reviewed before release. Then manually review `assets/` for redaction quality.
 
 ## Commit Convention
 

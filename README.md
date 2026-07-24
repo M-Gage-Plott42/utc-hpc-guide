@@ -14,7 +14,7 @@ Last updated: July 2026
 ## How to Use This Repo in 15 Minutes
 
 1. Read [Overview](docs/00-overview.md), [Access and SSH](docs/01-access-ssh.md), and [SLURM Basics](docs/03-slurm-basics.md).
-2. Review runnable templates in `examples/` and adapt placeholders (`<username>`, `<cpu-partition>`, `<gpu-partition>`, `<account>`).
+2. Review runnable templates in `examples/` and adapt the documented placeholders.
 3. Install the locked local quality toolchain and run checks from repo root:
 
 ```bash
@@ -73,7 +73,8 @@ Site-specific notes:
 ## No Assumptions
 
 This guide is intentionally general and works as a baseline SLURM/OOD/SSH guide. Replace placeholders such as
-`<username>`, `<login-host>`, `<cpu-partition>`, `<gpu-partition>`, and `<account>` with your institution values.
+`<username>`, `<login-host>`, `<cpu-partition>`, `<gpu-partition>`, `<account>`, `<home-path>`,
+`<scratch-path>`, and `<project-path>` with your institution values.
 Site-specific notes, when present, are isolated under `docs/sites/` and should be verified against official institutional documentation.
 
 ## Security

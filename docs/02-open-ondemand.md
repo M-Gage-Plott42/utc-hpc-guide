@@ -59,9 +59,9 @@ The hostname should match your compute allocation, not the login node.
 
 ## 6. Common Paths in OOD File Browser
 
-- Home: `/home/<username>` or site equivalent
-- Scratch: `/scratch/<username>` or site equivalent
-- Group/project space: `/groups/<group>` or site equivalent
+- Home: `<home-path>`
+- Scratch: `<scratch-path>`
+- Group/project space: `<project-path>`
 - Public/shared space: site-specific path
 
 Keep large datasets and environments out of Home unless your site policy allows it.

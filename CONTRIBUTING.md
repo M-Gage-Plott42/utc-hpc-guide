@@ -15,6 +15,9 @@ Use placeholders for site-specific values:
 - `<cpu-partition>`
 - `<gpu-partition>`
 - `<account>`
+- `<home-path>`
+- `<scratch-path>`
+- `<project-path>`
 
 Public site-specific notes are allowed only under `docs/sites/`. Site notes should link to official public documentation where possible, label non-public operational observations as field notes, and use placeholders for user-specific values.
 

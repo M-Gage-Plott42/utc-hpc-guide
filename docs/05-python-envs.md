@@ -13,7 +13,8 @@ python -c "import sys; print(sys.executable)"
 ## 2. Option A (Recommended): Conda Environment in Scratch
 
 ```bash
-ENV=/scratch/$USER/envs/py312
+SCRATCH_PATH="<scratch-path>"
+ENV="${SCRATCH_PATH}/envs/py312"
 conda create -p "$ENV" python=3.12 -y
 conda activate "$ENV"
 python -m pip install --upgrade pip
@@ -23,8 +24,9 @@ python -m pip install numpy pandas matplotlib
 Batch script activation snippet:
 
 ```bash
+SCRATCH_PATH="<scratch-path>"
 source "$(conda info --base)/etc/profile.d/conda.sh"
-conda activate /scratch/$USER/envs/py312
+conda activate "${SCRATCH_PATH}/envs/py312"
 ```
 
 ## 3. Option B: Install Miniconda/Miniforge in User Space
@@ -32,22 +34,38 @@ conda activate /scratch/$USER/envs/py312
 Use this when `conda` is not available on your cluster by default.
 
 ```bash
-cd /scratch/$USER
-mkdir -p installers && cd installers
-curl -L -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh -b -p /scratch/$USER/miniconda3
-/scratch/$USER/miniconda3/bin/conda init bash
+SCRATCH_PATH="<scratch-path>"
+INSTALLER_DIR="${SCRATCH_PATH}/installers"
+INSTALL_ROOT="${SCRATCH_PATH}/miniconda3"
+INSTALLER="Miniconda3-py312_26.5.3-1-Linux-x86_64.sh"
+INSTALLER_URL="https://repo.anaconda.com/miniconda/${INSTALLER}"
+INSTALLER_SHA256="ecb43ee4ae30a7a5af87737e9548ceb21f0a10ec55b8dc40d247aa925b80bfec"
+
+mkdir -p "$INSTALLER_DIR"
+cd "$INSTALLER_DIR"
+curl --fail --location --output "$INSTALLER" "$INSTALLER_URL"
+printf '%s  %s\n' "$INSTALLER_SHA256" "$INSTALLER" | sha256sum --check -
+bash "$INSTALLER" -b -p "$INSTALL_ROOT"
+"$INSTALL_ROOT/bin/conda" init bash
 ```
+
+This example pins the official Linux x86-64 Python 3.12 installer rather than
+using the moving `latest` alias. Confirm your node architecture first, obtain
+the matching filename and SHA-256 from the official
+[Miniconda installer index](https://repo.anaconda.com/miniconda/), and never
+run an installer after a hash mismatch. Anaconda's installation guidance
+recommends SHA-256 verification.
 
 ## 4. Option C: venv + pip
 
 Good for lightweight pure-Python projects.
 
 ```bash
+SCRATCH_PATH="<scratch-path>"
 module avail python
 module load python/<version>
-python -m venv /scratch/$USER/venvs/py310
-source /scratch/$USER/venvs/py310/bin/activate
+python -m venv "${SCRATCH_PATH}/venvs/py310"
+source "${SCRATCH_PATH}/venvs/py310/bin/activate"
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```

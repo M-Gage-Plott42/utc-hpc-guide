@@ -44,6 +44,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   text file and explicit, path-bound exceptions for official public site facts.
 - Added scrub-policy tests for expanded path coverage, exact site exceptions,
   and stale exceptions.
+- Replaced the regular-expression-only local link scan with a parser-based
+  validator for Markdown, reference-style, and raw HTML links.
+- Added local heading-anchor validation, including duplicate GitHub-style
+  heading suffixes, plus link-parser failure-path tests.
 
 ## [1.1.0] - 2026-02-17
 

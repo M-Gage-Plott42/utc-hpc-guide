@@ -41,6 +41,10 @@ Expected behavior:
   `scripts/public_scrub_exceptions.json`.
 - `make test-scrub` exercises scan coverage and exception failure paths.
 - `make check-assets` prints `asset_policy_clean` or fails if naming/metadata policy is violated.
+- `make check-links` parses Markdown links, reference links, raw HTML link
+  attributes, and heading anchors; it fails on missing local targets or anchors.
+- `make test-links` exercises inline, reference, HTML, code-mask, duplicate
+  heading, and failure-path behavior.
 
 If you change image assets, manually confirm screenshots do not expose usernames, hostnames, account/allocation IDs, or private paths.
 

@@ -31,7 +31,8 @@ generalize anything institution-specific that should not be public.
 
 ## 4. Documentation Integrity
 
-- Check that README links to all docs and examples.
+- Check that README links to all docs and examples; `make check-links` must
+  resolve inline Markdown, reference-style, raw HTML, and heading-anchor links.
 - Confirm commands render correctly in Markdown and copy/paste cleanly.
 - Confirm placeholders are consistent across docs.
 - Confirm any downloadable installer uses an exact filename and a source-verified

@@ -26,7 +26,9 @@ generalize anything institution-specific that should not be public.
 ## 3. Screenshots and Assets
 
 - Verify each image in `assets/` has no usernames, hostnames, account IDs, job IDs, node-specific real allocation names, GPU UUIDs, direct email addresses, or private paths.
-- Run `make check-assets` and confirm `asset_policy_clean`.
+- Run `make check-assets` and confirm all PNGs pass CRC, chunk-order, decode,
+  scanline, filter, terminal-IEND, and ancillary-chunk checks.
+- Run `make test-assets` and confirm the PNG failure-path suite passes.
 - Remove or re-export any image with residual metadata or identifying UI elements.
 
 ## 4. Documentation Integrity

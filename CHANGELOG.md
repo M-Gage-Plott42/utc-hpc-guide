@@ -48,6 +48,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   validator for Markdown, reference-style, and raw HTML links.
 - Added local heading-anchor validation, including duplicate GitHub-style
   heading suffixes, plus link-parser failure-path tests.
+- Expanded PNG checks from signature and metadata inspection to CRC, chunk
+  order and uniqueness, terminal IEND, bounded decompression, scanline/filter,
+  color/palette, and explicit ancillary-chunk policy validation.
+- Added corrupt, malformed, metadata-bearing, and decode failure-path tests for
+  public PNG assets.
 
 ## [1.1.0] - 2026-02-17
 

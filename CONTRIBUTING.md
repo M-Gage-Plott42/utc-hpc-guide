@@ -40,7 +40,11 @@ Expected behavior:
 - Public site facts require exact, reasoned exceptions under `docs/sites/` in
   `scripts/public_scrub_exceptions.json`.
 - `make test-scrub` exercises scan coverage and exception failure paths.
-- `make check-assets` prints `asset_policy_clean` or fails if naming/metadata policy is violated.
+- `make check-assets` prints `asset_policy_clean` only when sanitized naming,
+  PNG structure, CRCs, chunk ordering, decompression, filters, and the
+  ancillary-chunk privacy policy all pass.
+- `make test-assets` exercises corrupt, malformed, metadata-bearing, and
+  undecodable PNG failure paths.
 - `make check-links` parses Markdown links, reference links, raw HTML link
   attributes, and heading anchors; it fails on missing local targets or anchors.
 - `make test-links` exercises inline, reference, HTML, code-mask, duplicate

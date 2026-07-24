@@ -32,6 +32,8 @@ Review any manual-review matches. Hits such as `login`, `partition`, `account`, 
 - Check that README links to all docs and examples.
 - Confirm commands render correctly in Markdown and copy/paste cleanly.
 - Confirm placeholders are consistent across docs.
+- Confirm any downloadable installer uses an exact filename and a source-verified
+  SHA-256 digest rather than a moving `latest` URL.
 - Run `npm ci` followed by `make check` from repo root and confirm all checks
   pass with the locked local tooling.
 

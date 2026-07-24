@@ -36,6 +36,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   workloads.
 - Clarified that Python environment rebuilds should follow allocation and
   memory checks, not precede them.
+- Replaced assumed `/scratch/$USER` and `/home/<username>` paths with quoted,
+  site-configurable storage placeholders.
+- Pinned the Miniconda Linux x86-64 installer example to an exact release and
+  source-verified SHA-256 digest.
 
 ## [1.1.0] - 2026-02-17
 

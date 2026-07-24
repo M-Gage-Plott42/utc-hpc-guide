@@ -45,3 +45,6 @@ Replace these with site-specific values:
 - `<gpu-partition>`
 - `<account>`
 - `<group>`
+- `<home-path>`
+- `<scratch-path>`
+- `<project-path>`

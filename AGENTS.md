@@ -14,6 +14,9 @@ This repository is a public, documentation-first HPC onboarding guide focused on
   - `<cpu-partition>`
   - `<gpu-partition>`
   - `<account>`
+  - `<home-path>`
+  - `<scratch-path>`
+  - `<project-path>`
 - Treat official institutional HPC docs and live SLURM commands as source of truth for site-specific policy.
 
 ## Site-Specific Notes

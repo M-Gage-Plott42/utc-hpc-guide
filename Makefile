@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help setup lint scrub test-scrub check-assets check-links test-links check
+.PHONY: help setup lint scrub test-scrub check-assets test-assets check-links test-links check
 
 ASSET_CHECK_SCRIPT := scripts/check_assets.py
 MARKDOWNLINT := ./node_modules/.bin/markdownlint
@@ -14,7 +14,8 @@ help:
 	@echo "  make lint        - Run markdown lint checks"
 	@echo "  make scrub       - Scan every tracked text file against public scrub policy"
 	@echo "  make test-scrub  - Run scrub-checker failure-path tests"
-	@echo "  make check-assets - Enforce sanitized asset naming and empty metadata"
+	@echo "  make check-assets - Enforce PNG structure, decode, and privacy policy"
+	@echo "  make test-assets - Run PNG validation failure-path tests"
 	@echo "  make check-links - Parse and validate local links, references, and anchors"
 	@echo "  make test-links  - Run link-parser failure-path tests"
 	@echo "  make check       - Run lint + scrub + asset + link checks"
@@ -35,10 +36,13 @@ test-scrub:
 check-assets:
 	@python3 $(ASSET_CHECK_SCRIPT)
 
+test-assets:
+	@python3 -m unittest tests.test_check_assets
+
 check-links:
 	@python3 $(LINK_CHECK_SCRIPT)
 
 test-links:
 	@python3 -m unittest tests.test_check_links
 
-check: lint scrub test-scrub check-assets check-links test-links
+check: lint scrub test-scrub check-assets test-assets check-links test-links

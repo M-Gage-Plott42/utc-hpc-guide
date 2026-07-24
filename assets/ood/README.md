@@ -18,3 +18,8 @@ This folder contains sanitized screenshots derived from the local source guide P
 
 - Screenshots are illustrative only; UI details vary by institution.
 - Do not add unsanitized images containing usernames, hostnames, account strings, job IDs, or private paths.
+- `make check-assets` verifies PNG signatures, chunk CRCs, required chunk
+  ordering, decoded scanlines, filter bytes, end-of-file integrity, and the
+  ancillary-chunk allowlist.
+- Text, EXIF, and timestamp metadata chunks are forbidden. Re-export an asset
+  rather than bypassing the privacy policy.

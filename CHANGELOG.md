@@ -40,6 +40,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   site-configurable storage placeholders.
 - Pinned the Miniconda Linux x86-64 installer example to an exact release and
   source-verified SHA-256 digest.
+- Replaced fixed-path scrub commands with a fail-closed scan of every tracked
+  text file and explicit, path-bound exceptions for official public site facts.
+- Added scrub-policy tests for expanded path coverage, exact site exceptions,
+  and stale exceptions.
 
 ## [1.1.0] - 2026-02-17
 

@@ -18,8 +18,10 @@ Run:
 make scrub
 ```
 
-Fail release if the strict scan reports forbidden matches.
-Review any manual-review matches. Hits such as `login`, `partition`, `account`, or `allocation` may be expected in placeholders or `docs/sites/`, but generalize anything institution-specific that should not be public.
+Fail release if the all-tracked-text scan reports forbidden matches. Review
+the contextual-hit total when content changes. Public site facts must have an
+exact, reasoned exception bound to a Markdown page under `docs/sites/`;
+generalize anything institution-specific that should not be public.
 
 ## 3. Screenshots and Assets
 

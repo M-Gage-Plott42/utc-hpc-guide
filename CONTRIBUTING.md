@@ -35,8 +35,11 @@ Expected behavior:
 - `npm ci` installs the exact local tooling recorded in `package-lock.json`.
 - `make lint` uses only `./node_modules/.bin/markdownlint`; a global
   `markdownlint` installation is neither required nor used.
-- `make scrub` strict scan prints `strict_scrub_clean` or fails on forbidden patterns.
-- `make scrub` manual-review scan may print contextual matches; review and confirm each one is placeholder-safe or intentionally public site-note content.
+- `make scrub` scans every Git-tracked text file and prints
+  `public_scrub_clean` or fails on forbidden patterns.
+- Public site facts require exact, reasoned exceptions under `docs/sites/` in
+  `scripts/public_scrub_exceptions.json`.
+- `make test-scrub` exercises scan coverage and exception failure paths.
 - `make check-assets` prints `asset_policy_clean` or fails if naming/metadata policy is violated.
 
 If you change image assets, manually confirm screenshots do not expose usernames, hostnames, account/allocation IDs, or private paths.

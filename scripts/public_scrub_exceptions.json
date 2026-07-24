@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "site_fact_exceptions": [
+    {
+      "path": "docs/sites/utc-mocshpc.md",
+      "literal_fragments": ["login.", "mocshpc.", "utc.edu"],
+      "reason": "Official public UTC SSH hostname."
+    },
+    {
+      "path": "docs/sites/utc-mocshpc.md",
+      "literal_fragments": ["ondemand.", "mocshpc.", "utc.edu"],
+      "reason": "Official public UTC Open OnDemand hostname."
+    },
+    {
+      "path": "docs/sites/utc-mocshpc.md",
+      "literal_fragments": ["epyc", "-gpu"],
+      "reason": "Official public UTC Slurm partition."
+    },
+    {
+      "path": "docs/sites/utc-mocshpc.md",
+      "literal_fragments": ["epyc", "-cpu"],
+      "reason": "Official public UTC Slurm partition."
+    },
+    {
+      "path": "docs/sites/utc-mocshpc.md",
+      "literal_fragments": ["epyc", "-full"],
+      "reason": "Official public UTC Slurm partition."
+    },
+    {
+      "path": "docs/sites/utc-mocshpc.md",
+      "literal_fragments": ["epyc", "[00-15]"],
+      "reason": "Official public UTC node-range notation."
+    },
+    {
+      "path": "docs/sites/utc-mocshpc.md",
+      "literal_fragments": ["epyc", "[00-28]"],
+      "reason": "Official public UTC node-range notation."
+    },
+    {
+      "path": "docs/sites/utc-mocshpc.md",
+      "literal_fragments": ["epyc", "[16-28]"],
+      "reason": "Official public UTC node-range notation."
+    }
+  ]
+}

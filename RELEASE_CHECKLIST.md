@@ -32,7 +32,8 @@ Review any manual-review matches. Hits such as `login`, `partition`, `account`, 
 - Check that README links to all docs and examples.
 - Confirm commands render correctly in Markdown and copy/paste cleanly.
 - Confirm placeholders are consistent across docs.
-- Run `make check` from repo root and confirm all checks pass.
+- Run `npm ci` followed by `make check` from repo root and confirm all checks
+  pass with the locked local tooling.
 
 ## 5. Git Hygiene
 

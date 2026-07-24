@@ -11,6 +11,9 @@ build/
 dist/
 pip-wheel-metadata/
 
+# Locked local Node quality tooling
+node_modules/
+
 # Virtual environments and secrets
 .env
 .env.*

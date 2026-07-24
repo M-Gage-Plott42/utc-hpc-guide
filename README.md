@@ -9,19 +9,22 @@
 Practical HPC onboarding and workflows guide (SLURM + Open OnDemand + SSH + Python-first tooling).  
 Originally developed for a university research environment and sanitized for public release.
 
-Last updated: May 2026
+Last updated: July 2026
 
 ## How to Use This Repo in 15 Minutes
 
 1. Read [Overview](docs/00-overview.md), [Access and SSH](docs/01-access-ssh.md), and [SLURM Basics](docs/03-slurm-basics.md).
 2. Review runnable templates in `examples/` and adapt placeholders (`<username>`, `<cpu-partition>`, `<gpu-partition>`, `<account>`).
-3. Run quality checks from repo root:
+3. Install the locked local quality toolchain and run checks from repo root:
 
 ```bash
+npm ci
 make check
 ```
 
-This runs markdown linting, strict-fail scrub checks, asset hygiene checks, and local Markdown link validation.
+`npm ci` installs the exact versions in `package-lock.json`. `make check` uses
+only the repository-local Markdown linter, then runs strict-fail scrub checks,
+asset hygiene checks, and local Markdown link validation.
 
 ## Purpose
 

@@ -1,21 +1,26 @@
 SHELL := /bin/bash
 
-.PHONY: help lint scrub check-assets check-links check
+.PHONY: help setup lint scrub check-assets check-links check
 
 SCRUB_PATHS := README.md docs examples assets/ood/README.md
 ASSET_CHECK_SCRIPT := scripts/check_assets.py
+MARKDOWNLINT := ./node_modules/.bin/markdownlint
 
 help:
 	@echo "Available targets:"
+	@echo "  make setup       - Install the locked local Node quality toolchain"
 	@echo "  make lint        - Run markdown lint checks"
 	@echo "  make scrub       - Run strict-fail + manual-review public scrub scans"
 	@echo "  make check-assets - Enforce sanitized asset naming and empty metadata"
 	@echo "  make check-links - Validate local Markdown links"
 	@echo "  make check       - Run lint + scrub + asset + link checks"
 
+setup:
+	npm ci
+
 lint:
-	@command -v markdownlint >/dev/null || { echo "markdownlint not found; install it first."; exit 1; }
-	markdownlint "**/*.md" --config .markdownlint.yaml
+	@test -x "$(MARKDOWNLINT)" || { echo "Local markdownlint not found; run 'npm ci' first."; exit 1; }
+	@git ls-files -z -- '*.md' | xargs -0 "$(MARKDOWNLINT)" --config .markdownlint.yaml
 
 scrub:
 	@set -euo pipefail; \

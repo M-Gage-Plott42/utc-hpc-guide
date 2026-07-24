@@ -1,0 +1,15 @@
+{
+  "name": "utc-hpc-guide-quality-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Locked local quality tooling for the UTC HPC Guide.",
+  "engines": {
+    "node": ">=22.22.2"
+  },
+  "scripts": {
+    "lint:markdown": "markdownlint \"**/*.md\" --config .markdownlint.yaml"
+  },
+  "devDependencies": {
+    "markdownlint-cli": "0.49.1"
+  }
+}

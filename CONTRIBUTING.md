@@ -23,11 +23,15 @@ Public site-specific notes are allowed only under `docs/sites/`. Site notes shou
 Run these commands from repo root:
 
 ```bash
+npm ci
 make check
 ```
 
 Expected behavior:
 
+- `npm ci` installs the exact local tooling recorded in `package-lock.json`.
+- `make lint` uses only `./node_modules/.bin/markdownlint`; a global
+  `markdownlint` installation is neither required nor used.
 - `make scrub` strict scan prints `strict_scrub_clean` or fails on forbidden patterns.
 - `make scrub` manual-review scan may print contextual matches; review and confirm each one is placeholder-safe or intentionally public site-note content.
 - `make check-assets` prints `asset_policy_clean` or fails if naming/metadata policy is violated.

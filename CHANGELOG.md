@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Locked local Markdown tooling through checked `package.json` and
+  `package-lock.json` files.
 - GitHub dependency review for pull requests and merge-queue checks via
   `.github/workflows/dependency-review.yml` and
   `.github/dependency-review-config.yml`.
@@ -19,6 +21,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- The quality workflow now uses `npm ci` and the repository-local
+  `markdownlint` binary instead of installing an unpinned global CLI.
+- Dependency-review action pins now carry exact, provenance-verified release
+  comments.
 - Existing required workflows now use workflow-level concurrency and
   `merge_group` triggers so repository checks stay stable in merge queues.
 - Markdown lint config now allows repeated changelog subsection headings under

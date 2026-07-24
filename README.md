@@ -24,8 +24,9 @@ make check
 
 `npm ci` installs the exact versions in `package-lock.json`. `make check` uses
 only the repository-local Markdown linter, then runs all-tracked-text scrub
-checks, scrub failure-path tests, asset hygiene checks, and local Markdown
-link validation.
+checks, scrub failure-path tests, asset hygiene checks, parser-based local
+link, reference-link, and heading-anchor validation, and link-parser
+failure-path tests.
 
 ## Purpose
 

@@ -11,7 +11,7 @@ PLACEHOLDER_CHECK_SCRIPT := scripts/check_shell_placeholders.py
 PDF_BUILD_SCRIPT := scripts/build_pdf.py
 PDF_CHECK_SCRIPT := scripts/check_pdf.py
 PDF_MANIFEST := pdf/guide_manifest.json
-PDF_OUTPUT := dist/UTC_HPC_Guide_v1.2.0-rc.1.pdf
+PDF_OUTPUT := dist/UTC_HPC_Guide.pdf
 
 help:
 	@echo "Available targets:"
@@ -25,7 +25,7 @@ help:
 	@echo "  make test-links  - Run link-parser failure-path tests"
 	@echo "  make check-placeholders - Reject unsafe angle placeholders in shell examples"
 	@echo "  make test-placeholders - Run shell-placeholder failure-path tests"
-	@echo "  make pdf         - Build the printable release-candidate PDF"
+	@echo "  make pdf         - Build the printable release PDF"
 	@echo "  make check-pdf   - Rebuild twice, compare bytes, and run PDF QA"
 	@echo "  make check       - Run lint + scrub + asset + link + placeholder checks"
 

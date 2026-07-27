@@ -6,7 +6,7 @@ editable sources; the repository does not maintain a second hand-edited copy
 of the same content.
 
 The ordered source manifest is `pdf/guide_manifest.json`. Build the current
-release candidate with:
+release PDF with:
 
 ```bash
 make pdf
@@ -33,10 +33,10 @@ The fixed build epoch follows Pandoc's
 The tracked XeLaTeX header also supplies a stable PDF trailer identifier so the
 repository's supported Pandoc 3.1 toolchain produces identical bytes.
 
-The generated release candidate is
-`dist/UTC_HPC_Guide_v1.2.0-rc.1.pdf`. The `dist/` directory is intentionally
-ignored: reviewed release binaries belong on the corresponding GitHub release,
-while the tracked Markdown, manifest, and build scripts remain authoritative.
+The generated release PDF is `dist/UTC_HPC_Guide.pdf`. The `dist/` directory
+is intentionally ignored: reviewed release binaries belong on the
+corresponding GitHub release, while the tracked Markdown, manifest, and build
+scripts remain authoritative.
 
 Reproducibility here means byte-identical output from the same source and
 declared toolchain. A different Pandoc, XeLaTeX, or font package version can

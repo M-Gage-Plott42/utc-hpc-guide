@@ -12,9 +12,8 @@ Originally developed for a university research environment and sanitized for pub
 
 Last updated: July 2026
 
-[Printable PDF build and validation instructions](docs/pdf-guide.md). The
-reviewed v1.2.0 PDF will be attached to the GitHub release after
-release-candidate review.
+[Download the latest printable PDF](https://github.com/M-Gage-Plott42/utc-hpc-guide/releases/latest/download/UTC_HPC_Guide.pdf)
+or review the [PDF build and validation instructions](docs/pdf-guide.md).
 
 ## How to Use This Repo in 15 Minutes
 

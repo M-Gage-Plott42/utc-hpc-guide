@@ -5,10 +5,10 @@
   "author": "Gage Plott",
   "date": "July 2026",
   "release_target": "1.2.0",
-  "document_version": "1.2.0-rc.1",
+  "document_version": "1.2.0",
   "source_date_epoch": 1785153600,
-  "pdf_trailer_id": "97c153e963790451a8a322230624ad18",
-  "output_filename": "UTC_HPC_Guide_v1.2.0-rc.1.pdf",
+  "pdf_trailer_id": "da5f58a39d1bb03a8beadffe5f6a903c",
+  "output_filename": "UTC_HPC_Guide.pdf",
   "header_source": "pdf/header.tex",
   "core_sources": [
     "docs/00-overview.md",
@@ -35,7 +35,7 @@
   ],
   "required_pdf_text": [
     "Practical HPC Onboarding Guide",
-    "Release candidate for v1.2.0",
+    "Version 1.2.0",
     "SLURM Basics",
     "ReqMem",
     "MaxRSS",

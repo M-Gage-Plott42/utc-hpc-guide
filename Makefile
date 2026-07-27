@@ -1,12 +1,17 @@
 SHELL := /bin/bash
 
-.PHONY: help setup lint scrub test-scrub check-assets test-assets check-links test-links check
+.PHONY: help setup lint scrub test-scrub check-assets test-assets check-links test-links check-placeholders test-placeholders pdf check-pdf check
 
 ASSET_CHECK_SCRIPT := scripts/check_assets.py
 MARKDOWNLINT := ./node_modules/.bin/markdownlint
 SCRUB_CHECK_SCRIPT := scripts/check_public_scrub.py
 SCRUB_POLICY := scripts/public_scrub_exceptions.json
 LINK_CHECK_SCRIPT := scripts/check_links.py
+PLACEHOLDER_CHECK_SCRIPT := scripts/check_shell_placeholders.py
+PDF_BUILD_SCRIPT := scripts/build_pdf.py
+PDF_CHECK_SCRIPT := scripts/check_pdf.py
+PDF_MANIFEST := pdf/guide_manifest.json
+PDF_OUTPUT := dist/UTC_HPC_Guide_v1.2.0-rc.1.pdf
 
 help:
 	@echo "Available targets:"
@@ -18,7 +23,11 @@ help:
 	@echo "  make test-assets - Run PNG validation failure-path tests"
 	@echo "  make check-links - Parse and validate local links, references, and anchors"
 	@echo "  make test-links  - Run link-parser failure-path tests"
-	@echo "  make check       - Run lint + scrub + asset + link checks"
+	@echo "  make check-placeholders - Reject unsafe angle placeholders in shell examples"
+	@echo "  make test-placeholders - Run shell-placeholder failure-path tests"
+	@echo "  make pdf         - Build the printable release-candidate PDF"
+	@echo "  make check-pdf   - Rebuild twice, compare bytes, and run PDF QA"
+	@echo "  make check       - Run lint + scrub + asset + link + placeholder checks"
 
 setup:
 	npm ci
@@ -45,4 +54,17 @@ check-links:
 test-links:
 	@python3 -m unittest tests.test_check_links
 
-check: lint scrub test-scrub check-assets test-assets check-links test-links
+check-placeholders:
+	@python3 $(PLACEHOLDER_CHECK_SCRIPT)
+
+test-placeholders:
+	@python3 -m unittest tests.test_check_shell_placeholders
+
+pdf:
+	@python3 $(PDF_BUILD_SCRIPT) --manifest $(PDF_MANIFEST) --output $(PDF_OUTPUT)
+
+check-pdf:
+	@python3 $(PDF_BUILD_SCRIPT) --manifest $(PDF_MANIFEST) --output $(PDF_OUTPUT) --verify-reproducible
+	@python3 $(PDF_CHECK_SCRIPT) --manifest $(PDF_MANIFEST) --pdf $(PDF_OUTPUT)
+
+check: lint scrub test-scrub check-assets test-assets check-links test-links check-placeholders test-placeholders

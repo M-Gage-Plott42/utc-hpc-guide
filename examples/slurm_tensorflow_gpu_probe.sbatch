@@ -1,10 +1,11 @@
 #!/bin/bash -l
 # TensorFlow GPU diagnostic job.
-# Replace placeholders before use. This is not a production training script.
+# Replace every REPLACE_WITH_* value before use.
+# This is not a production training script.
 
 #SBATCH --job-name=tf_gpu_probe
-#SBATCH --partition=<gpu-partition>
-#SBATCH --account=<account>
+#SBATCH --partition=REPLACE_WITH_GPU_PARTITION
+#SBATCH --account=REPLACE_WITH_ACCOUNT
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
@@ -28,9 +29,14 @@ nvidia-smi -L
 nvidia-smi
 
 # Activate the environment that contains TensorFlow.
+ENV_PATH="REPLACE_WITH_CONDA_ENV_PATH"
+if [[ "$ENV_PATH" == REPLACE_WITH_* ]]; then
+    echo "Set ENV_PATH to a real Conda environment path before submitting." >&2
+    exit 2
+fi
 # shellcheck source=/dev/null
 source "$(conda info --base)/etc/profile.d/conda.sh"
-conda activate "<env-name-or-path>"
+conda activate "$ENV_PATH"
 
 export TF_FORCE_GPU_ALLOW_GROWTH=true
 

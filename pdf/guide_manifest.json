@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "title": "Practical HPC Onboarding Guide",
+  "subtitle": "SLURM, Open OnDemand, SSH, Python, and GPU Workflows",
+  "author": "Gage Plott",
+  "date": "July 2026",
+  "release_target": "1.2.0",
+  "document_version": "1.2.0-rc.1",
+  "source_date_epoch": 1785153600,
+  "pdf_trailer_id": "97c153e963790451a8a322230624ad18",
+  "output_filename": "UTC_HPC_Guide_v1.2.0-rc.1.pdf",
+  "header_source": "pdf/header.tex",
+  "core_sources": [
+    "docs/00-overview.md",
+    "docs/01-access-ssh.md",
+    "docs/02-open-ondemand.md",
+    "docs/03-slurm-basics.md",
+    "docs/04-gpu-jobs.md",
+    "docs/05-python-envs.md",
+    "docs/06-data-transfer.md",
+    "docs/07-troubleshooting.md",
+    "docs/08-best-practices.md"
+  ],
+  "site_appendices": [
+    {
+      "path": "docs/sites/utc-mocshpc.md",
+      "title": "Appendix A: UTC MocsHPC Site Notes"
+    }
+  ],
+  "examples": [
+    "examples/slurm_cpu_example.sbatch",
+    "examples/slurm_gpu_example.sbatch",
+    "examples/job_array_example.sbatch",
+    "examples/slurm_tensorflow_gpu_probe.sbatch"
+  ],
+  "required_pdf_text": [
+    "Practical HPC Onboarding Guide",
+    "Release candidate for v1.2.0",
+    "SLURM Basics",
+    "ReqMem",
+    "MaxRSS",
+    "tensorflow[and-cuda]",
+    "Miniconda3-py312_26.5.3-1-Linux-x86_64.sh",
+    "Data Transfer and Storage",
+    "Appendix A: UTC MocsHPC Site Notes",
+    "Appendix B: Runnable Slurm Templates",
+    "slurm_cpu_example.sbatch",
+    "slurm_tensorflow_gpu_probe.sbatch"
+  ]
+}

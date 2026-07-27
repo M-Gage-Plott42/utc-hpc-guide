@@ -15,7 +15,8 @@ Official public references:
 SSH login:
 
 ```bash
-ssh <your_utc_id>@login.mocshpc.utc.edu
+UTC_USER="REPLACE_WITH_UTC_ID"
+ssh "${UTC_USER}@login.mocshpc.utc.edu"
 ```
 
 Open OnDemand:
@@ -92,7 +93,7 @@ Use the generic [TensorFlow GPU probe example](../../examples/slurm_tensorflow_g
 
 ```bash
 #SBATCH --partition=epyc-gpu
-#SBATCH --account=<account>
+#SBATCH --account=REPLACE_WITH_ACCOUNT
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
@@ -107,9 +108,12 @@ Then make the job print allocation and framework diagnostics before running the 
 module purge
 module load cuda/11.8
 
+ENV_PATH="REPLACE_WITH_CONDA_ENV_PATH"
+SCRIPT_PATH="REPLACE_WITH_PYTHON_SCRIPT"
+
 # shellcheck source=/dev/null
 source "$(conda info --base)/etc/profile.d/conda.sh"
-conda activate <env-name-or-path>
+conda activate "$ENV_PATH"
 
 nvidia-smi -L
 nvidia-smi
@@ -119,7 +123,7 @@ print("tensorflow", tf.__version__)
 print("physical GPUs", tf.config.list_physical_devices("GPU"))
 PY
 
-/usr/bin/time -v python <your-script>.py
+/usr/bin/time -v python "$SCRIPT_PATH"
 ```
 
 UTC's CUDA page currently lists CUDA 11.8 and 12.2 availability on `epyc`, and shows `module load cuda/12.2` for NVCC. For an older TensorFlow environment that logs a missing `libcudart.so.11.0`, trying `cuda/11.8` is reasonable before rebuilding. In the field result that motivated this note, the environment did not need to be rebuilt once the job requested `--mem=64G`.
@@ -129,7 +133,8 @@ UTC's CUDA page currently lists CUDA 11.8 and 12.2 availability on `epyc`, and s
 UTC documents `jobstats <jobid>` for command-line resource review and also exposes Jobstats through Open OnDemand. Use it to inspect CPU usage, memory usage, runtime, node information, GPU usage, and storage performance.
 
 ```bash
-jobstats <jobid>
+JOB_ID="REPLACE_WITH_JOB_ID"
+jobstats "$JOB_ID"
 ```
 
 For plain `Killed` failures, compare requested memory against observed memory first, then check CUDA/TensorFlow environment details.

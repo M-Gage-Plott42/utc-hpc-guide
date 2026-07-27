@@ -4,12 +4,17 @@
 [![Quality Gate](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/quality.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/quality.yml)
 [![Markdown Lint](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/markdown-lint.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/markdown-lint.yml)
 [![Shell Lint](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/shell-lint.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/shell-lint.yml)
+[![PDF Guide](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/pdf.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/pdf.yml)
 [![Dependency Review](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/dependency-review.yml)
 
 Practical HPC onboarding and workflows guide (SLURM + Open OnDemand + SSH + Python-first tooling).  
 Originally developed for a university research environment and sanitized for public release.
 
 Last updated: July 2026
+
+[Printable PDF build and validation instructions](docs/pdf-guide.md). The
+reviewed v1.2.0 PDF will be attached to the GitHub release after
+release-candidate review.
 
 ## How to Use This Repo in 15 Minutes
 
@@ -26,7 +31,8 @@ make check
 only the repository-local Markdown linter, then runs all-tracked-text scrub
 checks, scrub failure-path tests, asset hygiene checks, parser-based local
 link, reference-link, and heading-anchor validation, and link-parser
-failure-path tests.
+failure-path tests. It also rejects angle-bracket placeholders in shell
+snippets and runnable templates.
 
 ## Purpose
 
@@ -60,6 +66,7 @@ This repository is a documentation-first guide for new and intermediate HPC user
 - [Data Transfer and Storage](docs/06-data-transfer.md)
 - [Troubleshooting](docs/07-troubleshooting.md)
 - [Best Practices](docs/08-best-practices.md)
+- [Printable PDF Guide](docs/pdf-guide.md)
 
 Site-specific notes:
 

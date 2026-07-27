@@ -37,6 +37,8 @@ generalize anything institution-specific that should not be public.
   resolve inline Markdown, reference-style, raw HTML, and heading-anchor links.
 - Confirm commands render correctly in Markdown and copy/paste cleanly.
 - Confirm placeholders are consistent across docs.
+- Run `make check-placeholders` and confirm shell snippets and sbatch templates
+  contain no angle-bracket placeholders that a shell could parse as redirects.
 - Confirm any downloadable installer uses an exact filename and a source-verified
   SHA-256 digest rather than a moving `latest` URL.
 - Run `npm ci` followed by `make check` from repo root and confirm all checks
@@ -49,7 +51,18 @@ generalize anything institution-specific that should not be public.
 - Push only intended files.
 - For substantial changes, prefer branch + PR for reviewable history.
 
-## 6. Publication Note
+## 6. Printable PDF
+
+- Confirm `pdf/guide_manifest.json` lists the complete ordered guide source.
+- Run `make check-pdf` and require byte-identical rebuilds plus passing
+  structure, metadata, font, text-extraction, and rendering checks.
+- Review the generated PDF visually before publishing.
+- Attach the reviewed PDF to the matching GitHub release under the stable
+  asset name `UTC_HPC_Guide.pdf`.
+- After publication, confirm the stable latest-release asset URL resolves:
+  `https://github.com/M-Gage-Plott42/utc-hpc-guide/releases/latest/download/UTC_HPC_Guide.pdf`.
+
+## 7. Publication Note
 
 For external materials (e.g., LANL package), include:
 

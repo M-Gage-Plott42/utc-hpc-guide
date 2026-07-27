@@ -5,9 +5,11 @@ GPU jobs require both a GPU-capable partition and explicit GPU requests.
 ## 1. Interactive GPU Probe
 
 ```bash
+GPU_PARTITION="REPLACE_WITH_GPU_PARTITION"
+ACCOUNT="REPLACE_WITH_ACCOUNT"
 srun \
-  --partition=<gpu-partition> \
-  --account=<account> \
+  --partition="$GPU_PARTITION" \
+  --account="$ACCOUNT" \
   --nodes=1 \
   --ntasks=1 \
   --cpus-per-task=4 \
@@ -48,10 +50,10 @@ Error patterns like `Invalid generic resource (gres) specification` usually mean
 ## 4. GPU Request Hygiene
 
 - Start with one GPU and scale only when needed.
-- Use `--ntasks=1` with `--cpus-per-task=<n>` for a normal single-process Python script.
+- Use `--ntasks=1` with `--cpus-per-task=N` for a normal single-process Python script.
 - Use multiple tasks only for MPI, distributed launchers, or explicitly multi-process training.
 - Match `--cpus-per-task` to your data pipeline requirements; it is the normal way to give one Python process more CPU.
-- Confirm partition policies with `scontrol show partition <gpu-partition>`.
+- Confirm partition policies with `scontrol show partition "$GPU_PARTITION"`.
 - Validate placement with `nvidia-smi` at job start.
 - Request host memory explicitly with `--mem=<size>` and review measured usage after the job completes.
 
@@ -88,6 +90,13 @@ PY
 ```
 
 TensorFlow's install docs use `tf.config.list_physical_devices("GPU")` as the GPU verification check.
+
+For a generic current Linux environment, TensorFlow documents
+`python -m pip install 'tensorflow[and-cuda]'`. On a managed cluster, do not
+assume that packaged CUDA libraries and a site-provided CUDA module should be
+combined. First confirm the NVIDIA driver, the cluster's module policy, and the
+framework version; then use one compatible environment strategy and verify it
+inside an allocated GPU job.
 
 TensorRT warnings during TensorFlow import are often not fatal unless the workload uses TensorRT acceleration. TensorFlow documents TensorRT as optional software for improving inference latency and throughput, so check framework GPU visibility and job memory before chasing TensorRT warnings.
 

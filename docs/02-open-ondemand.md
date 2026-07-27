@@ -42,8 +42,8 @@ Host and session metadata are redacted. Treat this as a UI reference, not a poli
 ## 4. Attach from SSH to an Existing OOD Allocation
 
 ```bash
-JOBID=<jobid>
-srun --pty --overlap --jobid="$JOBID" /bin/bash -l
+JOB_ID="REPLACE_WITH_JOB_ID"
+srun --pty --overlap --jobid="$JOB_ID" /bin/bash -l
 ```
 
 Use `/bin/bash` explicitly for portability inside allocations.

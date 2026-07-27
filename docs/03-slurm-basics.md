@@ -10,9 +10,11 @@ SLURM allocates compute resources for interactive and batch workloads.
 ## 2. Quick Interactive CPU Session
 
 ```bash
+CPU_PARTITION="REPLACE_WITH_CPU_PARTITION"
+ACCOUNT="REPLACE_WITH_ACCOUNT"
 srun \
-  --partition=<cpu-partition> \
-  --account=<account> \
+  --partition="$CPU_PARTITION" \
+  --account="$ACCOUNT" \
   --nodes=1 \
   --ntasks=1 \
   --cpus-per-task=4 \
@@ -45,11 +47,25 @@ sbatch examples/slurm_cpu_example.sbatch
 ## 5. Monitor and Inspect Jobs
 
 ```bash
+JOB_ID="REPLACE_WITH_JOB_ID"
 squeue -u "$USER"
-sacct -j <jobid> --format=JobID,JobName,Partition,ReqMem,AllocTRES,AllocCPUS,Elapsed,State,ExitCode,MaxRSS
+sacct -j "$JOB_ID" \
+  --format=JobID,JobName,Partition,ReqMem,AllocTRES,AllocCPUS,Elapsed,State,ExitCode,MaxRSS
 ```
 
-Use `State`, `ExitCode`, `ReqMem`, and `MaxRSS` together when debugging failures. Site-local tools such as `jobstats`, `seff`, or reporting dashboards may present the same resource data in a more readable form.
+`sacct` normally prints a primary row for the whole job and separate rows for
+job steps such as `.batch` and `.extern`. Interpret the fields at the level
+where Slurm records them:
+
+- `ReqMem` comes from the job allocation, not an individual step.
+- `MaxRSS` is the largest resident-memory high-water mark reported for one
+  task in a job step. It may be blank on the whole-job row.
+- Read `State`, `ExitCode`, `ReqMem`, and the populated step-level `MaxRSS`
+  values together when debugging failures.
+
+Site-local tools such as `jobstats`, `seff`, or reporting dashboards may
+present the same resource data in a more readable form. Accounting fields also
+depend on the site's configured job-accounting plugin.
 
 ## 6. Explicit Memory Requests
 
@@ -75,16 +91,19 @@ Reference: Slurm [`sbatch`](https://slurm.schedmd.com/sbatch.html) and [`sacct`]
 ## 7. Cancel a Job
 
 ```bash
-scancel <jobid>
+JOB_ID="REPLACE_WITH_JOB_ID"
+scancel "$JOB_ID"
 ```
 
 ## 8. Useful Cluster Inspection Commands
 
 ```bash
+PARTITION="REPLACE_WITH_PARTITION"
+GPU_PARTITION="REPLACE_WITH_GPU_PARTITION"
 sinfo -s
 scontrol show config | egrep -i "DefMem|MaxMem"
-scontrol show partition <partition-name>
-sinfo -N -p <gpu-partition> -o "%N %c %m %G"
+scontrol show partition "$PARTITION"
+sinfo -N -p "$GPU_PARTITION" -o "%N %c %m %G"
 ```
 
 ## 9. Log Files and Working Directory

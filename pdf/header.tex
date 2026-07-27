@@ -1,0 +1,52 @@
+\usepackage{fancyhdr}
+\usepackage{microtype}
+\usepackage{xurl}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+% The builder replaces these manifest-bound tokens before invoking XeLaTeX.
+% xdvipdfmx requires the first-page trailer special for byte-identical output.
+\special{pdf:trailerid [
+  <@PDF_TRAILER_ID@>
+  <@PDF_TRAILER_ID@>
+]}
+
+\definecolor{GuideBlue}{HTML}{174A7E}
+\definecolor{GuideLightBlue}{HTML}{EAF2F8}
+\definecolor{GuideGray}{HTML}{4B5563}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=GuideBlue,
+  urlcolor=GuideBlue,
+  citecolor=GuideBlue,
+  pdfborder={0 0 0}
+}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  breakatwhitespace=false,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single,
+  framerule=0.3pt,
+  rulecolor=\color{GuideGray},
+  backgroundcolor=\color{GuideLightBlue},
+  showstringspaces=false,
+  upquote=true
+}
+
+\setlength{\emergencystretch}{3em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.45em}
+\setcounter{secnumdepth}{0}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Practical HPC Onboarding Guide}
+\fancyhead[R]{\small v@DOCUMENT_VERSION@}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0pt}

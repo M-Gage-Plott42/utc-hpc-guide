@@ -13,7 +13,9 @@ If access fails, verify permissions first before debugging SSH syntax.
 ## 2. Basic SSH Login
 
 ```bash
-ssh <username>@<login-host>
+HPC_USER="REPLACE_WITH_USERNAME"
+LOGIN_HOST="REPLACE_WITH_LOGIN_HOST"
+ssh "${HPC_USER}@${LOGIN_HOST}"
 ```
 
 You should land on a login/head node. Avoid running heavy compute on login nodes.
@@ -24,10 +26,12 @@ Generate a local key and install the public key on the cluster account.
 
 ```bash
 # local machine
-ssh-keygen -t ed25519 -C "<username>@hpc"
+HPC_USER="REPLACE_WITH_USERNAME"
+LOGIN_HOST="REPLACE_WITH_LOGIN_HOST"
+ssh-keygen -t ed25519 -C "${HPC_USER}@hpc"
 
 # if supported at your site
-ssh-copy-id <username>@<login-host>
+ssh-copy-id "${HPC_USER}@${LOGIN_HOST}"
 ```
 
 ## 4. Optional SSH Config Alias
@@ -36,8 +40,8 @@ Add a host alias to `~/.ssh/config` on your local machine:
 
 ```sshconfig
 Host hpc
-    HostName <login-host>
-    User <username>
+    HostName REPLACE_WITH_LOGIN_HOST
+    User REPLACE_WITH_USERNAME
     IdentityFile ~/.ssh/id_ed25519
     ServerAliveInterval 60
     ServerAliveCountMax 120

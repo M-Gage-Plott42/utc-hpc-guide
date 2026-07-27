@@ -19,9 +19,9 @@ Use your institution's exact paths, backup behavior, and retention policies.
 ## 2. Check Capacity and Quota
 
 ```bash
-HOME_PATH="<home-path>"
-SCRATCH_PATH="<scratch-path>"
-PROJECT_PATH="<project-path>"
+HOME_PATH="REPLACE_WITH_HOME_PATH"
+SCRATCH_PATH="REPLACE_WITH_SCRATCH_PATH"
+PROJECT_PATH="REPLACE_WITH_PROJECT_PATH"
 df -h "$HOME_PATH"
 df -h "$SCRATCH_PATH" 2>/dev/null || true
 df -h "$PROJECT_PATH" 2>/dev/null || true
@@ -40,11 +40,17 @@ If quota commands fail, use your support channel for authoritative limits.
 ## 4. rsync Example
 
 ```bash
+HPC_USER="REPLACE_WITH_USERNAME"
+LOGIN_HOST="REPLACE_WITH_LOGIN_HOST"
+SCRATCH_PATH="REPLACE_WITH_SCRATCH_PATH"
+
 # local -> cluster
-rsync -avhP ./data/ "<username>@<login-host>:<scratch-path>/project/data/"
+rsync -avhP ./data/ \
+  "${HPC_USER}@${LOGIN_HOST}:${SCRATCH_PATH}/project/data/"
 
 # cluster -> local
-rsync -avhP "<username>@<login-host>:<scratch-path>/project/results/" ./results/
+rsync -avhP \
+  "${HPC_USER}@${LOGIN_HOST}:${SCRATCH_PATH}/project/results/" ./results/
 ```
 
 ## 5. Data Hygiene Checklist

@@ -18,6 +18,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   requests, GPU partition selection, CUDA module checks, and Jobstats usage.
 - TensorFlow GPU probe example for diagnosing Slurm allocation, framework GPU
   visibility, and memory-related kills.
+- Deterministic printable-guide assembly, byte-for-byte reproducibility checks,
+  PDF structure/font/text/render QA, and a dedicated hosted PDF workflow.
+- Shell-placeholder validation and focused failure-path tests.
 
 ### Changed
 
@@ -53,6 +56,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   color/palette, and explicit ancillary-chunk policy validation.
 - Added corrupt, malformed, metadata-bearing, and decode failure-path tests for
   public PNG assets.
+- Replaced the remaining assumed scratch paths in runnable CPU/GPU examples
+  with fail-closed, site-configurable environment paths.
+- Clarified whole-job versus job-step interpretation of Slurm `ReqMem` and
+  `MaxRSS`.
+- Updated generic TensorFlow GPU installation guidance while keeping
+  site-module compatibility decisions explicit.
 
 ## [1.1.0] - 2026-02-17
 

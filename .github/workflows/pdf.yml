@@ -1,0 +1,38 @@
+name: PDF Guide
+
+on:
+  pull_request:
+  merge_group:
+    types:
+      - checks_requested
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pdf:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install PDF toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            fonts-dejavu-core \
+            pandoc \
+            poppler-utils \
+            qpdf \
+            texlive-latex-extra \
+            texlive-xetex
+
+      - name: Build twice and validate PDF
+        run: make check-pdf

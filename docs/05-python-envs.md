@@ -13,7 +13,7 @@ python -c "import sys; print(sys.executable)"
 ## 2. Option A (Recommended): Conda Environment in Scratch
 
 ```bash
-SCRATCH_PATH="<scratch-path>"
+SCRATCH_PATH="REPLACE_WITH_SCRATCH_PATH"
 ENV="${SCRATCH_PATH}/envs/py312"
 conda create -p "$ENV" python=3.12 -y
 conda activate "$ENV"
@@ -24,7 +24,7 @@ python -m pip install numpy pandas matplotlib
 Batch script activation snippet:
 
 ```bash
-SCRATCH_PATH="<scratch-path>"
+SCRATCH_PATH="REPLACE_WITH_SCRATCH_PATH"
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate "${SCRATCH_PATH}/envs/py312"
 ```
@@ -34,7 +34,7 @@ conda activate "${SCRATCH_PATH}/envs/py312"
 Use this when `conda` is not available on your cluster by default.
 
 ```bash
-SCRATCH_PATH="<scratch-path>"
+SCRATCH_PATH="REPLACE_WITH_SCRATCH_PATH"
 INSTALLER_DIR="${SCRATCH_PATH}/installers"
 INSTALL_ROOT="${SCRATCH_PATH}/miniconda3"
 INSTALLER="Miniconda3-py312_26.5.3-1-Linux-x86_64.sh"
@@ -61,9 +61,9 @@ recommends SHA-256 verification.
 Good for lightweight pure-Python projects.
 
 ```bash
-SCRATCH_PATH="<scratch-path>"
+SCRATCH_PATH="REPLACE_WITH_SCRATCH_PATH"
 module avail python
-module load python/<version>
+module load python/REPLACE_WITH_VERSION
 python -m venv "${SCRATCH_PATH}/venvs/py310"
 source "${SCRATCH_PATH}/venvs/py310/bin/activate"
 python -m pip install --upgrade pip
@@ -96,7 +96,8 @@ Cluster rebuilds, OS updates, and module-stack changes can break binary packages
 Do not make environment rebuilds the first response to a job that only prints plain `Killed`. Check Slurm memory, GPU allocation, and job accounting first:
 
 ```bash
-sacct -j <jobid> --format=JobID,ReqMem,AllocTRES,State,ExitCode,MaxRSS
+JOB_ID="REPLACE_WITH_JOB_ID"
+sacct -j "$JOB_ID" --format=JobID,ReqMem,AllocTRES,State,ExitCode,MaxRSS
 ```
 
 Snapshot before rebuilding:
@@ -115,8 +116,16 @@ except Exception as exc:
 PY
 ```
 
-For TensorFlow, the official install docs recommend `pip` because TensorFlow is officially released to PyPI, and they recommend verifying GPU visibility with `tf.config.list_physical_devices("GPU")`.
+For a generic current Linux environment, TensorFlow's official install docs
+recommend `pip`, install GPU support with
+`python -m pip install 'tensorflow[and-cuda]'`, and verify GPU visibility with
+`tf.config.list_physical_devices("GPU")`.
 
-Avoid blindly running `pip install --upgrade tensorflow` inside an old managed-HPC environment. Check the site CUDA module, NVIDIA driver, Python version, and TensorFlow compatibility first.
+Avoid blindly installing or upgrading TensorFlow inside an old managed-HPC
+environment. Check the site CUDA-module policy, NVIDIA driver, Python version,
+and TensorFlow compatibility first. A site module can be appropriate for an
+existing environment built against that module, while the current generic pip
+extra supplies its own supported CUDA user-space dependencies. Do not combine
+the two approaches without verifying compatibility.
 
 Reference: TensorFlow [pip install](https://www.tensorflow.org/install/pip) documentation.

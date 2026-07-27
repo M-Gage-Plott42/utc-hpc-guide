@@ -30,7 +30,8 @@ PY
 - Step 4: check job accounting:
 
 ```bash
-sacct -j <jobid> --format=JobID,ReqMem,AllocTRES,State,ExitCode,MaxRSS
+JOB_ID="REPLACE_WITH_JOB_ID"
+sacct -j "$JOB_ID" --format=JobID,ReqMem,AllocTRES,State,ExitCode,MaxRSS
 ```
 
 - Step 5: if your site provides `jobstats`, `seff`, or similar tools, use them to review memory and GPU usage.
@@ -62,7 +63,7 @@ Likely cause: requesting GPUs in a non-GPU allocation or unsupported GPU request
 Fixes:
 
 - Submit from a GPU partition
-- Verify partition policy with `scontrol show partition <gpu-partition>`
+- Verify partition policy with `scontrol show partition "$GPU_PARTITION"`
 - Reduce requested GPU count
 
 ## 5. pip Build Failures for Scientific Packages
@@ -81,7 +82,7 @@ Some module setups only support:
 
 ```bash
 module avail
-module show <module-name>
+module show REPLACE_WITH_MODULE_NAME
 ```
 
 ## 7. `nproc` Shows Fewer CPUs Than Expected

@@ -1,10 +1,10 @@
 #!/bin/bash -l
 # Minimal SLURM job array template.
-# Replace placeholders before use.
+# Replace every REPLACE_WITH_* value before use.
 
 #SBATCH --job-name=array_example
-#SBATCH --partition=<cpu-partition>
-#SBATCH --account=<account>
+#SBATCH --partition=REPLACE_WITH_CPU_PARTITION
+#SBATCH --account=REPLACE_WITH_ACCOUNT
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1

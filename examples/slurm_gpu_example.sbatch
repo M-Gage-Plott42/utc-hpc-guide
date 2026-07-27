@@ -19,12 +19,12 @@ set -euo pipefail
 
 cd "$SLURM_SUBMIT_DIR"
 
-# shellcheck source=/dev/null
 ENV_PATH="REPLACE_WITH_CONDA_ENV_PATH"
 if [[ "$ENV_PATH" == REPLACE_WITH_* ]]; then
     echo "Set ENV_PATH to a real Conda environment path before submitting." >&2
     exit 2
 fi
+# shellcheck source=/dev/null
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate "$ENV_PATH"
 

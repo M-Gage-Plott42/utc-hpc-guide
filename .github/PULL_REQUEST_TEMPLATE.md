@@ -51,5 +51,9 @@ For PDF or release changes, complete the
 - `Tagged`, `StructTreeRoot`, `MarkInfo`, and `Lang` results:
 - veraPDF profile, result, and report artifact:
 - All-page visual-review result:
-- Manual accessibility reviewer, tools, date, findings, and limitations:
+- Manual accessibility reviewer and tester profile:
+- Windows, desktop Acrobat Reader, and NVDA exact versions and settings:
+- Heading/list/table/figure/link/code/end-to-end results:
+- Keyboard-only and Magnifier/reflow results:
+- Accessibility defects, remediations, retest results, and limitations:
 - UTC live-validation status:

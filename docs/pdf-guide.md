@@ -118,53 +118,96 @@ prove usable reading order, or constitute UTC accessibility approval.
 
 ## Manual Accessibility Review
 
-Complete this review on the exact candidate identified by filename and
-SHA-256. Record the reviewer, review date, operating system, assistive
-technology or PDF viewer and version, findings, remediations, and unresolved
-limitations.
+Complete this review only after source edits are finished, on the exact
+candidate identified by filename and SHA-256. Any PDF-changing commit
+invalidates earlier evidence.
 
-- Navigate by headings and confirm a logical hierarchy.
-- Navigate each list and confirm item boundaries and nesting.
-- Read the document in logical order, including transitions around images,
-  tables, page breaks, and Appendix B.
-- Inspect the UTC partition table and confirm column headers are associated
-  with each data cell.
-- Review every link in context and confirm its purpose is understandable from
-  the linked text and surrounding sentence.
-- Inspect all three Open OnDemand figures and confirm their alternative text
-  communicates the useful visual information without relying on the word
-  "image" or exposing identifiers.
-- Confirm repeated running headers, page numbers, rules, and purely decorative
-  elements do not interrupt assistive-technology reading order.
-- Read representative narrative and Appendix B code blocks with assistive
-  technology; confirm punctuation, selection order, indentation, and line
-  wrapping remain understandable.
-- Check text, links, code styling, table rules, and meaningful graphics for
-  sufficient contrast.
-- Inspect every page at 200% zoom and test reflow mode where the review tool
-  supports it; record any tool or format limitation rather than claiming a
-  capability that was not tested.
-- Complete an end-to-end screen-reader reading-order pass with the named tool
-  and record defects or skipped content.
-- Confirm the visual page review found no clipping, broken glyphs, unintended
-  blanks, malformed code, table overflow, or exposed private information.
+The required release baseline is the current desktop Adobe Acrobat Reader and
+current stable NVDA on Windows 11, with exact versions recorded. Open the
+local PDF in Reader rather than a browser PDF viewer, use the tagged document
+structure rather than a reading-order override, and record relevant Reader
+and NVDA reading settings. The reviewer should be an experienced screen-reader
+user or otherwise proficient enough to complete the tasks without relying on
+visual order. A sighted maintainer's author-assisted NVDA smoke test is useful
+supplemental evidence, but it is not the required proficient human review.
+Adobe explicitly notes that
+[Read Out Loud is not a screen reader](https://helpx.adobe.com/uk/acrobat/using/reading-pdfs-reflow-accessibility-features.html#read-a-pdf-with-read-out-loud),
+so it cannot satisfy this baseline.
 
-A reviewer may use the following evidence fields in the pull request:
+Complete and record each result as pass, fail, or not tested:
+
+- Use NVDA browse-mode heading navigation and the Elements List to confirm the
+  heading hierarchy and document title.
+- Navigate forward and backward by list and list item; confirm boundaries,
+  counts, and nesting.
+- Navigate the UTC partition table by table and cell. Confirm NVDA announces
+  the correct `Partition` or `Public UTC notes` column header and retains the
+  correct row and column relationship for every cell.
+- Navigate by graphic and read sequentially around all three Open OnDemand
+  figures. Confirm each useful alternative description is spoken once at the
+  intended source position, without a filename, identifier, or detached
+  caption.
+- Navigate links through both NVDA's Elements List and Tab/Shift+Tab. Confirm
+  meaningful purpose, logical focus order, visible focus, and keyboard
+  activation for representative contents and external links.
+- Complete an end-to-end Say All reading-order pass from the title through
+  Appendix B. Meaningful content must be read once in logical order; repeated
+  running headers, page numbers, rules, and decorative elements must not
+  interrupt it.
+- With punctuation and indentation reporting enabled, read representative
+  narrative commands and the complete CPU and TensorFlow Appendix B templates
+  line by line. Confirm quoting, variables, comments, indentation, wrapping,
+  and page transitions remain understandable.
+- Inspect every page at 200% zoom and in Acrobat Reflow. Use Windows Magnifier
+  as a supplemental low-vision check and record whether narrative content
+  remains present and readable without clipping, overlap, or unnecessary
+  two-dimensional scrolling. A table or indentation-dependent code may retain
+  two-dimensional layout; no information may disappear.
+- Complete all link navigation without a mouse, then confirm the separate
+  visual review found no clipping, broken glyphs, unintended blanks, malformed
+  code, table overflow, insufficient contrast, or exposed private information.
+
+The [NVDA user guide](https://download.nvaccess.org/releases/stable/documentation/en/userGuide.html#BrowseMode)
+documents Adobe Reader browse mode and structural navigation for headings,
+lists, tables, links, and graphics. W3C's
+[PDF reading- and tab-order test](https://www.w3.org/WAI/WCAG21/Techniques/pdf/PDF3)
+requires assistive-technology or accessibility-API reading-order inspection
+plus keyboard focus-order inspection. Adobe documents
+[tag-dependent reflow](https://helpx.adobe.com/uk/acrobat/using/reading-pdfs-reflow-accessibility-features.html#reflow-a-pdf),
+and Section508.gov provides a
+[manual PDF testing and remediation series](https://www.section508.gov/create/pdfs/).
+
+JAWS with Acrobat or VoiceOver with a supported macOS viewer can broaden
+confidence, but a second pairing is not required for this repository's RC
+baseline. A clean result demonstrates only the named environment and tasks; it
+does not establish universal assistive-technology interoperability, WCAG or
+Section 508 certification, disability-user testing, or UTC accessibility
+approval.
+
+Record the following evidence in a pull-request comment so recording the
+review does not alter the PDF that was tested:
 
 ```text
-Reviewer:
+Reviewer and tester profile:
 Review date:
-PDF filename and SHA-256:
-Operating system:
-PDF viewer and version:
-Assistive technology and version:
-Findings and remediations:
+PDF filename:
+SHA-256 before and after review:
+Windows edition and build:
+Adobe Acrobat Reader version:
+NVDA version, synthesizer, and keyboard layout:
+Reader and NVDA reading settings:
+Heading/list/table/figure/link/code/end-to-end results:
+Keyboard-only result:
+Magnifier/reflow result:
+Defects, remediations, and retest result:
 Unresolved limitations:
 ```
 
-If machine validation, visual quality, reproducibility, OCR, or manual
-accessibility review conflicts, stop with a release-candidate report. Do not
-weaken or allowlist the failed gate and do not promote an unreviewed PDF.
+Omitted, duplicated, materially reordered, mislabeled, or unusable meaningful
+content is a release blocker even when veraPDF passes. If machine validation,
+visual quality, reproducibility, OCR, or manual accessibility review
+conflicts, stop with a release-candidate report. Do not weaken or allowlist the
+failed gate and do not promote an unreviewed PDF.
 
 ## Reproducibility and Artifacts
 

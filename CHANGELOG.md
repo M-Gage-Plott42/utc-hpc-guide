@@ -28,8 +28,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   no-follow boundary.
 - Rechecked the selected UTC partition facts against current public
   documentation and a July 30 read-only live session; recorded the confirmed
-  4 GiB scheduler default and authenticated Open OnDemand route, plus the
-  unresolved public/live CPU-cap conflict.
+  4 GiB scheduler default and authenticated Open OnDemand route. The
+  authenticated desktop form independently corroborates the conservative
+  public CPU request ceiling; the higher raw Slurm value remains a disclosed,
+  nonblocking administrative discrepancy rather than permission to request
+  more.
+- Defined a reproducible real-assistive-technology acceptance baseline using
+  the exact candidate hash, desktop Acrobat Reader, NVDA, keyboard navigation,
+  Magnifier, and reflow, with itemized evidence and explicit claim boundaries.
 - Corrected Open OnDemand guidance to describe `srun --jobid` as a new,
   resource-sharing job step rather than an attachment to an existing app.
 - Qualified CPU-count diagnostics and added comparisons with Slurm allocation

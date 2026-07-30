@@ -14,12 +14,19 @@ Validation status, July 30, 2026: the public UTC pages above were rechecked,
 and a VPN-enabled, read-only session confirmed authenticated SSH, scheduler
 visibility, and Open OnDemand routing. A private human browser check completed
 authentication and confirmed the final dashboard origin and
-`/pun/sys/dashboard` path; no session data was retained. No job, allocation,
-workload, account, or user record was queried or created. One public/live
-conflict remains unresolved: the public partition page says `epyc-cpu` has a
-120-CPU-per-node maximum, while both live `scontrol` and `sinfo` reported 128.
-Treat 120 as the current published value, not a live-confirmed limit, and
-obtain UTC technical confirmation before release promotion.
+`/pun/sys/dashboard` path. The authenticated MocsHPC Desktop form also listed
+120 as the maximum core count for its CPU-only EPYC option, independently
+corroborating the public partition page for that supported workflow. No
+session data was retained, and no job, allocation, workload, account, or user
+record was queried or created.
+
+Read-only `scontrol` and `sinfo` views nevertheless advertised 128 CPUs per
+node for `epyc-cpu`. Use 120 as the supported request ceiling. Treat 128 as an
+unexplained scheduler/application discrepancy, not permission to request
+121--128 CPUs. UTC technical clarification remains desirable, but the
+discrepancy is a nonblocking administrative follow-up because the current
+public page and authenticated user-facing form agree on the lower value and
+this guide does not recommend the higher one.
 
 ## Access
 
@@ -55,6 +62,12 @@ These are sanitized operational observations, not public UTC policy:
   default inherits the cluster-wide `DefMemPerNode`; this corroborates the
   4 GiB default while remaining a field note rather than a published UTC
   guarantee. Continue requesting memory explicitly.
+- The authenticated MocsHPC Desktop resource table listed 120 maximum cores
+  for its CPU-only EPYC option. It also displayed a 256 GB maximum-memory
+  value. Those values are application-specific interactive-desktop form
+  ceilings; they do not establish physical node capacity or the generic
+  direct-Slurm batch limit. Open OnDemand documents numeric form maxima as
+  [application-configured, client-side validation](https://osc.github.io/ood-documentation/latest/how-tos/app-development/interactive/form.html).
 - `epyc-gpu` was up with a five-day limit, an eight-CPU-per-node job cap, and
   two A100 80 GB GPUs represented in its live generic-resource record.
 - `epyc-full` was up with a five-day limit, a 128-CPU-per-node job cap, and
@@ -62,7 +75,11 @@ These are sanitized operational observations, not public UTC policy:
   Its detailed `scontrol` record was not available to the validating identity,
   so access restrictions and minimum-GPU behavior were not live-tested.
 - `epyc-cpu` was up with a five-day limit, but its live 128-CPU-per-node job
-  cap conflicts with the public page's 120-CPU value.
+  cap conflicts with the public page and authenticated desktop form's
+  120-CPU value. Slurm defines `MaxCPUsPerNode` and `sinfo %B` as CPUs
+  available to jobs, so the 128 reading cannot be reclassified as merely a
+  physical-core count. Do not infer that eight cores are reserved or otherwise
+  explain the mismatch without UTC confirmation.
 
 See the upstream
 [Slurm partition memory-default documentation](https://slurm.schedmd.com/slurm.conf.html#OPT_DefMemPerNode)
@@ -108,10 +125,13 @@ families. Recheck that page and live `sinfo` output before submitting work.
 | `epyc-cpu` | Nodes `epyc[00-28]`; CPU-only; max 5 days; max 120 CPUs per node; max GPUs 0; a job requesting a GPU will not start. |
 | `epyc-full` | Nodes `epyc[00-15]`; max 5 days; max 128 CPUs per node; max 2 GPUs; min 1 GPU; requires explicit account access; a job without a GPU request will not start. |
 
-The table reports the public UTC page. It does not resolve the current
-`epyc-cpu` discrepancy: the July 30 live partition views both advertised 128
-CPUs per node. Confirm the effective job cap with UTC before relying on either
-number.
+The table reports the public UTC page. The authenticated MocsHPC Desktop form
+independently lists 120 as its CPU-only EPYC maximum, so use 120 as the
+supported request ceiling. The July 30 raw Slurm partition views advertised
+128 CPUs per node, but that backend field note does not authorize requests for
+121--128 CPUs. UTC clarification of the layered configuration remains
+recommended; it is not a release-promotion blocker while the guide retains
+the conservative, independently corroborated 120 limit.
 
 For an ordinary single-process TensorFlow or PyTorch probe, `epyc-gpu`, one
 GPU, and one task are a useful starting shape. Request host memory explicitly,

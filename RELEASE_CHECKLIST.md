@@ -21,7 +21,10 @@ Keep network-dependent dependency audits separate from this local gate.
 - Confirm site-specific notes are checked against official public docs or clearly labeled as field notes.
 - For a UTC-targeted release, record the public-document recheck and sanitized
   live-validation date. Do not promote while required VPN/live checks are
-  pending or public and live facts conflict.
+  pending or a public/live conflict leaves supported user guidance ambiguous.
+  A disclosed layered mismatch may be nonblocking only when current
+  user-facing sources agree on a conservative supported value and the guide
+  neither claims nor encourages the higher backend value.
 - Confirm README "Last updated" month/year is current.
 - Confirm candidate artifacts are labeled review-only and the stable release
   link still points to the intended published version.
@@ -102,8 +105,12 @@ private data.
 - Treat OCR as a legibility regression check, not proof that screenshots or
   pages are safely redacted.
 - Complete the [manual accessibility review](docs/pdf-guide.md#manual-accessibility-review)
-  and record the reviewer, tools and versions, date, findings, remediations,
-  and limitations.
+  on the exact candidate hash using the documented NVDA, desktop Acrobat
+  Reader, keyboard, Magnifier, and reflow baseline. Record reviewer
+  proficiency, exact tools and versions, settings, date, itemized results,
+  remediations, retest results, and limitations. An author-assisted
+  screen-reader smoke test or Acrobat Read Out Loud is not a substitute for
+  the proficient human baseline.
 - Do not describe automated tagging or veraPDF success as WCAG 2.1 AA
   certification, assistive-technology usability, or UTC accessibility
   approval.

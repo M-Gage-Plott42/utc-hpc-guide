@@ -39,14 +39,21 @@ Sanitized session card example:
 
 Host and session metadata are redacted. Treat this as a UI reference, not a policy source.
 
-## 4. Attach from SSH to an Existing OOD Allocation
+## 4. Launch a Diagnostic Shell Inside an Existing OOD Allocation
 
 ```bash
 JOB_ID="REPLACE_WITH_JOB_ID"
 srun --pty --overlap --jobid="$JOB_ID" /bin/bash -l
 ```
 
-Use `/bin/bash` explicitly for portability inside allocations.
+This starts a new Slurm job step under the existing allocation. It does not
+attach to the running Desktop, Jupyter kernel, terminal, or another process.
+The `--overlap` option lets the new step share the allocation's CPUs, memory,
+and generic resources with other steps. Keep this shell lightweight and use it
+for diagnostics so it does not compete materially with the OOD workload.
+
+Use `/bin/bash` explicitly for portability inside allocations. Confirm that
+your site permits user-launched steps inside OOD jobs.
 
 ## 5. Confirm You Are on the Allocated Node
 
@@ -64,7 +71,11 @@ The hostname should match your compute allocation, not the login node.
 - Group/project space: `<project-path>`
 - Public/shared space: site-specific path
 
-Keep large datasets and environments out of Home unless your site policy allows it.
+Keep large datasets out of Home unless site policy allows them there. Put
+environments that must survive scratch purges in site-approved persistent
+project/software storage. Use scratch for an environment only when local
+retention and software-placement policies support it and the environment is
+rebuildable.
 
 Sanitized storage shortcuts example:
 

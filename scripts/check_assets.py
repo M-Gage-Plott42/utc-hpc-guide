@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate PNG structure, decoding, and public asset hygiene."""
+"""Validate the public asset allowlist and PNG structure/metadata hygiene."""
 
 from __future__ import annotations
 
@@ -11,6 +11,9 @@ from pathlib import Path
 
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+ALLOWED_ASSET_DOCUMENTS = {"assets/ood/README.md"}
+ALLOWED_SCREENSHOT_DIRECTORY = "assets/ood"
+SANITIZED_PNG_SUFFIX = "_sanitized.png"
 KNOWN_CRITICAL_CHUNKS = {b"IHDR", b"PLTE", b"IDAT", b"IEND"}
 ALLOWED_ANCILLARY_CHUNKS = {
     b"cHRM",
@@ -363,21 +366,47 @@ def validate_png_bytes(data: bytes) -> list[str]:
     return failures
 
 
+def validate_asset_tree(repo_root: Path) -> tuple[list[Path], list[str]]:
+    """Return allowlisted PNGs and failures for every other asset-tree entry."""
+    asset_root = repo_root / "assets"
+    if not asset_root.exists():
+        return [], []
+
+    pngs: list[Path] = []
+    failures: list[str] = []
+    for path in sorted(asset_root.rglob("*")):
+        relative = path.relative_to(repo_root).as_posix()
+        if path.is_symlink():
+            failures.append(f"{relative}: symbolic links are not allowed in assets")
+            continue
+        if path.is_dir():
+            continue
+        if relative in ALLOWED_ASSET_DOCUMENTS:
+            continue
+        if (
+            path.parent.relative_to(repo_root).as_posix()
+            == ALLOWED_SCREENSHOT_DIRECTORY
+            and path.name.endswith(SANITIZED_PNG_SUFFIX)
+        ):
+            pngs.append(path)
+            continue
+        failures.append(
+            f"{relative}: path is not allowlisted; assets may contain only "
+            f"{ALLOWED_SCREENSHOT_DIRECTORY}/*{SANITIZED_PNG_SUFFIX} files "
+            "and assets/ood/README.md"
+        )
+    return pngs, failures
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parent.parent
-    asset_root = repo_root / "assets"
-    pngs = sorted(asset_root.rglob("*.png"))
-    if not pngs:
+    pngs, failures = validate_asset_tree(repo_root)
+    if not pngs and not failures:
         print("no_png_assets_found")
         return 0
 
-    failures: list[str] = []
     for path in pngs:
         relative = path.relative_to(repo_root)
-        if not path.name.endswith("_sanitized.png"):
-            failures.append(
-                f"{relative}: filename must end with '_sanitized.png' for public assets"
-            )
         for failure in validate_png_bytes(path.read_bytes()):
             failures.append(f"{relative}: {failure}")
 

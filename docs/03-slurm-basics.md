@@ -28,7 +28,29 @@ Then verify:
 ```bash
 hostname
 nproc
+printf 'SLURM_CPUS_PER_TASK=%s\n' "${SLURM_CPUS_PER_TASK:-unset}"
+printf 'SLURM_CPUS_ON_NODE=%s\n' "${SLURM_CPUS_ON_NODE:-unset}"
+scontrol show job "$SLURM_JOB_ID"
 ```
+
+Treat these as complementary checks, not interchangeable proof. GNU `nproc`
+reports processors available to the current process. Depending on the
+installed Coreutils version and process environment, CPU affinity/cpusets,
+cgroup v2 CPU quotas, `OMP_NUM_THREADS`, or `OMP_THREAD_LIMIT` can affect that
+number. Slurm variables describe scheduler scopes:
+
+- `SLURM_CPUS_PER_TASK` is set when CPUs per task were explicitly requested.
+- `SLURM_CPUS_ON_NODE` describes CPUs available to the step on the current
+  node, with details depending on the site's Slurm selection plugin.
+- `scontrol show job "$SLURM_JOB_ID"` reports the job allocation, while a job
+  step's binding can still constrain an individual process.
+
+Compare the values with the request and site configuration; no single value is
+a universal allocation test.
+
+References: GNU Coreutils [`nproc`](https://www.gnu.org/software/coreutils/manual/html_node/nproc-invocation.html)
+and Slurm [`srun`](https://slurm.schedmd.com/srun.html) and
+[`sbatch`](https://slurm.schedmd.com/sbatch.html) documentation.
 
 ## 3. Important: `#SBATCH` Parsing Behavior
 

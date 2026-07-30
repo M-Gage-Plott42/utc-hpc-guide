@@ -2,6 +2,17 @@
 
 Use isolated environments for reproducible jobs. Avoid installing into shared/base Python.
 
+Choose an environment root from your site's storage and software policy. When
+an environment must survive scratch purges, prefer persistent project/software
+storage that is available on compute nodes and suitable for package-file I/O.
+Use scratch only when the site permits environments there and its retention,
+quota, metadata, and performance policies fit your workflow.
+
+Scratch environments must be treated as rebuildable. Keep an
+`environment.yml`, pinned requirements or lock file, and any installation
+notes in version control or another genuinely durable location. Do not assume
+that a persistent filesystem is backed up; verify the site's backup policy.
+
 ## 1. Inspect Current Python
 
 ```bash
@@ -10,11 +21,11 @@ python --version
 python -c "import sys; print(sys.executable)"
 ```
 
-## 2. Option A (Recommended): Conda Environment in Scratch
+## 2. Option A (Recommended): Conda at a Site-Approved Environment Root
 
 ```bash
-SCRATCH_PATH="REPLACE_WITH_SCRATCH_PATH"
-ENV="${SCRATCH_PATH}/envs/py312"
+ENV_ROOT="REPLACE_WITH_SITE_APPROVED_ENV_ROOT"
+ENV="${ENV_ROOT}/conda/py312"
 conda create -p "$ENV" python=3.12 -y
 conda activate "$ENV"
 python -m pip install --upgrade pip
@@ -24,19 +35,21 @@ python -m pip install numpy pandas matplotlib
 Batch script activation snippet:
 
 ```bash
-SCRATCH_PATH="REPLACE_WITH_SCRATCH_PATH"
+ENV_ROOT="REPLACE_WITH_SITE_APPROVED_ENV_ROOT"
 source "$(conda info --base)/etc/profile.d/conda.sh"
-conda activate "${SCRATCH_PATH}/envs/py312"
+conda activate "${ENV_ROOT}/conda/py312"
 ```
 
 ## 3. Option B: Install Miniconda/Miniforge in User Space
 
-Use this when `conda` is not available on your cluster by default.
+Use this when `conda` is not available on your cluster by default. Install it
+under the same site-approved environment root; that root may be a persistent
+project/software tier or policy-compatible scratch.
 
 ```bash
-SCRATCH_PATH="REPLACE_WITH_SCRATCH_PATH"
-INSTALLER_DIR="${SCRATCH_PATH}/installers"
-INSTALL_ROOT="${SCRATCH_PATH}/miniconda3"
+ENV_ROOT="REPLACE_WITH_SITE_APPROVED_ENV_ROOT"
+INSTALLER_DIR="${ENV_ROOT}/installers"
+INSTALL_ROOT="${ENV_ROOT}/miniconda3"
 INSTALLER="Miniconda3-py312_26.5.3-1-Linux-x86_64.sh"
 INSTALLER_URL="https://repo.anaconda.com/miniconda/${INSTALLER}"
 INSTALLER_SHA256="ecb43ee4ae30a7a5af87737e9548ceb21f0a10ec55b8dc40d247aa925b80bfec"
@@ -61,11 +74,11 @@ recommends SHA-256 verification.
 Good for lightweight pure-Python projects.
 
 ```bash
-SCRATCH_PATH="REPLACE_WITH_SCRATCH_PATH"
+ENV_ROOT="REPLACE_WITH_SITE_APPROVED_ENV_ROOT"
 module avail python
 module load python/REPLACE_WITH_VERSION
-python -m venv "${SCRATCH_PATH}/venvs/py310"
-source "${SCRATCH_PATH}/venvs/py310/bin/activate"
+python -m venv "${ENV_ROOT}/venvs/py310"
+source "${ENV_ROOT}/venvs/py310/bin/activate"
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
@@ -100,7 +113,9 @@ JOB_ID="REPLACE_WITH_JOB_ID"
 sacct -j "$JOB_ID" --format=JobID,ReqMem,AllocTRES,State,ExitCode,MaxRSS
 ```
 
-Snapshot before rebuilding:
+Snapshot before rebuilding. Review the output, then save the appropriate
+manifest or lock file with the project in version-controlled or otherwise
+durable storage:
 
 ```bash
 python --version

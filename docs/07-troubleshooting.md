@@ -87,7 +87,27 @@ module show REPLACE_WITH_MODULE_NAME
 
 ## 7. `nproc` Shows Fewer CPUs Than Expected
 
-Inside SLURM job steps, `nproc` reflects CPUs assigned to your job step, not total node CPUs.
+Compare process-visible CPUs with the Slurm request and allocation:
+
+```bash
+JOB_ID="${SLURM_JOB_ID:-REPLACE_WITH_JOB_ID}"
+nproc
+printf 'SLURM_CPUS_PER_TASK=%s\n' "${SLURM_CPUS_PER_TASK:-unset}"
+printf 'SLURM_CPUS_ON_NODE=%s\n' "${SLURM_CPUS_ON_NODE:-unset}"
+scontrol show job "$JOB_ID"
+```
+
+`nproc` reports processors available to the current process, not necessarily
+all CPUs on the node or every CPU in the job allocation. CPU affinity/cpusets,
+compatible Coreutils handling of cgroup v2 CPU quotas, and
+`OMP_NUM_THREADS`/`OMP_THREAD_LIMIT` can reduce the result.
+
+The Slurm values have different scopes and can also depend on how the job was
+requested and configured. In particular, `SLURM_CPUS_PER_TASK` may be unset
+unless CPUs per task were explicitly requested. `scontrol show job` describes
+the job allocation, but step-level CPU binding can still narrow what one
+process sees. Compare all of these with the `sbatch` or `srun` request; no
+single value is a universal allocation test.
 
 ## 8. SSH Connection Problems
 

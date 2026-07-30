@@ -20,8 +20,17 @@ Describe what changed and why.
 
 ## Validation Performed
 
-Paste the checks you ran (for example):
+Paste the checks you ran. Use the routine gate for ordinary documentation
+changes:
 
 ```bash
+npm ci
 make check
+```
+
+For release-affecting changes, use:
+
+```bash
+npm ci
+make release-check
 ```

@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Reject angle-bracket placeholders where a shell could parse them."""
+"""Reject angle placeholders in tracked sbatch files and known shell fences.
+
+Markdown scanning covers fenced blocks whose bare info string or Pandoc-style
+class identifies a supported shell language. Indented Markdown code blocks are
+intentionally excluded because indentation is also commonly used for literal
+examples and nested prose; those blocks remain a manual-review responsibility.
+"""
 
 from __future__ import annotations
 
@@ -11,8 +17,17 @@ from pathlib import Path
 
 
 ANGLE_PLACEHOLDER = re.compile(r"<[A-Za-z][A-Za-z0-9_-]*>")
-FENCE = re.compile(r"^[ \t]*(`{3,}|~{3,})[ \t]*([A-Za-z0-9_-]*)")
-SHELL_LANGUAGES = {"bash", "console", "sh", "shell", "sshconfig", "zsh"}
+FENCE = re.compile(r"^[ \t]*(`{3,}|~{3,})[ \t]*(.*)$")
+ATTRIBUTE_CLASS = re.compile(r"(?:^|[ \t])\.([A-Za-z0-9_-]+)(?=[ \t}]|$)")
+SHELL_LANGUAGES = {
+    "bash",
+    "console",
+    "sh",
+    "shell",
+    "shell-session",
+    "sshconfig",
+    "zsh",
+}
 
 
 @dataclass(frozen=True)
@@ -29,6 +44,23 @@ def scan_sbatch(text: str) -> list[Finding]:
     return findings
 
 
+def shell_fence(info_string: str) -> bool:
+    """Return whether a Markdown fence info string denotes shell content."""
+    info = info_string.strip()
+    if not info:
+        return False
+    bare_language = info.split(maxsplit=1)[0].casefold()
+    if bare_language in SHELL_LANGUAGES:
+        return True
+    if info.startswith("{") and info.endswith("}"):
+        classes = {
+            match.group(1).casefold()
+            for match in ATTRIBUTE_CLASS.finditer(info[1:-1])
+        }
+        return bool(classes & SHELL_LANGUAGES)
+    return False
+
+
 def scan_markdown(text: str) -> list[Finding]:
     findings: list[Finding] = []
     fence_character = ""
@@ -41,7 +73,7 @@ def scan_markdown(text: str) -> list[Finding]:
                 fence = match.group(1)
                 fence_character = fence[0]
                 fence_length = len(fence)
-                scan_fence = match.group(2).casefold() in SHELL_LANGUAGES
+                scan_fence = shell_fence(match.group(2))
             continue
 
         stripped = line.lstrip()

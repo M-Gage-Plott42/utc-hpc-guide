@@ -2,7 +2,6 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Quality Gate](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/quality.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/quality.yml)
-[![Markdown Lint](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/markdown-lint.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/markdown-lint.yml)
 [![Shell Lint](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/shell-lint.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/shell-lint.yml)
 [![PDF Guide](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/pdf.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/pdf.yml)
 [![Dependency Review](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/dependency-review.yml)
@@ -32,6 +31,19 @@ checks, scrub failure-path tests, asset hygiene checks, parser-based local
 link, reference-link, and heading-anchor validation, and link-parser
 failure-path tests. It also rejects angle-bracket placeholders in shell
 snippets and runnable templates.
+
+For a release-affecting change, install ShellCheck and the documented PDF
+toolchain, then run the complete local gate:
+
+```bash
+npm ci
+make release-check
+```
+
+`make release-check` adds per-file Bash syntax checks, ShellCheck, reproducible
+PDF build with structural and every-page OCR QA, and staged/unstaged whitespace
+checks to the routine gate. Dependency audits and other network-dependent
+checks remain separate.
 
 ## Purpose
 
@@ -101,6 +113,14 @@ Do not commit credentials, usernames, internal hostnames, or allocation IDs.
 
 - Required workflows now use workflow-level concurrency and `merge_group`
   triggers so checks stay stable on pull requests and merge queues.
+- The Quality Gate is the single Markdown-lint authority and uses the locked
+  repository-local toolchain.
+- PDF workflow runs upload the validated PDF with a build-toolchain record for
+  short-lived review traceability. That record describes the observed runner;
+  it is not a toolchain lock, signed provenance, or permanent archive.
+- External HTTP(S) links are monitored only on a schedule or manual dispatch,
+  with retries, timeouts, and an exact reasoned allowlist; network availability
+  does not gate ordinary pull requests.
 - Dependency review runs by default on public repos and can be enabled for
   private copies later with `ENABLE_DEPENDENCY_REVIEW=true` once GitHub Code
   Security or GHAS is available.

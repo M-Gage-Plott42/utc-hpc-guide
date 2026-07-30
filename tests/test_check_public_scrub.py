@@ -87,6 +87,20 @@ class PublicScrubTests(unittest.TestCase):
         findings, _, _ = check_repository(root, policy)
         self.assertEqual(findings[0].rule, "unapproved_site_fact")
 
+    def test_skips_tracked_file_deleted_from_worktree(self) -> None:
+        temp_dir, root, policy = self.make_repo(
+            {
+                "README.md": "Generic guide.",
+                "obsolete.md": "Tracked but removed before commit.",
+            }
+        )
+        self.addCleanup(temp_dir.cleanup)
+        (root / "obsolete.md").unlink()
+
+        findings, _, _ = check_repository(root, policy)
+
+        self.assertEqual(findings, [])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -7,6 +7,23 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- Corrected Open OnDemand guidance to describe `srun --jobid` as a new,
+  resource-sharing job step rather than an attachment to an existing app.
+- Qualified CPU-count diagnostics and added comparisons with Slurm allocation
+  variables and `scontrol show job`.
+- Made Python environment placement site-dependent, with persistent
+  project/software storage preferred when environments must survive and
+  durable reconstruction metadata required when scratch may be purged.
+- Scoped the UTC partition table to a selected onboarding subset and labeled
+  the 64 GB examples as field-note diagnostic starting points, not minima.
+- Unified the local release gate, added PDF build traceability, and added
+  every-page OCR legibility checks for the v1.2.1 release candidate.
+- Hardened asset-path, shell-fence, and public-content policy boundaries; added
+  scheduled external-link monitoring; and consolidated Markdown lint under the
+  locked Quality Gate.
+
 ## [1.2.0] - 2026-07-27
 
 ### Added

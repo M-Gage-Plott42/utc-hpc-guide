@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import struct
+import tempfile
 import unittest
 import zlib
+from pathlib import Path
 
-from scripts.check_assets import validate_png_bytes
+from scripts.check_assets import validate_asset_tree, validate_png_bytes
 
 
 def png_chunk(chunk_type: bytes, payload: bytes, crc_delta: int = 0) -> bytes:
@@ -120,6 +122,47 @@ class AssetCheckerTests(unittest.TestCase):
             + png_chunk(b"IEND", b"")
         )
         self.assertIn("pHYs must appear before IDAT", validate_png_bytes(data))
+
+    def test_asset_tree_allows_documented_sanitized_pngs_and_readme(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            asset_dir = root / "assets" / "ood"
+            asset_dir.mkdir(parents=True)
+            (asset_dir / "README.md").write_text("Asset notes.\n", encoding="utf-8")
+            image = asset_dir / "example_sanitized.png"
+            image.write_bytes(valid_png())
+
+            pngs, failures = validate_asset_tree(root)
+
+            self.assertEqual(pngs, [image])
+            self.assertEqual(failures, [])
+
+    def test_asset_tree_rejects_uppercase_and_unexpected_extensions(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            asset_dir = root / "assets" / "ood"
+            asset_dir.mkdir(parents=True)
+            (asset_dir / "upper_sanitized.PNG").write_bytes(valid_png())
+            (asset_dir / "vector_sanitized.svg").write_text("<svg/>\n", encoding="utf-8")
+
+            pngs, failures = validate_asset_tree(root)
+
+            self.assertEqual(pngs, [])
+            self.assertEqual(len(failures), 2)
+            self.assertTrue(any("upper_sanitized.PNG" in item for item in failures))
+            self.assertTrue(any("vector_sanitized.svg" in item for item in failures))
+
+    def test_asset_tree_rejects_unexpected_document(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            asset_dir = root / "assets" / "ood"
+            asset_dir.mkdir(parents=True)
+            (asset_dir / "NOTES.md").write_text("Not allowlisted.\n", encoding="utf-8")
+
+            _, failures = validate_asset_tree(root)
+
+            self.assertEqual(len(failures), 1)
+            self.assertIn("assets/ood/NOTES.md", failures[0])
 
 
 if __name__ == "__main__":

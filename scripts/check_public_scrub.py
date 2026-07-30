@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Fail closed on sensitive values in every tracked text file."""
+"""Enforce this repository's public-content policy across tracked text files.
+
+This policy-specific scanner is one defense in depth. Its finite patterns and
+site-fact exceptions do not constitute exhaustive secret detection.
+"""
 
 from __future__ import annotations
 
@@ -91,7 +95,10 @@ def tracked_paths(root: Path) -> list[str]:
 
 
 def read_tracked_text(root: Path, path: str) -> str | None:
-    data = (root / path).read_bytes()
+    target = root / path
+    if not target.is_file():
+        return None
+    data = target.read_bytes()
     if b"\0" in data:
         return None
     try:
@@ -230,12 +237,13 @@ def main() -> int:
                 file=sys.stderr,
             )
         print(
-            f"ERROR: public scrub failed with {len(findings)} finding(s).",
+            "ERROR: repository public-content policy failed with "
+            f"{len(findings)} finding(s).",
             file=sys.stderr,
         )
         return 1
     print(
-        "public_scrub_clean "
+        "public_scrub_policy_passed "
         f"tracked_text_files={text_file_count} "
         f"contextual_review_hits={context_hits} "
         f"site_fact_exceptions={len(load_policy(root, policy_path))}"

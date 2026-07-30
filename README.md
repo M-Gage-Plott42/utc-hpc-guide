@@ -13,6 +13,8 @@ Last updated: July 2026
 
 [Download the latest printable PDF](https://github.com/M-Gage-Plott42/utc-hpc-guide/releases/latest/download/UTC_HPC_Guide.pdf)
 or review the [PDF build and validation instructions](docs/pdf-guide.md).
+The stable download remains `v1.2.0`; `v1.2.1-rc.2` workflow artifacts are
+review candidates and are not for redistribution.
 
 ## How to Use This Repo in 15 Minutes
 
@@ -32,18 +34,22 @@ link, reference-link, and heading-anchor validation, and link-parser
 failure-path tests. It also rejects angle-bracket placeholders in shell
 snippets and runnable templates.
 
-For a release-affecting change, install ShellCheck and the documented PDF
-toolchain, then run the complete local gate:
+For a release-affecting change, install ShellCheck, use the documented Ubuntu
+24.04 x86_64 host, bootstrap the locked PDF toolchain, and run the complete
+local gate:
 
 ```bash
 npm ci
+make setup-pdf-tools
 make release-check
 ```
 
-`make release-check` adds per-file Bash syntax checks, ShellCheck, reproducible
-PDF build with structural and every-page OCR QA, and staged/unstaged whitespace
-checks to the routine gate. Dependency audits and other network-dependent
-checks remain separate.
+`make release-check` adds per-file Bash syntax checks, ShellCheck, a
+byte-identical tagged-PDF build, structural and PDF/UA-2 machine validation,
+rendering and every-page OCR QA, and staged/unstaged whitespace checks to the
+routine gate. Automated PDF/UA validation is not a WCAG 2.1 AA certification;
+manual accessibility review remains required. Dependency audits and other
+network-dependent checks remain separate.
 
 ## Purpose
 
@@ -115,9 +121,11 @@ Do not commit credentials, usernames, internal hostnames, or allocation IDs.
   triggers so checks stay stable on pull requests and merge queues.
 - The Quality Gate is the single Markdown-lint authority and uses the locked
   repository-local toolchain.
-- PDF workflow runs upload the validated PDF with a build-toolchain record for
-  short-lived review traceability. That record describes the observed runner;
-  it is not a toolchain lock, signed provenance, or permanent archive.
+- PDF workflow runs upload the validated review candidate,
+  `build-toolchain.txt`, and `verapdf-report.xml` together for short-lived
+  review traceability. `pdf/toolchain.lock.json` pins the declared PDF
+  toolchain inputs; the run record describes the observed build and is not
+  signed provenance or a permanent archive.
 - External HTTP(S) links are monitored only on a schedule or manual dispatch,
   with retries, timeouts, and an exact reasoned allowlist; network availability
   does not gate ordinary pull requests.

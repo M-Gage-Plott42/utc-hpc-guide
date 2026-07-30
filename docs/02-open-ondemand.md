@@ -14,7 +14,7 @@ Use conservative resource requests first to reduce queue wait time.
 
 Illustrative example (sanitized):
 
-![Sanitized OOD desktop request form](../assets/ood/ood_desktop_request_form_sanitized.png)
+![Open OnDemand desktop request form showing resource and launch controls](../assets/ood/ood_desktop_request_form_sanitized.png)
 
 This screenshot is illustrative only. Labels and default values vary by institution.
 
@@ -35,7 +35,7 @@ squeue -u "$USER" -o "%.18i %.30j %R" | egrep -i "desktop|ondemand|jupyter"
 
 Sanitized session card example:
 
-![Sanitized OOD session card](../assets/ood/ood_session_card_sanitized.png)
+![Running Open OnDemand desktop session card showing allocation and launch controls](../assets/ood/ood_session_card_sanitized.png)
 
 Host and session metadata are redacted. Treat this as a UI reference, not a policy source.
 
@@ -79,4 +79,4 @@ rebuildable.
 
 Sanitized storage shortcuts example:
 
-![Sanitized OOD storage shortcuts](../assets/ood/ood_storage_shortcuts_sanitized.png)
+![Open OnDemand file shortcuts for home, scratch, public, and group storage](../assets/ood/ood_storage_shortcuts_sanitized.png)

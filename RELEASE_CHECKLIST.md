@@ -7,6 +7,7 @@ then run the unified release gate from the repository root:
 
 ```bash
 npm ci
+make setup-pdf-tools
 make release-check
 ```
 
@@ -18,7 +19,12 @@ Keep network-dependent dependency audits separate from this local gate.
 - Confirm examples avoid site-specific partition/account/QOS values.
 - Confirm `docs/sites/` contains only public site-specific notes.
 - Confirm site-specific notes are checked against official public docs or clearly labeled as field notes.
+- For a UTC-targeted release, record the public-document recheck and sanitized
+  live-validation date. Do not promote while required VPN/live checks are
+  pending or public and live facts conflict.
 - Confirm README "Last updated" month/year is current.
+- Confirm candidate artifacts are labeled review-only and the stable release
+  link still points to the intended published version.
 
 ## 2. Sensitive Data Scrub
 
@@ -32,6 +38,13 @@ Fail release if the all-tracked-text scan reports forbidden matches. Review
 the contextual-hit total when content changes. Public site facts must have an
 exact, reasoned exception bound to a Markdown page under `docs/sites/`;
 generalize anything institution-specific that should not be public.
+
+The scrub preflight must accept only stage-zero regular or executable index
+entries. Fail on tracked symbolic links, gitlinks, unmerged entries,
+unsupported modes, or a worktree symbolic link replacing a regular file.
+Regular worktree reads must use the repository's no-follow boundary. A scrub
+pass is still one defense in depth, not proof that the repository is free of
+private data.
 
 ## 3. Screenshots and Assets
 
@@ -64,18 +77,43 @@ generalize anything institution-specific that should not be public.
 ## 6. Printable PDF
 
 - Confirm `pdf/guide_manifest.json` lists the complete ordered guide source.
+- Run `make setup-pdf-tools` and confirm every source checksum, signature, key
+  fingerprint, version, and host QA-tool version required by
+  `pdf/toolchain.lock.json` passes before building.
 - Confirm the `make check-pdf` portion of `make release-check` requires
   byte-identical rebuilds plus passing structure, metadata, font,
-  text-extraction, rendering, and every-page OCR checks.
+  text-extraction, rendering, every-page OCR, and
+  `make check-pdf-accessibility` checks.
+- Confirm `pdfinfo` reports `Tagged: yes` and PDF 2.0.
+- Confirm the catalog has a structure tree, marked-content metadata, `en-US`,
+  and the expected PDF/UA-2 identification.
+- Confirm representative headings, lists, table headers/cells, links, figures,
+  and code are present in the logical structure.
+- Confirm all three Open OnDemand figures carry the expected meaningful
+  alternative descriptions.
+- Confirm the PDF has no encryption, forms, JavaScript, attachments, embedded
+  files, or other active content rejected by the accessibility checker.
+- Run the locked veraPDF `ua2` profile with no allowlist and confirm
+  `dist/verapdf-report.xml` contains exactly one compliant job and no failed or
+  exceptional jobs.
 - Confirm the shell syntax, ShellCheck, and `git diff --check` portions of the
   unified gate pass.
 - Review the generated PDF visually before publishing.
 - Treat OCR as a legibility regression check, not proof that screenshots or
   pages are safely redacted.
-- For a GitHub Actions build, download the PDF and `build-toolchain.txt` from
-  the same workflow artifact and confirm the recorded PDF SHA-256 matches.
-  The artifact is transient, and the record is neither a toolchain lock nor
-  signed build provenance.
+- Complete the [manual accessibility review](docs/pdf-guide.md#manual-accessibility-review)
+  and record the reviewer, tools and versions, date, findings, remediations,
+  and limitations.
+- Do not describe automated tagging or veraPDF success as WCAG 2.1 AA
+  certification, assistive-technology usability, or UTC accessibility
+  approval.
+- For a GitHub Actions build, download the PDF, `build-toolchain.txt`, and
+  `verapdf-report.xml` from the same workflow artifact and confirm the recorded
+  PDF SHA-256 matches. `pdf/toolchain.lock.json` is the declared toolchain lock;
+  the artifact record is run traceability, not signed provenance, and the
+  artifact is transient.
+- For final promotion, review the successful artifact built from the exact
+  final `main` commit and confirm its SHA-256 before tagging.
 - Attach the reviewed PDF to the matching GitHub release under the stable
   asset name `UTC_HPC_Guide.pdf`.
 - After publication, confirm the stable latest-release asset URL resolves:

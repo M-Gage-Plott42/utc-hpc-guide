@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help setup lint scrub test-scrub check-assets test-assets check-links test-links test-external-links check-external-links check-placeholders test-placeholders test-pdf-ocr check-shell-syntax check-shell-lint check-whitespace pdf check-pdf-ocr check-pdf check release-check
+.PHONY: help setup setup-pdf-tools lint scrub test-scrub check-assets test-assets check-links test-links test-external-links check-external-links check-placeholders test-placeholders test-build-pdf test-pdf-ocr test-pdf-accessibility test-pdf-toolchain-bootstrap test-pdf-toolchain-record check-shell-syntax check-shell-lint check-whitespace pdf check-pdf-ocr check-pdf-accessibility check-pdf check release-check
 
 ASSET_CHECK_SCRIPT := scripts/check_assets.py
 MARKDOWNLINT := ./node_modules/.bin/markdownlint
@@ -13,12 +13,17 @@ PLACEHOLDER_CHECK_SCRIPT := scripts/check_shell_placeholders.py
 PDF_BUILD_SCRIPT := scripts/build_pdf.py
 PDF_CHECK_SCRIPT := scripts/check_pdf.py
 PDF_OCR_CHECK_SCRIPT := scripts/check_pdf_ocr.py
+PDF_ACCESSIBILITY_CHECK_SCRIPT := scripts/check_pdf_accessibility.py
+PDF_TOOLCHAIN_BOOTSTRAP := scripts/bootstrap_pdf_toolchain.py
+PDF_TOOLCHAIN_LOCK := pdf/toolchain.lock.json
+PDF_TOOLCHAIN_ROOT ?= .cache/pdf-toolchain
+PDF_TOOLCHAIN_BIN := $(abspath $(PDF_TOOLCHAIN_ROOT))/bin
 PDF_MANIFEST := pdf/guide_manifest.json
-PDF_OUTPUT := dist/UTC_HPC_Guide_v1.2.1-rc.1.pdf
 
 help:
 	@echo "Available targets:"
 	@echo "  make setup       - Install the locked local Node quality toolchain"
+	@echo "  make setup-pdf-tools - Verify and install the locked tagged-PDF toolchain"
 	@echo "  make lint        - Run markdown lint checks"
 	@echo "  make scrub       - Scan every tracked text file against public scrub policy"
 	@echo "  make test-scrub  - Run scrub-checker failure-path tests"
@@ -30,18 +35,26 @@ help:
 	@echo "  make check-external-links - Run the separate network link monitor"
 	@echo "  make check-placeholders - Reject unsafe angle placeholders in shell examples"
 	@echo "  make test-placeholders - Run shell-placeholder failure-path tests"
+	@echo "  make test-build-pdf - Run PDF manifest/build failure-path tests"
 	@echo "  make test-pdf-ocr - Run PDF OCR checker failure-path tests"
+	@echo "  make test-pdf-accessibility - Run PDF accessibility failure-path tests"
+	@echo "  make test-pdf-toolchain-bootstrap - Run locked-bootstrap failure-path tests"
+	@echo "  make test-pdf-toolchain-record - Run PDF build-record failure-path tests"
 	@echo "  make check-shell-syntax - Run bash syntax checks on tracked sbatch examples"
 	@echo "  make check-shell-lint - Run ShellCheck on tracked sbatch examples"
 	@echo "  make check-whitespace - Check staged/unstaged lines for whitespace errors"
 	@echo "  make pdf         - Build the printable release-candidate PDF"
 	@echo "  make check-pdf-ocr - OCR every page of the existing candidate PDF"
-	@echo "  make check-pdf   - Rebuild twice, compare bytes, and run structural/OCR QA"
+	@echo "  make check-pdf-accessibility - Run structural and veraPDF PDF/UA-2 QA"
+	@echo "  make check-pdf   - Rebuild twice and run structural/PDF-UA/OCR QA"
 	@echo "  make check       - Run lint + scrub + asset + link + placeholder checks"
 	@echo "  make release-check - Run the complete local release gate"
 
 setup:
 	npm ci
+
+setup-pdf-tools:
+	@python3 $(PDF_TOOLCHAIN_BOOTSTRAP) --lock $(PDF_TOOLCHAIN_LOCK) --root $(PDF_TOOLCHAIN_ROOT)
 
 lint:
 	@test -x "$(MARKDOWNLINT)" || { echo "Local markdownlint not found; run 'npm ci' first."; exit 1; }
@@ -77,8 +90,20 @@ check-placeholders:
 test-placeholders:
 	@python3 -m unittest tests.test_check_shell_placeholders
 
+test-build-pdf:
+	@python3 -m unittest tests.test_build_pdf
+
 test-pdf-ocr:
 	@python3 -m unittest tests.test_check_pdf_ocr
+
+test-pdf-accessibility:
+	@python3 -m unittest tests.test_check_pdf_accessibility
+
+test-pdf-toolchain-bootstrap:
+	@python3 -m unittest tests.test_bootstrap_pdf_toolchain
+
+test-pdf-toolchain-record:
+	@python3 -m unittest tests.test_write_pdf_toolchain_record
 
 check-shell-syntax:
 	@mapfile -d '' shell_files < <(git ls-files -z -- 'examples/*.sbatch'); \
@@ -110,17 +135,21 @@ check-whitespace:
 	@git diff --check
 	@git diff --cached --check
 
-pdf:
-	@python3 $(PDF_BUILD_SCRIPT) --manifest $(PDF_MANIFEST) --output $(PDF_OUTPUT)
+pdf: setup-pdf-tools
+	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_BUILD_SCRIPT) --manifest $(PDF_MANIFEST)
 
-check-pdf-ocr:
-	@python3 $(PDF_OCR_CHECK_SCRIPT) --manifest $(PDF_MANIFEST) --pdf $(PDF_OUTPUT)
+check-pdf-ocr: setup-pdf-tools
+	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_OCR_CHECK_SCRIPT) --manifest $(PDF_MANIFEST)
 
-check-pdf:
-	@python3 $(PDF_BUILD_SCRIPT) --manifest $(PDF_MANIFEST) --output $(PDF_OUTPUT) --verify-reproducible
-	@python3 $(PDF_CHECK_SCRIPT) --manifest $(PDF_MANIFEST) --pdf $(PDF_OUTPUT)
-	@python3 $(PDF_OCR_CHECK_SCRIPT) --manifest $(PDF_MANIFEST) --pdf $(PDF_OUTPUT)
+check-pdf-accessibility: setup-pdf-tools
+	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_ACCESSIBILITY_CHECK_SCRIPT) --manifest $(PDF_MANIFEST) --verapdf "$(PDF_TOOLCHAIN_BIN)/verapdf" --report dist/verapdf-report.xml
 
-check: lint scrub test-scrub check-assets test-assets check-links test-links test-external-links check-placeholders test-placeholders test-pdf-ocr
+check-pdf: setup-pdf-tools
+	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_BUILD_SCRIPT) --manifest $(PDF_MANIFEST) --verify-reproducible
+	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_CHECK_SCRIPT) --manifest $(PDF_MANIFEST)
+	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_OCR_CHECK_SCRIPT) --manifest $(PDF_MANIFEST)
+	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_ACCESSIBILITY_CHECK_SCRIPT) --manifest $(PDF_MANIFEST) --verapdf "$(PDF_TOOLCHAIN_BIN)/verapdf" --report dist/verapdf-report.xml
+
+check: lint scrub test-scrub check-assets test-assets check-links test-links test-external-links check-placeholders test-placeholders test-build-pdf test-pdf-ocr test-pdf-accessibility test-pdf-toolchain-bootstrap test-pdf-toolchain-record
 
 release-check: check check-shell-syntax check-shell-lint check-pdf check-whitespace

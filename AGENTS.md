@@ -52,16 +52,28 @@ npm ci
 make check
 ```
 
-For release-affecting work, install ShellCheck and the PDF toolchain, then run:
+For release-affecting work, install ShellCheck and the documented host
+prerequisites, bootstrap the locked PDF toolchain, then run:
 
 ```bash
 npm ci
+make setup-pdf-tools
 make release-check
 ```
 
-The release gate adds Bash syntax, ShellCheck, reproducible structural and
-every-page OCR PDF QA, and whitespace validation. Keep network-dependent
-dependency audits separate.
+The release gate adds Bash syntax, ShellCheck, a byte-identical tagged-PDF
+build, structural and PDF/UA-2 machine validation, every-page rendering and OCR
+QA, and whitespace validation. Follow
+[`docs/pdf-guide.md`](docs/pdf-guide.md) for the locked toolchain and manual
+accessibility review. Automated tagging and veraPDF success do not establish
+WCAG 2.1 AA, assistive-technology usability, or UTC accessibility approval.
+Keep network-dependent dependency audits separate.
+
+The repository scrub accepts only ordinary stage-zero regular or executable
+Git index entries. Tracked symbolic links, gitlinks, unmerged entries,
+unsupported modes, and a worktree symbolic link replacing a regular file are
+policy failures. Worktree content must be opened through the repository's
+no-follow regular-file boundary.
 
 Manual-review scrub hits such as `login`, `partition`, `account`, or `allocation` are expected in generic placeholders and may be expected in `docs/sites/`, but each hit must be reviewed before release. Then manually review `assets/` for redaction quality.
 

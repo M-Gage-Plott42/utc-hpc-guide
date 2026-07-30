@@ -10,6 +10,11 @@ Official public references:
 - [CUDA and NVIDIA](https://utc.teamdynamix.com/TDClient/2717/Portal/KB/ArticleDet?ID=163891)
 - [Jobstats](https://utc.teamdynamix.com/TDClient/2717/Portal/KB/ArticleDet?ID=171575)
 
+Validation status, July 2026: the public UTC pages above were rechecked for
+this update. Live scheduler commands, authenticated login, and browser routing
+have not yet been revalidated; those checks remain pending a VPN-enabled
+session.
+
 ## Access
 
 SSH login:
@@ -21,13 +26,19 @@ ssh "${UTC_USER}@login.mocshpc.utc.edu"
 
 Open OnDemand:
 
-- Public docs list `ondemand.mocshpc.utc.edu`.
-- The dashboard URL is `https://ondemand.mocshpc.utc.edu/pun/sys/dashboard/`.
-- VPN may be required when connecting from off campus.
+- UTC's public login documentation lists the
+  [Open OnDemand entry URL](https://ondemand.mocshpc.utc.edu/).
+- A March 2026 field note recorded `/pun/sys/dashboard/` as the authenticated
+  dashboard path under that public host. Treat that path as historical until
+  its current redirect behavior is confirmed in a VPN-enabled browser.
+- UTC's public login documentation directs off-campus users to connect to the
+  UTC VPN before using SSH or Open OnDemand.
 
-## March 2026 Refresh Field Note
+## Historical March 2026 Refresh Field Note
 
-Field note from the March 2026 refresh and debugging session:
+The following observations came from a March 2026 refresh and debugging
+session. They are historical field notes, not current public policy, and live
+revalidation remains pending:
 
 - The login address and Open OnDemand URL changed.
 - Scheduler behavior changed.
@@ -54,8 +65,8 @@ families. Recheck that page and live `sinfo` output before submitting work.
 | Partition | Public UTC notes |
 | --- | --- |
 | `epyc-gpu` | Nodes `epyc[00-15]`; max 5 days; max 8 CPUs per node; max 2 GPUs; min 1 GPU; a job without a GPU request will not start. |
-| `epyc-cpu` | Nodes `epyc[00-28]`; CPU-only; max GPUs 0; a job requesting a GPU will not start. |
-| `epyc-full` | Nodes `epyc[00-15]`; max 5 days; max 128 CPUs per node; max 2 GPUs; requires explicit account access. |
+| `epyc-cpu` | Nodes `epyc[00-28]`; CPU-only; max 5 days; max 120 CPUs per node; max GPUs 0; a job requesting a GPU will not start. |
+| `epyc-full` | Nodes `epyc[00-15]`; max 5 days; max 128 CPUs per node; max 2 GPUs; min 1 GPU; requires explicit account access; a job without a GPU request will not start. |
 
 For an ordinary single-process TensorFlow or PyTorch probe, `epyc-gpu`, one
 GPU, and one task are a useful starting shape. Request host memory explicitly,

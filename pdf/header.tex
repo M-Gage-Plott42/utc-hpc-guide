@@ -1,20 +1,11 @@
 \usepackage{fancyhdr}
-\usepackage{microtype}
-\usepackage{xurl}
-\usepackage{listings}
-\usepackage{xcolor}
 \usepackage{hyperref}
 
-% The builder replaces these manifest-bound tokens before invoking XeLaTeX.
-% xdvipdfmx requires the first-page trailer special for byte-identical output.
-\special{pdf:trailerid [
-  <@PDF_TRAILER_ID@>
-  <@PDF_TRAILER_ID@>
-]}
+% Pandoc emits DocumentMetadata before the document class and owns the
+% engine-neutral trailer identifier. Keep this header to tagging-compatible
+% presentation settings.
 
 \definecolor{GuideBlue}{HTML}{174A7E}
-\definecolor{GuideLightBlue}{HTML}{EAF2F8}
-\definecolor{GuideGray}{HTML}{4B5563}
 
 \hypersetup{
   colorlinks=true,
@@ -24,18 +15,23 @@
   pdfborder={0 0 0}
 }
 
-\lstset{
-  basicstyle=\ttfamily\footnotesize,
-  breaklines=true,
-  breakatwhitespace=false,
-  columns=fullflexible,
-  keepspaces=true,
-  frame=single,
-  framerule=0.3pt,
-  rulecolor=\color{GuideGray},
-  backgroundcolor=\color{GuideLightBlue},
-  showstringspaces=false,
-  upquote=true
+\tagpdfsetup{
+  attach-css=false,
+  table/header-rows={1}
+}
+
+\NewDocumentEnvironment{GuideCode}{}{%
+  \par
+  \tagstructbegin{tag=Code}%
+  \begingroup
+  \ttfamily\small\raggedright
+  \setlength{\parindent}{0pt}%
+  \setlength{\parskip}{0pt}%
+}{%
+  \par
+  \endgroup
+  \tagstructend
+  \par\addvspace{0.5\baselineskip}
 }
 
 \setlength{\emergencystretch}{3em}

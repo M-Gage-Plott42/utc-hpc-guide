@@ -7,8 +7,28 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Added a checksum- and signature-verifying PDF toolchain bootstrap locked to
+  Pandoc 3.10.1, frozen TeX Live 2025 with LuaLaTeX, Eclipse Temurin
+  21.0.11+10, and veraPDF 1.30.2 with the `ua2` profile.
+- Added source-generated PDF/UA-2 structure checks, a preserved
+  machine-readable veraPDF report, and a manual accessibility review checklist
+  for the `v1.2.1-rc.2` review candidate.
+
 ### Changed
 
+- Migrated the printable-guide build contract from the distribution
+  Pandoc/XeLaTeX path to manifest-derived output paths and the locked LuaLaTeX
+  tagged-PDF path while retaining byte-identical rebuild, structural, render,
+  text-extraction, font, and every-page OCR gates.
+- Made the public-content scrub fail closed on tracked symbolic links,
+  gitlinks, unmerged or unsupported index entries, and worktree replacement
+  links while scanning both indexed and differing worktree content through a
+  no-follow boundary.
+- Rechecked the selected UTC partition facts against current public
+  documentation and marked live cluster and browser-route validation as
+  pending.
 - Corrected Open OnDemand guidance to describe `srun --jobid` as a new,
   resource-sharing job step rather than an attachment to an existing app.
 - Qualified CPU-count diagnostics and added comparisons with Slurm allocation

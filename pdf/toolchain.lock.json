@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "platform": "linux-x86_64",
+  "host": {
+    "os_id": "ubuntu",
+    "version_id": "24.04"
+  },
+  "pandoc": {
+    "version": "3.10.1",
+    "url": "https://github.com/jgm/pandoc/releases/download/3.10.1/pandoc-3.10.1-linux-amd64.tar.gz",
+    "sha256": "72948bf5784f560d5ad1876709daca27e0667f262da727bb33f77b58e52df2f5",
+    "version_line": "pandoc 3.10.1"
+  },
+  "java": {
+    "distribution": "Eclipse Temurin",
+    "version": "21.0.11+10",
+    "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.11%2B10/OpenJDK21U-jre_x64_linux_hotspot_21.0.11_10.tar.gz",
+    "sha256": "e5038aae3ca9ff670bc696496b0728dbd23d280026bad30291cb919221ecfdcb",
+    "version_line": "openjdk version \"21.0.11\" 2026-04-21 LTS",
+    "runtime_line": "OpenJDK Runtime Environment Temurin-21.0.11+10 (build 21.0.11+10-LTS)"
+  },
+  "texlive": {
+    "release": "2025",
+    "repository_revision": "78234",
+    "repository_url": "http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/tlnet-final",
+    "repository_database": {
+      "url": "http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/tlnet-final/tlpkg/texlive.tlpdb",
+      "sha256": "74b5744d2ff1386138d5361d3af49179f921dbbc953e449324d99448af092f41"
+    },
+    "installer": {
+      "url": "http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/tlnet-final/install-tl-unx.tar.gz",
+      "sha256": "311df9f1477fd90c520159d1feddc2d6270f010d8349d1f6bdb9461a93b48a5c",
+      "sha512": "a307d7d11bcbd1f054ad0b0d476f7f12bc1a40d07445020edef8713b44453831d18a2f1722c3d2b0ea2e4fe6c06183a79d1c4049495113f412a9f5a570a8614d",
+      "checksum_url": "http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/tlnet-final/install-tl-unx.tar.gz.sha512",
+      "checksum_sha256": "348534f96ed5597c0f8d57e34e41e5cf96860480aa63de477da71e70ec066398",
+      "signature_url": "http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/tlnet-final/install-tl-unx.tar.gz.sha512.asc",
+      "signature_sha256": "1eb1082b566781fbd2d4808b8805125f2fb7a4c0413aaf9bfd7243ec9ddcf50e"
+    },
+    "signing_key": {
+      "url": "https://tug.org/texlive/files/texlive.asc",
+      "sha256": "f9fd0e1a8fb8f06b260a256c88a86244cb1913348d962e63e0b238371be71c64",
+      "primary_fingerprint": "C78B82D8C79512F79CC0D7C80D5E5D9106BAB6BC",
+      "signing_fingerprint": "D8F2F86057A857E42A88106A4CE1877E19438C70"
+    },
+    "scheme": "scheme-small",
+    "packages": {
+      "lualatex-math": {
+        "revision": "77677",
+        "version": "1.12",
+        "container_sha512": "b1c5d7fc8f170568613df00745ac7ddeb9db1b3cb70320e479d9e0579c68a30fb44d02c70740f446fd62045b42d303f72e67982e7537c62d1c678b6b8c4915e0"
+      },
+      "selnolig": {
+        "revision": "77677",
+        "version": "0.302",
+        "container_sha512": "96033d26c3dba814a42216c6e0a1792cd71c2bdd54bd8fd3dd3ce6d86779f1f9c3d4def94f3371d3f884fc520d604222205e6708f047f7deb803d3c7d9a494ce"
+      },
+      "xurl": {
+        "revision": "77677",
+        "version": "0.10",
+        "container_sha512": "01ba77148eb15732418912cbae2d2e614d6f6dc75af16f90343decc4fe5dd0fa388481e7ae20215f9685b097db71293b04a362cc28fa0f5aa784d8e87752b0b0"
+      },
+      "dejavu": {
+        "revision": "77677",
+        "version": "2.34",
+        "container_sha512": "40ec3fc1fd156a5f8bfa9e9f86aba655f113c2db62241d740a7efce9576ede3b6041bc78e5c4b160f5d447d1c83c207b2914f53e6b0d06619ee289778abfe8ad"
+      },
+      "tagpdf": {
+        "revision": "77539",
+        "version": "0.99y",
+        "container_sha512": "5b7e9fc603809e16aa7158a5297dbdfeb216370874d5f74558eebbfca6aa8a38dc9b082b1e9aaf36669268688ccfd3e2a2c08f53c0d75fbf3057f053429ed2bb"
+      },
+      "latex-lab": {
+        "revision": "76739",
+        "version": "2025-11-01a",
+        "container_sha512": "b16fc432bc8c7c15cb3ca21b73bea3592a5fa4a099e124264412ca9ca6a2b31d9d2781d9c02b21b3d0386c2429d764680942e26e6422d1819a948a71a3939712"
+      }
+    },
+    "lualatex_version_line": "This is LuaHBTeX, Version 1.22.0 (TeX Live 2025)",
+    "latex_kernel": "2025-11-01"
+  },
+  "verapdf": {
+    "version": "1.30.2",
+    "profile": "ua2",
+    "url": "https://software.verapdf.org/rel/1.30/verapdf-greenfield-1.30.2-installer.zip",
+    "sha256": "6cc6341cb1af644044054b81f00a6590a7918abb18f762243de115258bcad838",
+    "signature_url": "https://software.verapdf.org/rel/1.30/verapdf-greenfield-1.30.2-installer.zip.asc",
+    "signature_sha256": "f33175e402f28c42e80866aa62aa337c5d7d7a16a4ea1ae4ff50b0f13343ff26",
+    "signing_key": {
+      "url": "https://software.verapdf.org/keys/KEY",
+      "sha256": "30f1dc7fb7c9f3d9796dd9f9dd5d344ebbcf45bef9632d9c47c39cdf254249f2",
+      "primary_fingerprint": "13DD102B4DD69354D12DE5A83184863278B17FE7",
+      "signing_fingerprint": "13DD102B4DD69354D12DE5A83184863278B17FE7"
+    },
+    "version_line": "veraPDF 1.30.2"
+  },
+  "ubuntu_24_04_qa_packages": {
+    "fontconfig": "2.15.0-1.1ubuntu2",
+    "poppler-utils": "24.02.0-1ubuntu9.9",
+    "qpdf": "11.9.0-1.1ubuntu0.1",
+    "tesseract-ocr": "5.3.4-1build5",
+    "tesseract-ocr-eng": "1:4.1.0-2"
+  },
+  "qa_tools": {
+    "qpdf": {
+      "arguments": [
+        "--version"
+      ],
+      "version_line": "qpdf version 11.9.0"
+    },
+    "pdfinfo": {
+      "arguments": [
+        "-v"
+      ],
+      "version_line": "pdfinfo version 24.02.0"
+    },
+    "pdffonts": {
+      "arguments": [
+        "-v"
+      ],
+      "version_line": "pdffonts version 24.02.0"
+    },
+    "pdftotext": {
+      "arguments": [
+        "-v"
+      ],
+      "version_line": "pdftotext version 24.02.0"
+    },
+    "pdftoppm": {
+      "arguments": [
+        "-v"
+      ],
+      "version_line": "pdftoppm version 24.02.0"
+    },
+    "tesseract": {
+      "arguments": [
+        "--version"
+      ],
+      "version_line": "tesseract 5.3.4"
+    },
+    "fc-match": {
+      "arguments": [
+        "--version"
+      ],
+      "version_line": "fontconfig version 2.15.0"
+    }
+  }
+}

@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 import re
 import shutil
 import subprocess
@@ -13,6 +12,11 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import Any
+
+try:
+    from .pdf_manifest import load_manifest, output_path
+except ImportError:
+    from pdf_manifest import load_manifest, output_path
 
 
 FONT_FLAGS = re.compile(
@@ -140,23 +144,34 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=Path("pdf/guide_manifest.json"),
     )
-    parser.add_argument("--pdf", type=Path, required=True)
+    parser.add_argument("--pdf", type=Path)
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     try:
-        manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
-        if manifest.get("schema_version") != 1:
-            raise ValueError("PDF manifest schema_version must be 1")
-        validate_pdf(args.pdf, manifest)
+        root = Path(
+            subprocess.run(
+                ["git", "rev-parse", "--show-toplevel"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+        )
+        manifest_path = args.manifest
+        if not manifest_path.is_absolute():
+            manifest_path = root / manifest_path
+        manifest = load_manifest(manifest_path)
+        pdf = args.pdf or output_path(root, manifest)
+        if not pdf.is_absolute():
+            pdf = root / pdf
+        validate_pdf(pdf, manifest)
         return 0
     except (
         OSError,
         ValueError,
         RuntimeError,
-        json.JSONDecodeError,
         subprocess.CalledProcessError,
     ) as exc:
         print(f"ERROR: PDF QA failed: {exc}", file=sys.stderr)

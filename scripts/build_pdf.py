@@ -5,56 +5,22 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 import os
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from typing import Any
+
+try:
+    from .pdf_manifest import load_manifest, output_path
+except ImportError:
+    from pdf_manifest import load_manifest, output_path
 
 
 TOP_HEADING = re.compile(r"^# (?:[0-9]{2} )?(.+)$", re.MULTILINE)
-
-
-def load_manifest(root: Path, path: Path) -> dict[str, Any]:
-    manifest = json.loads(path.read_text(encoding="utf-8"))
-    if manifest.get("schema_version") != 1:
-        raise ValueError("PDF manifest schema_version must be 1")
-    for key in (
-        "title",
-        "subtitle",
-        "author",
-        "date",
-        "release_target",
-        "document_version",
-        "source_date_epoch",
-        "pdf_trailer_id",
-        "output_filename",
-        "header_source",
-        "core_sources",
-        "site_appendices",
-        "examples",
-        "required_pdf_text",
-    ):
-        if key not in manifest:
-            raise ValueError(f"PDF manifest is missing {key}")
-
-    if not re.fullmatch(r"[0-9a-f]{32}", manifest["pdf_trailer_id"]):
-        raise ValueError("pdf_trailer_id must be exactly 32 lowercase hex characters")
-
-    source_paths = [manifest["header_source"], *manifest["core_sources"]]
-    source_paths.extend(item["path"] for item in manifest["site_appendices"])
-    source_paths.extend(manifest["examples"])
-    for raw_path in source_paths:
-        normalized = PurePosixPath(raw_path)
-        if normalized.is_absolute() or ".." in normalized.parts:
-            raise ValueError(f"PDF source must stay inside the repository: {raw_path}")
-        if not (root / normalized).is_file():
-            raise ValueError(f"PDF source does not exist: {raw_path}")
-    return manifest
 
 
 def normalize_chapter(text: str, title: str | None = None) -> str:
@@ -80,10 +46,16 @@ def rewrite_example_links(text: str, examples: list[str]) -> str:
 
 def assemble_markdown(root: Path, manifest: dict[str, Any]) -> str:
     examples = list(manifest["examples"])
+    if manifest["release_status"] == "candidate":
+        release_line = f"**Release candidate for v{manifest['release_target']}**"
+        identifier_label = "Candidate identifier"
+    else:
+        release_line = f"**Version {manifest['document_version']}**"
+        identifier_label = "Document identifier"
     core_sections = [
         (
-            f"**Release candidate for v{manifest['release_target']}**  \n"
-            f"Candidate identifier: `v{manifest['document_version']}`  \n"
+            f"{release_line}  \n"
+            f"{identifier_label}: `v{manifest['document_version']}`  \n"
             "Canonical source: tracked repository chapters, site appendix, "
             "examples, and `pdf/guide_manifest.json`  \n"
             "Repository: <https://github.com/M-Gage-Plott42/utc-hpc-guide>\n\n"
@@ -111,7 +83,6 @@ def assemble_markdown(root: Path, manifest: dict[str, Any]) -> str:
         "These tracked templates intentionally use `REPLACE_WITH_*` markers. "
         "Replace every marker with site-approved values before submission."
     )
-    example_sections.append("\\lstset{basicstyle=\\ttfamily\\scriptsize}")
     for index, path in enumerate(examples):
         if index:
             example_sections.append("\\newpage")
@@ -139,6 +110,63 @@ def command_path(name: str) -> str:
     return resolved
 
 
+def locked_font_variables() -> list[str]:
+    kpsewhich = command_path("kpsewhich")
+    required_files = (
+        "DejaVuSerif.ttf",
+        "DejaVuSerif-Bold.ttf",
+        "DejaVuSerif-Italic.ttf",
+        "DejaVuSerif-BoldItalic.ttf",
+        "DejaVuSans.ttf",
+        "DejaVuSans-Bold.ttf",
+        "DejaVuSans-Oblique.ttf",
+        "DejaVuSans-BoldOblique.ttf",
+        "DejaVuSansMono.ttf",
+        "DejaVuSansMono-Bold.ttf",
+        "DejaVuSansMono-Oblique.ttf",
+        "DejaVuSansMono-BoldOblique.ttf",
+    )
+    resolved: list[Path] = []
+    for filename in required_files:
+        result = subprocess.run(
+            [kpsewhich, filename],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        path = Path(result.stdout.strip())
+        if not path.is_file():
+            raise RuntimeError(f"locked PDF font is unavailable: {filename}")
+        resolved.append(path)
+    font_directories = {path.parent.resolve() for path in resolved}
+    if len(font_directories) != 1:
+        raise RuntimeError("locked PDF fonts did not resolve from one directory")
+    font_directory = font_directories.pop().as_posix() + "/"
+    variables: list[str] = []
+
+    def add_family(
+        variable: str,
+        family: str,
+        italic_suffix: str,
+        bold_italic_suffix: str,
+    ) -> None:
+        for value in (
+            f"{variable}={family}",
+            f"{variable}options=Path={font_directory}",
+            f"{variable}options=Extension=.ttf",
+            f"{variable}options=UprightFont=*",
+            f"{variable}options=BoldFont=*-Bold",
+            f"{variable}options=ItalicFont=*-{italic_suffix}",
+            f"{variable}options=BoldItalicFont=*-{bold_italic_suffix}",
+        ):
+            variables.extend(("--variable", value))
+
+    add_family("mainfont", "DejaVuSerif", "Italic", "BoldItalic")
+    add_family("sansfont", "DejaVuSans", "Oblique", "BoldOblique")
+    add_family("monofont", "DejaVuSansMono", "Oblique", "BoldOblique")
+    return variables
+
+
 def build_once(
     root: Path,
     manifest: dict[str, Any],
@@ -146,15 +174,12 @@ def build_once(
     work_dir: Path,
 ) -> None:
     pandoc = command_path("pandoc")
-    xelatex = command_path("xelatex")
+    lualatex = command_path("lualatex")
     assembled = work_dir / "UTC_HPC_Guide_assembled.md"
     assembled.write_text(assemble_markdown(root, manifest), encoding="utf-8")
     header = work_dir / "header.tex"
     header_text = (root / manifest["header_source"]).read_text(encoding="utf-8")
     header_text = header_text.replace(
-        "@PDF_TRAILER_ID@",
-        manifest["pdf_trailer_id"],
-    ).replace(
         "@DOCUMENT_VERSION@",
         manifest["document_version"],
     )
@@ -169,12 +194,14 @@ def build_once(
     command = [
         pandoc,
         str(assembled),
-        "--from=markdown+smart",
+        "--from=markdown-implicit_figures+smart",
         "--standalone",
         "--toc",
         "--toc-depth=2",
-        "--listings",
-        f"--pdf-engine={xelatex}",
+        "--syntax-highlighting=none",
+        f"--pdf-engine={lualatex}",
+        f"--template={root / manifest['template_source']}",
+        f"--lua-filter={root / manifest['code_filter_source']}",
         f"--resource-path={root}:{root / 'docs'}",
         f"--include-in-header={header}",
         "--metadata",
@@ -186,21 +213,25 @@ def build_once(
         "--metadata",
         f"date={manifest['date']}",
         "--metadata",
-        "lang=en-US",
+        f"lang={manifest['language']}",
         "--metadata",
         "subject=Practical SLURM, Open OnDemand, SSH, Python, and GPU onboarding",
         "--variable",
         "papersize=letter",
         "--variable",
+        f"pdfstandard={manifest['pdf_standard']}",
+        "--variable",
+        (
+            "pdf-trailer-id="
+            f"<{manifest['pdf_trailer_id']}> <{manifest['pdf_trailer_id']}>"
+        ),
+        "--variable",
+        f"pdf-random-seed={manifest['source_date_epoch']}",
+        "--variable",
         "geometry:margin=0.72in",
         "--variable",
         "fontsize=10pt",
-        "--variable",
-        "mainfont=DejaVu Serif",
-        "--variable",
-        "sansfont=DejaVu Sans",
-        "--variable",
-        "monofont=DejaVu Sans Mono",
+        *locked_font_variables(),
         "--output",
         str(output),
     ]
@@ -222,8 +253,9 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=Path("pdf/guide_manifest.json"),
     )
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--output", type=Path)
     parser.add_argument("--verify-reproducible", action="store_true")
+    parser.add_argument("--print-output-path", action="store_true")
     return parser.parse_args()
 
 
@@ -240,16 +272,23 @@ def main() -> int:
     manifest_path = args.manifest
     if not manifest_path.is_absolute():
         manifest_path = root / manifest_path
-    output = args.output
-    if not output.is_absolute():
-        output = root / output
-
     try:
-        manifest = load_manifest(root, manifest_path)
-        if output.name != manifest["output_filename"]:
+        manifest = load_manifest(
+            manifest_path,
+            root=root,
+            validate_sources=True,
+        )
+        expected_output = output_path(root, manifest)
+        if args.print_output_path:
+            print(expected_output.relative_to(root).as_posix())
+            return 0
+        output = args.output or expected_output
+        if not output.is_absolute():
+            output = root / output
+        if output.resolve() != expected_output.resolve():
             raise ValueError(
-                "output filename must match manifest output_filename: "
-                f"{manifest['output_filename']}"
+                "output path must match manifest-derived output path: "
+                f"{expected_output.relative_to(root)}"
             )
         with tempfile.TemporaryDirectory(prefix="utc-hpc-pdf-") as first_temp:
             first = Path(first_temp) / output.name
@@ -274,7 +313,6 @@ def main() -> int:
         OSError,
         ValueError,
         RuntimeError,
-        json.JSONDecodeError,
         subprocess.CalledProcessError,
     ) as exc:
         print(f"ERROR: PDF build failed: {exc}", file=sys.stderr)

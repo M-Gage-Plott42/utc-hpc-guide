@@ -29,6 +29,35 @@ class ShellPlaceholderTests(unittest.TestCase):
         findings = scan_markdown("```text\n<username>@<host>\n```\n")
         self.assertEqual(findings, [])
 
+    def test_rejects_shell_session_fence(self) -> None:
+        findings = scan_markdown(
+            "```shell-session\n"
+            "$ ssh <username>@<login-host>\n"
+            "```\n"
+        )
+        self.assertEqual([item.value for item in findings], ["<username>", "<login-host>"])
+
+    def test_rejects_pandoc_attribute_shell_fences(self) -> None:
+        findings = scan_markdown(
+            "```{.bash .numberLines}\n"
+            "squeue -u <username>\n"
+            "```\n\n"
+            "~~~{.shell}\n"
+            "cd <project-path>\n"
+            "~~~\n"
+        )
+        self.assertEqual(
+            [item.value for item in findings],
+            ["<username>", "<project-path>"],
+        )
+
+    def test_conservatively_ignores_indented_code_blocks(self) -> None:
+        findings = scan_markdown(
+            "Indented examples remain manual-review scope:\n\n"
+            "    ssh <username>@<login-host>\n"
+        )
+        self.assertEqual(findings, [])
+
     def test_rejects_sbatch_directive_placeholder(self) -> None:
         findings = scan_sbatch("#SBATCH --partition=<gpu-partition>\n")
         self.assertEqual(len(findings), 1)

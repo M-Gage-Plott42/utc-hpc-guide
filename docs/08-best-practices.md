@@ -21,9 +21,13 @@ Operational habits that make HPC workflows reproducible and reviewer-friendly.
 ## 3. Storage and Placement Hygiene
 
 - Keep Home focused on source code, configs, and lightweight metadata
-- Keep large datasets, environments, checkpoints, and logs in Scratch/project space
+- Put durable environments in site-approved persistent project/software storage
+- Use Scratch for environments only when site policy permits it and they are rebuildable
+- Keep large active datasets, checkpoints, and logs in Scratch/project space
+- Keep environment manifests or lock files in version control or durable storage
 - Stage data where jobs run to reduce unnecessary filesystem traffic
 - Archive or prune stale outputs to stay within quota and retention policies
+- Verify backup policy; persistent storage is not automatically backed up
 
 ## 4. Security and Privacy Hygiene
 
@@ -42,7 +46,7 @@ rg -n "@|/home/|login|partition|account|allocation|project|token|secret" .
 
 1. Connect to cluster network (VPN if needed).
 2. SSH to login host.
-3. Create environment in scratch/project space.
+3. Create an environment in site-approved storage and preserve its rebuild metadata.
 4. Validate with a small interactive or short batch job.
 5. Submit production job with sbatch.
 6. Monitor with `squeue`/`sacct`, then archive outputs.

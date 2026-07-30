@@ -45,7 +45,11 @@ scontrol show config | egrep -i "DefMem|MaxMem"
 scontrol show partition epyc-gpu
 ```
 
-## Important Partitions for TensorFlow GPU Jobs
+## Selected Partitions for TensorFlow GPU Onboarding
+
+This table is a selected EPYC onboarding subset, not a complete partition
+inventory. UTC's public partition page lists additional EPYC and non-EPYC
+families. Recheck that page and live `sinfo` output before submitting work.
 
 | Partition | Public UTC notes |
 | --- | --- |
@@ -53,14 +57,22 @@ scontrol show partition epyc-gpu
 | `epyc-cpu` | Nodes `epyc[00-28]`; CPU-only; max GPUs 0; a job requesting a GPU will not start. |
 | `epyc-full` | Nodes `epyc[00-15]`; max 5 days; max 128 CPUs per node; max 2 GPUs; requires explicit account access. |
 
-For ordinary single-process TensorFlow or PyTorch jobs, start with `epyc-gpu`, one GPU, one task, and enough explicit host memory for the workload.
+For an ordinary single-process TensorFlow or PyTorch probe, `epyc-gpu`, one
+GPU, and one task are a useful starting shape. Request host memory explicitly,
+then tune it from a representative run and Jobstats rather than treating the
+example below as a minimum.
 
 ## Hardware Notes
 
 - `epyc[00-15]` nodes have 512 GB RAM and two NVIDIA A100 80 GB GPUs per node.
 - `epyc[16-28]` are CPU-only EPYC nodes with 512 GB RAM.
 
-## Recommended Interactive GPU Probe
+## Interactive GPU Probe
+
+The following 64 GB request is a March 2026 field-note diagnostic starting
+point, not a documented TensorFlow minimum or a recommendation for every
+workload. Run a representative probe, review Jobstats, and adjust the next
+request from measured usage.
 
 ```bash
 srun \
@@ -89,7 +101,9 @@ Do not use `--ntasks=4` for a single Python/TensorFlow script just to give it mo
 
 ## TensorFlow Batch Pattern
 
-Use the generic [TensorFlow GPU probe example](../../examples/slurm_tensorflow_gpu_probe.sbatch) after replacing placeholders. For the UTC TensorFlow debug pattern that succeeded, use this resource shape:
+Use the generic [TensorFlow GPU probe example](../../examples/slurm_tensorflow_gpu_probe.sbatch)
+after replacing placeholders. The UTC debug pattern reported in the March
+2026 field note used this resource shape:
 
 ```bash
 #SBATCH --partition=epyc-gpu
@@ -101,6 +115,10 @@ Use the generic [TensorFlow GPU probe example](../../examples/slurm_tensorflow_g
 #SBATCH --mem=64G
 #SBATCH --time=0-01:00:00
 ```
+
+Treat 64 GB as a diagnostic starting point from that observation, not a
+documented minimum. After a representative run, use Jobstats to tune memory
+down or up.
 
 Then make the job print allocation and framework diagnostics before running the workload:
 
@@ -126,7 +144,12 @@ PY
 /usr/bin/time -v python "$SCRIPT_PATH"
 ```
 
-UTC's CUDA page currently lists CUDA 11.8 and 12.2 availability on `epyc`, and shows `module load cuda/12.2` for NVCC. For an older TensorFlow environment that logs a missing `libcudart.so.11.0`, trying `cuda/11.8` is reasonable before rebuilding. In the field result that motivated this note, the environment did not need to be rebuilt once the job requested `--mem=64G`.
+UTC's CUDA page currently lists CUDA 11.8 and 12.2 availability on `epyc`, and
+shows `module load cuda/12.2` for NVCC. For an older TensorFlow environment
+that logs a missing `libcudart.so.11.0`, trying `cuda/11.8` is reasonable
+before rebuilding. In the single field result that motivated this note, the
+environment did not need to be rebuilt once the job requested `--mem=64G`;
+that observation does not establish a general memory minimum.
 
 ## Jobstats
 

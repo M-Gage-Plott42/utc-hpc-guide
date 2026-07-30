@@ -82,8 +82,8 @@ def assemble_markdown(root: Path, manifest: dict[str, Any]) -> str:
     examples = list(manifest["examples"])
     core_sections = [
         (
-            f"**Version {manifest['document_version']}**  \n"
-            f"Document identifier: `v{manifest['document_version']}`  \n"
+            f"**Release candidate for v{manifest['release_target']}**  \n"
+            f"Candidate identifier: `v{manifest['document_version']}`  \n"
             "Canonical source: tracked repository chapters, site appendix, "
             "examples, and `pdf/guide_manifest.json`  \n"
             "Repository: <https://github.com/M-Gage-Plott42/utc-hpc-guide>\n\n"

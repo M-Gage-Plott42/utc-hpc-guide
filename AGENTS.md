@@ -45,11 +45,23 @@ This repository is a public, documentation-first HPC onboarding guide focused on
 
 ## Pre-Publish Scrub Checklist
 
-Run before commit/push:
+For routine documentation work, install the locked Node toolchain and run:
 
 ```bash
+npm ci
 make check
 ```
+
+For release-affecting work, install ShellCheck and the PDF toolchain, then run:
+
+```bash
+npm ci
+make release-check
+```
+
+The release gate adds Bash syntax, ShellCheck, reproducible structural and
+every-page OCR PDF QA, and whitespace validation. Keep network-dependent
+dependency audits separate.
 
 Manual-review scrub hits such as `login`, `partition`, `account`, or `allocation` are expected in generic placeholders and may be expected in `docs/sites/`, but each hit must be reviewed before release. Then manually review `assets/` for redaction quality.
 

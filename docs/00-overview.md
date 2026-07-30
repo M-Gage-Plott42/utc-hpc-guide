@@ -24,7 +24,9 @@ This guide provides a Python-first path for onboarding to a SLURM-based HPC envi
 1. Confirm account and network access.
 2. Test SSH login to the cluster login host.
 3. Launch an interactive session (SSH `srun --pty` or OOD).
-4. Build a Python environment in scratch/project storage.
+4. Build a Python environment in site-approved project/software storage, or
+   use scratch only when its retention policy supports a rebuildable
+   environment.
 5. Submit CPU/GPU jobs with `sbatch`.
 6. Monitor jobs, inspect logs, iterate.
 

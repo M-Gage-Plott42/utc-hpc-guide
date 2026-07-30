@@ -4,11 +4,11 @@
   "subtitle": "SLURM, Open OnDemand, SSH, Python, and GPU Workflows",
   "author": "Gage Plott",
   "date": "July 2026",
-  "release_target": "1.2.0",
-  "document_version": "1.2.0",
-  "source_date_epoch": 1785153600,
-  "pdf_trailer_id": "da5f58a39d1bb03a8beadffe5f6a903c",
-  "output_filename": "UTC_HPC_Guide.pdf",
+  "release_target": "1.2.1",
+  "document_version": "1.2.1-rc.1",
+  "source_date_epoch": 1785326400,
+  "pdf_trailer_id": "273da9da44fa4a552a55481a7c61049d",
+  "output_filename": "UTC_HPC_Guide_v1.2.1-rc.1.pdf",
   "header_source": "pdf/header.tex",
   "core_sources": [
     "docs/00-overview.md",
@@ -35,7 +35,7 @@
   ],
   "required_pdf_text": [
     "Practical HPC Onboarding Guide",
-    "Version 1.2.0",
+    "Release candidate for v1.2.1",
     "SLURM Basics",
     "ReqMem",
     "MaxRSS",
@@ -46,5 +46,21 @@
     "Appendix B: Runnable Slurm Templates",
     "slurm_cpu_example.sbatch",
     "slurm_tensorflow_gpu_probe.sbatch"
+  ],
+  "ocr_dpi": 150,
+  "ocr_min_alnum_per_page": 200,
+  "required_ocr_text": [
+    "Practical HPC Onboarding Guide",
+    "Release candidate for v1.2.1",
+    "Access and SSH",
+    "Open OnDemand",
+    "SLURM Basics",
+    "GPU Jobs",
+    "Python Environments",
+    "Data Transfer and Storage",
+    "Troubleshooting",
+    "Best Practices",
+    "UTC MocsHPC Site Notes",
+    "Runnable Slurm Templates"
   ]
 }

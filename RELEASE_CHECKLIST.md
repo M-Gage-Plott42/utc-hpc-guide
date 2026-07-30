@@ -2,6 +2,16 @@
 
 Use this checklist before tagging a release or major public update.
 
+Install the locked Node dependencies and required local ShellCheck/PDF tools,
+then run the unified release gate from the repository root:
+
+```bash
+npm ci
+make release-check
+```
+
+Keep network-dependent dependency audits separate from this local gate.
+
 ## 1. Content and Scope
 
 - Confirm generic docs remain cluster-agnostic and placeholder-based.
@@ -41,8 +51,8 @@ generalize anything institution-specific that should not be public.
   contain no angle-bracket placeholders that a shell could parse as redirects.
 - Confirm any downloadable installer uses an exact filename and a source-verified
   SHA-256 digest rather than a moving `latest` URL.
-- Run `npm ci` followed by `make check` from repo root and confirm all checks
-  pass with the locked local tooling.
+- Confirm the `make check` portion of `make release-check` passes with the
+  locked local Markdown tooling.
 
 ## 5. Git Hygiene
 
@@ -54,9 +64,18 @@ generalize anything institution-specific that should not be public.
 ## 6. Printable PDF
 
 - Confirm `pdf/guide_manifest.json` lists the complete ordered guide source.
-- Run `make check-pdf` and require byte-identical rebuilds plus passing
-  structure, metadata, font, text-extraction, and rendering checks.
+- Confirm the `make check-pdf` portion of `make release-check` requires
+  byte-identical rebuilds plus passing structure, metadata, font,
+  text-extraction, rendering, and every-page OCR checks.
+- Confirm the shell syntax, ShellCheck, and `git diff --check` portions of the
+  unified gate pass.
 - Review the generated PDF visually before publishing.
+- Treat OCR as a legibility regression check, not proof that screenshots or
+  pages are safely redacted.
+- For a GitHub Actions build, download the PDF and `build-toolchain.txt` from
+  the same workflow artifact and confirm the recorded PDF SHA-256 matches.
+  The artifact is transient, and the record is neither a toolchain lock nor
+  signed build provenance.
 - Attach the reviewed PDF to the matching GitHub release under the stable
   asset name `UTC_HPC_Guide.pdf`.
 - After publication, confirm the stable latest-release asset URL resolves:

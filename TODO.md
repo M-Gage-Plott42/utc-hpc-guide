@@ -87,7 +87,7 @@ Baseline:
 - [x] Rebuild and validate the PDF twice for byte identity.
 - [x] Run structural, font, text-extraction, rendering, and OCR checks.
 - [x] Inspect every PDF page for layout defects.
-- [ ] Confirm the toolchain-record hash matches the final PDF.
+- [x] Confirm the toolchain-record hash matches the final PDF.
 - [x] Review all scrub hits and public assets.
 
 ## Phase 5: Deferred Audit Hardening
@@ -121,7 +121,7 @@ Baseline:
 ## Phase 6: Handoff
 
 - [x] Confirm the final worktree contains only intended files.
-- [ ] Commit the completed maintenance work.
-- [ ] Push the topic branch.
-- [ ] Copy the verified newest PDF to the Windows desktop.
-- [ ] Report hashes, validation output, PDF page count, and remaining limits.
+- [x] Commit the completed maintenance work.
+- [x] Push the topic branch.
+- [x] Copy the verified newest PDF to the Windows desktop.
+- [x] Report hashes, validation output, PDF page count, and remaining limits.

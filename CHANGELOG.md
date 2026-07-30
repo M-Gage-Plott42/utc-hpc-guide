@@ -27,8 +27,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   links while scanning both indexed and differing worktree content through a
   no-follow boundary.
 - Rechecked the selected UTC partition facts against current public
-  documentation and marked live cluster and browser-route validation as
-  pending.
+  documentation and a July 30 read-only live session; recorded the confirmed
+  4 GiB scheduler default and authenticated Open OnDemand route, plus the
+  unresolved public/live CPU-cap conflict.
 - Corrected Open OnDemand guidance to describe `srun --jobid` as a new,
   resource-sharing job step rather than an attachment to an existing app.
 - Qualified CPU-count diagnostics and added comparisons with Slurm allocation

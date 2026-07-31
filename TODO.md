@@ -159,3 +159,43 @@ Validation evidence recorded before the publication workflow:
 No phase requires new live-site access. Reopen live validation only if an
 authoritative change makes the isolated site guidance ambiguous. No new
 administrative clarification will be provided for this release.
+
+## Parked Follow-Up: Polished PDF Redesign
+
+Status: parked for the next work session
+
+Audit date: July 31, 2026
+
+Reviewed prototype PDF SHA-256:
+`29ca3b095aade4bb267a781348154265b3b5c377f77aacd8b7a7e910ce5d3d2e`
+
+Accept the prototype's visual design direction, but do not replace the
+published PDF with that exact file. The 27-page LuaLaTeX prototype is visually
+complete, has embedded Unicode fonts, includes every expected section,
+screenshot, and template, and preserves the visible canonical content. It is
+not a release artifact because it is an untagged PDF 1.7 build outside the
+locked reproducible pipeline.
+
+When work resumes:
+
+- Port the design into the existing manifest-driven Pandoc/LuaLaTeX pipeline;
+  retain the numbered chapters, `docs/sites/` page, examples, and manifest as
+  the only canonical editable sources. Do not commit the aggregate root
+  Markdown or TeX as a second hand-maintained copy.
+- Preserve standard image alternatives through the tagged-PDF path. The
+  prototype's empty Markdown image labels plus custom `fig-alt` attributes do
+  not survive its direct TeX build, and the resulting figures have no
+  PDF-level alternatives.
+- Change the 12-point gold-on-white `Version 1.2.1` text. Its approximately
+  1.75:1 contrast is insufficient, and the locked OCR gate misses that required
+  phrase even though every page otherwise satisfies the OCR density threshold.
+  Prefer navy text while keeping gold as a decorative accent.
+- Restore the manifest-required `Appendix A:` and `Appendix B:` punctuation.
+- Remove the duplicate logical page label `1` for the cover and first body
+  page, and resolve the nonfatal `tocloft` redefinition warning.
+- Produce the redesign only through the locked PDF 2.0/PDF/UA-2 toolchain,
+  then run reproducibility, structure, veraPDF, every-page render, OCR, visual,
+  and manual accessibility reviews on the exact final hash.
+
+No VPN or new live-cluster validation is needed for this design migration.
+Reopen live validation only under the existing live-site rule above.

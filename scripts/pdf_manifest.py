@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from pathlib import Path, PurePosixPath
@@ -12,6 +13,10 @@ SCHEMA_VERSION = 2
 PDF_STANDARD = "ua-2"
 DOCUMENT_LANGUAGE = "en-US"
 FIGURE_COUNT = 3
+RELEASE_TARGET = re.compile(
+    r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
+)
+ARTIFACT_LABEL = re.compile(r"[a-z0-9](?:[a-z0-9.-]{0,126}[a-z0-9])?")
 
 
 def _require_string(manifest: dict[str, Any], key: str) -> str:
@@ -39,11 +44,21 @@ def _validate_relative_path(raw_path: str, *, label: str) -> PurePosixPath:
     return normalized
 
 
+def derive_pdf_trailer_id(document_version: str, source_date_epoch: int) -> str:
+    """Derive the stable 128-bit PDF trailer identifier from release metadata."""
+    seed = f"utc-hpc-guide:v{document_version}:{source_date_epoch}".encode("ascii")
+    return hashlib.sha256(seed).hexdigest()[:32]
+
+
 def _validate_release_state(manifest: dict[str, Any]) -> None:
     status = _require_string(manifest, "release_status")
     target = _require_string(manifest, "release_target")
     version = _require_string(manifest, "document_version")
     filename = _require_string(manifest, "output_filename")
+    if RELEASE_TARGET.fullmatch(target) is None:
+        raise ValueError(
+            "release_target must be a safe numeric major.minor.patch version"
+        )
     if status == "candidate":
         if not re.fullmatch(re.escape(target) + r"-rc\.[1-9][0-9]*", version):
             raise ValueError(
@@ -103,6 +118,8 @@ def load_manifest(
 
     if not isinstance(manifest.get("source_date_epoch"), int):
         raise ValueError("PDF manifest source_date_epoch must be an integer")
+    if manifest["source_date_epoch"] < 1:
+        raise ValueError("PDF manifest source_date_epoch must be positive")
     if not re.fullmatch(r"[0-9a-f]{32}", manifest["pdf_trailer_id"]):
         raise ValueError(
             "PDF manifest pdf_trailer_id must be exactly 32 lowercase hex characters"
@@ -130,6 +147,15 @@ def load_manifest(
         _require_string(appendix, "title")
 
     _validate_release_state(manifest)
+    expected_trailer_id = derive_pdf_trailer_id(
+        manifest["document_version"],
+        manifest["source_date_epoch"],
+    )
+    if manifest["pdf_trailer_id"] != expected_trailer_id:
+        raise ValueError(
+            "PDF manifest pdf_trailer_id must match the deterministic "
+            "document_version/source_date_epoch derivation"
+        )
 
     if validate_sources:
         if root is None:
@@ -160,3 +186,36 @@ def output_path(root: Path, manifest: dict[str, Any]) -> Path:
     if len(filename.parts) != 1:
         raise ValueError("PDF output_filename must not contain directories")
     return root / "dist" / filename
+
+
+def distribution_status(manifest: dict[str, Any]) -> str:
+    """Describe document state without claiming that an artifact is published."""
+    _validate_release_state(manifest)
+    if manifest["release_status"] == "candidate":
+        return (
+            f"review-only release candidate for v{manifest['release_target']}; "
+            "not stable"
+        )
+    return (
+        f"final document build for v{manifest['document_version']}; "
+        "publication is separate"
+    )
+
+
+def workflow_metadata(root: Path, manifest: dict[str, Any]) -> dict[str, str]:
+    """Return newline-safe GitHub Actions outputs derived from the manifest."""
+    _validate_release_state(manifest)
+    version = manifest["document_version"]
+    status = manifest["release_status"]
+    artifact_label = f"utc-hpc-guide-v{version}-{status}"
+    if ARTIFACT_LABEL.fullmatch(artifact_label) is None:
+        raise ValueError("manifest-derived artifact label is not workflow-safe")
+    relative_output = output_path(root, manifest).relative_to(root).as_posix()
+    if re.fullmatch(r"dist/[A-Za-z0-9][A-Za-z0-9._-]*\.pdf", relative_output) is None:
+        raise ValueError("manifest-derived PDF path is not workflow-safe")
+    return {
+        "path": relative_output,
+        "document_version": version,
+        "release_status": status,
+        "artifact_label": artifact_label,
+    }

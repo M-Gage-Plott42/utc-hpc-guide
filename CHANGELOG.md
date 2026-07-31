@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-07-30
+
 ### Added
 
 - Added a checksum- and signature-verifying PDF toolchain bootstrap locked to
@@ -14,7 +16,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   21.0.11+10, and veraPDF 1.30.2 with the `ua2` profile.
 - Added source-generated PDF/UA-2 structure checks, a preserved
   machine-readable veraPDF report, and a manual accessibility review checklist
-  for the `v1.2.1-rc.2` review candidate.
+  for the final `v1.2.1` document.
 
 ### Changed
 
@@ -25,7 +27,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Made the public-content scrub fail closed on tracked symbolic links,
   gitlinks, unmerged or unsupported index entries, and worktree replacement
   links while scanning both indexed and differing worktree content through a
-  no-follow boundary.
+  repository-rooted boundary that opens every path component without following
+  symbolic links.
 - Rechecked the selected UTC partition facts against current public
   documentation and a July 30 read-only live session; recorded the confirmed
   4 GiB scheduler default and authenticated Open OnDemand route. The
@@ -33,9 +36,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   public CPU request ceiling; the higher raw Slurm value remains a disclosed,
   nonblocking administrative discrepancy rather than permission to request
   more.
-- Defined a reproducible real-assistive-technology acceptance baseline using
-  the exact candidate hash, desktop Acrobat Reader, NVDA, keyboard navigation,
-  Magnifier, and reflow, with itemized evidence and explicit claim boundaries.
+- Defined product-neutral manual accessibility evidence for reading order,
+  focus order, structure, keyboard use, magnification, and reflow, bound to the
+  exact PDF hash with tested-tool and untested-limitation disclosures. Desktop
+  Acrobat Reader plus NVDA remains a recommended reference pairing.
 - Corrected Open OnDemand guidance to describe `srun --jobid` as a new,
   resource-sharing job step rather than an attachment to an existing app.
 - Qualified CPU-count diagnostics and added comparisons with Slurm allocation
@@ -46,10 +50,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Scoped the UTC partition table to a selected onboarding subset and labeled
   the 64 GB examples as field-note diagnostic starting points, not minima.
 - Unified the local release gate, added PDF build traceability, and added
-  every-page OCR legibility checks for the v1.2.1 release candidate.
+  every-page OCR legibility checks for the final v1.2.1 document.
 - Hardened asset-path, shell-fence, and public-content policy boundaries; added
   scheduled external-link monitoring; and consolidated Markdown lint under the
   locked Quality Gate.
+- Derived workflow artifact identity and build distribution status from the
+  validated candidate-or-final manifest instead of RC-specific workflow text.
 
 ## [1.2.0] - 2026-07-27
 

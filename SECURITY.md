@@ -27,9 +27,11 @@ The scanner evaluates the indexed blob for every accepted entry and also scans
 a differing worktree version. A genuinely deleted worktree file therefore does
 not remove its indexed content from scrutiny. Existing worktree entries,
 including the policy file and site-exception targets, are inspected with
-`lstat`, opened with a no-follow flag, and verified as the same regular file
-after opening. A symbolic link that replaces an indexed regular file is a
-policy failure; the scanner does not resolve, read, or print the link target.
+repository-rooted, directory-relative operations. Every path component is
+opened without following symbolic links, each parent must be a directory, and
+the final component must be the same regular file before and after opening. A
+symbolic link anywhere in that chain is a policy failure; the scanner does not
+resolve, read, or print the link target.
 
 GitHub documents automatic secret scanning for public repositories and
 user-level push protection for supported secret patterns. That standard

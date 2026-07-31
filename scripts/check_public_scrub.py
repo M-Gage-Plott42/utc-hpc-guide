@@ -8,6 +8,7 @@ site-fact exceptions do not constitute exhaustive secret detection.
 from __future__ import annotations
 
 import argparse
+import errno
 import json
 import os
 import re
@@ -91,6 +92,263 @@ class IndexEntry:
 
 
 ALLOWED_INDEX_MODES = frozenset(("100644", "100755"))
+OPEN_SUPPORTS_DIR_FD = os.open in os.supports_dir_fd
+STAT_SUPPORTS_DIR_FD = os.stat in os.supports_dir_fd
+STAT_SUPPORTS_NOFOLLOW = os.stat in os.supports_follow_symlinks
+
+
+class WorktreeBoundaryError(ValueError):
+    """A repository path could not be opened inside the no-follow boundary."""
+
+    def __init__(self, path: str, rule: str, value: str) -> None:
+        super().__init__(f"{rule}: {path}: {value}")
+        self.path = path
+        self.rule = rule
+        self.value = value
+
+
+def validate_repository_path(path: str) -> tuple[str, ...]:
+    """Validate an unmodified Git-style repository-relative path."""
+
+    if not isinstance(path, str) or not path:
+        raise ValueError("repository path must be a non-empty string")
+    if "\0" in path:
+        raise ValueError("repository path must not contain NUL")
+    if path.startswith("/"):
+        raise ValueError(f"repository path must be relative: {path!r}")
+    components = path.split("/")
+    if any(component in ("", ".", "..") for component in components):
+        raise ValueError(
+            "repository path must not contain empty, dot, or dot-dot components: "
+            f"{path!r}"
+        )
+    return tuple(components)
+
+
+def _policy_repository_path(policy_path: os.PathLike[str] | str) -> str:
+    raw_path = os.fspath(policy_path)
+    if Path(raw_path).is_absolute():
+        raise ValueError("scrub policy path must be repository-relative")
+    validate_repository_path(raw_path)
+    return raw_path
+
+
+class RepositoryReader:
+    """Read regular files beneath one anchored repository directory descriptor."""
+
+    def __init__(self, root: Path) -> None:
+        self.root = root
+        self._root_descriptor: int | None = None
+
+    def __enter__(self) -> RepositoryReader:
+        required_flags = ("O_DIRECTORY", "O_NOFOLLOW", "O_CLOEXEC", "O_NONBLOCK")
+        if any(not hasattr(os, flag) for flag in required_flags):
+            raise OSError("this platform cannot guarantee rooted no-follow reads")
+        if not OPEN_SUPPORTS_DIR_FD or not STAT_SUPPORTS_DIR_FD:
+            raise OSError("this platform cannot guarantee descriptor-relative reads")
+        if not STAT_SUPPORTS_NOFOLLOW:
+            raise OSError("this platform cannot guarantee no-follow status checks")
+
+        before = os.stat(self.root, follow_symlinks=False)
+        if stat.S_ISLNK(before.st_mode):
+            raise ValueError("repository root must not be a symbolic link")
+        if not stat.S_ISDIR(before.st_mode):
+            raise ValueError("repository root must be a directory")
+        flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+        descriptor = os.open(self.root, flags)
+        try:
+            opened = os.fstat(descriptor)
+        except BaseException:
+            os.close(descriptor)
+            raise
+        if not stat.S_ISDIR(opened.st_mode):
+            os.close(descriptor)
+            raise ValueError("repository root must be a directory")
+        if (before.st_dev, before.st_ino) != (opened.st_dev, opened.st_ino):
+            os.close(descriptor)
+            raise OSError("repository root changed while being opened")
+        self._root_descriptor = descriptor
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        if self._root_descriptor is not None:
+            os.close(self._root_descriptor)
+            self._root_descriptor = None
+
+    @property
+    def root_descriptor(self) -> int:
+        if self._root_descriptor is None:
+            raise RuntimeError("repository reader is not open")
+        return self._root_descriptor
+
+    @staticmethod
+    def _type_error(
+        display_path: str,
+        *,
+        is_parent: bool,
+        mode: int,
+    ) -> WorktreeBoundaryError:
+        if stat.S_ISLNK(mode):
+            return WorktreeBoundaryError(
+                display_path,
+                "tracked_symlink_not_allowed",
+                (
+                    "worktree_parent_component_is_symlink"
+                    if is_parent
+                    else "worktree_entry_is_symlink"
+                ),
+            )
+        return WorktreeBoundaryError(
+            display_path,
+            "tracked_worktree_type_not_allowed",
+            (
+                "worktree_parent_component_is_not_directory"
+                if is_parent
+                else "worktree_entry_is_not_regular"
+            ),
+        )
+
+    def _open_checked_component(
+        self,
+        parent_descriptor: int,
+        component: str,
+        display_path: str,
+        *,
+        is_parent: bool,
+        allow_missing: bool,
+    ) -> int | None:
+        try:
+            before = os.stat(
+                component,
+                dir_fd=parent_descriptor,
+                follow_symlinks=False,
+            )
+        except FileNotFoundError:
+            if allow_missing:
+                return None
+            raise ValueError(
+                f"required regular file does not exist: {display_path}"
+            ) from None
+
+        expected_type = stat.S_ISDIR if is_parent else stat.S_ISREG
+        if not expected_type(before.st_mode):
+            raise self._type_error(
+                display_path,
+                is_parent=is_parent,
+                mode=before.st_mode,
+            )
+
+        flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC
+        if is_parent:
+            flags |= os.O_DIRECTORY
+        else:
+            flags |= os.O_NONBLOCK
+        try:
+            descriptor = os.open(
+                component,
+                flags,
+                dir_fd=parent_descriptor,
+            )
+        except OSError as exc:
+            if exc.errno in (errno.ELOOP, errno.ENOENT, errno.ENOTDIR):
+                raise WorktreeBoundaryError(
+                    display_path,
+                    "tracked_worktree_path_changed",
+                    "worktree_path_changed_while_opening",
+                ) from None
+            raise
+
+        try:
+            opened = os.fstat(descriptor)
+        except BaseException:
+            os.close(descriptor)
+            raise
+        if not expected_type(opened.st_mode):
+            os.close(descriptor)
+            raise self._type_error(
+                display_path,
+                is_parent=is_parent,
+                mode=opened.st_mode,
+            )
+        if (before.st_dev, before.st_ino) != (opened.st_dev, opened.st_ino):
+            os.close(descriptor)
+            raise WorktreeBoundaryError(
+                display_path,
+                "tracked_worktree_path_changed",
+                "worktree_path_changed_while_opening",
+            )
+        return descriptor
+
+    def _open_regular(
+        self,
+        repository_path: str,
+        *,
+        allow_missing: bool,
+    ) -> int | None:
+        components = validate_repository_path(repository_path)
+        parent_descriptor = self.root_descriptor
+        opened_parents: list[int] = []
+        try:
+            for component in components[:-1]:
+                next_descriptor = self._open_checked_component(
+                    parent_descriptor,
+                    component,
+                    repository_path,
+                    is_parent=True,
+                    allow_missing=allow_missing,
+                )
+                if next_descriptor is None:
+                    return None
+                opened_parents.append(next_descriptor)
+                parent_descriptor = next_descriptor
+            return self._open_checked_component(
+                parent_descriptor,
+                components[-1],
+                repository_path,
+                is_parent=False,
+                allow_missing=allow_missing,
+            )
+        finally:
+            for descriptor in reversed(opened_parents):
+                os.close(descriptor)
+
+    def validate_regular(
+        self,
+        repository_path: str,
+        *,
+        allow_missing: bool,
+    ) -> bool:
+        descriptor = self._open_regular(
+            repository_path,
+            allow_missing=allow_missing,
+        )
+        if descriptor is None:
+            return False
+        os.close(descriptor)
+        return True
+
+    def read_regular_bytes(
+        self,
+        repository_path: str,
+        *,
+        allow_missing: bool,
+    ) -> bytes | None:
+        descriptor = self._open_regular(
+            repository_path,
+            allow_missing=allow_missing,
+        )
+        if descriptor is None:
+            return None
+        try:
+            chunks: list[bytes] = []
+            while True:
+                chunk = os.read(descriptor, 1024 * 1024)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+            return b"".join(chunks)
+        finally:
+            os.close(descriptor)
 
 
 def tracked_entries(root: Path) -> list[IndexEntry]:
@@ -132,6 +390,18 @@ def tracked_entries(root: Path) -> list[IndexEntry]:
 def preflight_index_entries(entries: Iterable[IndexEntry]) -> list[Finding]:
     findings: list[Finding] = []
     for entry in entries:
+        try:
+            validate_repository_path(entry.path)
+        except ValueError:
+            findings.append(
+                Finding(
+                    entry.path,
+                    0,
+                    "tracked_path_not_allowed",
+                    "path_is_not_strictly_repository_relative",
+                )
+            )
+            continue
         if entry.stage != 0:
             findings.append(
                 Finding(
@@ -171,91 +441,56 @@ def preflight_index_entries(entries: Iterable[IndexEntry]) -> list[Finding]:
     return findings
 
 
-def _display_path(root: Path, target: Path) -> str:
-    try:
-        return target.relative_to(root).as_posix()
-    except ValueError:
-        return str(target)
-
-
 def preflight_worktree_entries(
     root: Path,
     entries: Iterable[IndexEntry],
     policy_path: Path,
+    *,
+    reader: RepositoryReader | None = None,
 ) -> list[Finding]:
-    findings: list[Finding] = []
-    inspected: set[Path] = set()
+    policy_key = _policy_repository_path(policy_path)
+    inspected: set[str] = set()
     candidates = [
-        (root / entry.path, entry.path)
+        entry.path
         for entry in entries
         if entry.stage == 0 and entry.mode in ALLOWED_INDEX_MODES
     ]
-    candidates.append((policy_path, _display_path(root, policy_path)))
-    for target, display_path in candidates:
-        if target in inspected:
-            continue
-        inspected.add(target)
-        try:
-            status = target.lstat()
-        except FileNotFoundError:
-            continue
-        if stat.S_ISLNK(status.st_mode):
-            findings.append(
-                Finding(
+    candidates.append(policy_key)
+
+    def inspect(active_reader: RepositoryReader) -> list[Finding]:
+        findings: list[Finding] = []
+        for display_path in candidates:
+            if display_path in inspected:
+                continue
+            inspected.add(display_path)
+            try:
+                active_reader.validate_regular(
                     display_path,
-                    0,
-                    "tracked_symlink_not_allowed",
-                    "worktree_entry_is_symlink",
+                    allow_missing=display_path != policy_key,
                 )
-            )
-        elif not stat.S_ISREG(status.st_mode):
-            findings.append(
-                Finding(
-                    display_path,
-                    0,
-                    "tracked_worktree_type_not_allowed",
-                    "worktree_entry_is_not_regular",
-                )
-            )
-    return findings
+            except WorktreeBoundaryError as exc:
+                findings.append(Finding(exc.path, 0, exc.rule, exc.value))
+        return findings
+
+    if reader is not None:
+        return inspect(reader)
+    with RepositoryReader(root) as active_reader:
+        return inspect(active_reader)
 
 
 def read_regular_bytes_no_follow(
-    target: Path,
-    display_path: str,
+    root: Path,
+    repository_path: str,
     *,
     allow_missing: bool,
 ) -> bytes | None:
-    try:
-        before = target.lstat()
-    except FileNotFoundError:
-        if allow_missing:
-            return None
-        raise ValueError(f"required regular file does not exist: {display_path}") from None
-    if stat.S_ISLNK(before.st_mode):
-        raise ValueError(f"symbolic link is not allowed: {display_path}")
-    if not stat.S_ISREG(before.st_mode):
-        raise ValueError(f"regular file required: {display_path}")
-    if not hasattr(os, "O_NOFOLLOW"):
-        raise OSError("this platform cannot guarantee no-follow file reads")
+    """Compatibility wrapper around the rooted descriptor-relative reader."""
 
-    flags = os.O_RDONLY | os.O_NOFOLLOW
-    descriptor = os.open(target, flags)
-    try:
-        opened = os.fstat(descriptor)
-        if not stat.S_ISREG(opened.st_mode):
-            raise ValueError(f"regular file required: {display_path}")
-        if (before.st_dev, before.st_ino) != (opened.st_dev, opened.st_ino):
-            raise OSError(f"file changed while being opened: {display_path}")
-        chunks: list[bytes] = []
-        while True:
-            chunk = os.read(descriptor, 1024 * 1024)
-            if not chunk:
-                break
-            chunks.append(chunk)
-        return b"".join(chunks)
-    finally:
-        os.close(descriptor)
+    with RepositoryReader(root) as reader:
+        return reader.read_regular_bytes(
+            repository_path,
+            allow_missing=allow_missing,
+        )
 
 
 def decode_text(data: bytes | None) -> str | None:
@@ -298,9 +533,13 @@ def parse_policy(
         reason = entry.get("reason")
         if not isinstance(path, str) or not path:
             raise ValueError(f"exception {index} requires path")
+        try:
+            validate_repository_path(path)
+        except ValueError as exc:
+            raise ValueError(
+                f"exception {index} path must stay within the repository"
+            ) from exc
         normalized = PurePosixPath(path)
-        if normalized.is_absolute() or ".." in normalized.parts:
-            raise ValueError(f"exception {index} path must stay within the repository")
         if normalized.parts[:2] != ("docs", "sites") or normalized.suffix != ".md":
             raise ValueError(f"exception {index} must target a Markdown file under docs/sites")
         if (
@@ -327,35 +566,48 @@ def parse_policy(
     return exceptions
 
 
-def load_policy(root: Path, policy_path: Path) -> list[SiteFactException]:
-    policy_data = read_regular_bytes_no_follow(
-        policy_path,
-        _display_path(root, policy_path),
-        allow_missing=False,
-    )
-    assert policy_data is not None
+def load_policy(
+    root: Path,
+    policy_path: Path,
+    *,
+    reader: RepositoryReader | None = None,
+) -> list[SiteFactException]:
+    policy_key = _policy_repository_path(policy_path)
 
-    def read_worktree_target(path: str) -> bytes:
-        target_data = read_regular_bytes_no_follow(
-            root / path,
-            path,
+    def load(active_reader: RepositoryReader) -> list[SiteFactException]:
+        policy_data = active_reader.read_regular_bytes(
+            policy_key,
             allow_missing=False,
         )
-        assert target_data is not None
-        return target_data
+        assert policy_data is not None
 
-    return parse_policy(policy_data, read_worktree_target)
+        def read_worktree_target(path: str) -> bytes:
+            target_data = active_reader.read_regular_bytes(
+                path,
+                allow_missing=False,
+            )
+            assert target_data is not None
+            return target_data
+
+        return parse_policy(policy_data, read_worktree_target)
+
+    if reader is not None:
+        return load(reader)
+    with RepositoryReader(root) as active_reader:
+        return load(active_reader)
 
 
 def load_index_policy(
     root: Path,
     policy_path: Path,
     entries_by_path: dict[str, IndexEntry],
+    *,
+    reader: RepositoryReader | None = None,
 ) -> list[SiteFactException]:
-    policy_key = _display_path(root, policy_path)
+    policy_key = _policy_repository_path(policy_path)
     policy_entry = entries_by_path.get(policy_key)
     if policy_entry is None:
-        return load_policy(root, policy_path)
+        return load_policy(root, policy_path, reader=reader)
     policy_data = read_index_blob(root, policy_entry)
 
     def read_index_target(path: str) -> bytes:
@@ -401,67 +653,89 @@ def scan_text(
     return findings, len(CONTEXT_PATTERN.findall(text))
 
 
-def check_repository(root: Path, policy_path: Path) -> tuple[list[Finding], int, int]:
+def check_repository(
+    root: Path,
+    policy_path: Path,
+    *,
+    include_exception_count: bool = False,
+) -> tuple[list[Finding], int, int] | tuple[list[Finding], int, int, int]:
+    _policy_repository_path(policy_path)
     entries = tracked_entries(root)
     findings = preflight_index_entries(entries)
     if findings:
-        return findings, 0, 0
-    findings = preflight_worktree_entries(root, entries, policy_path)
-    if findings:
-        return findings, 0, 0
+        result: tuple[list[Finding], int, int] = (findings, 0, 0)
+        return (*result, 0) if include_exception_count else result
 
-    entries_by_path = {entry.path: entry for entry in entries}
-    index_exceptions = load_index_policy(root, policy_path, entries_by_path)
-    worktree_exceptions = load_policy(root, policy_path)
-    context_hits = 0
-    text_file_count = 0
-    for entry in entries:
-        index_data = read_index_blob(root, entry)
-        worktree_data = read_regular_bytes_no_follow(
-            root / entry.path,
-            entry.path,
-            allow_missing=True,
+    with RepositoryReader(root) as reader:
+        findings = preflight_worktree_entries(
+            root,
+            entries,
+            policy_path,
+            reader=reader,
         )
-        index_allowed = {
-            exception.literal.casefold()
-            for exception in index_exceptions
-            if exception.path == entry.path
-        }
-        worktree_allowed = {
-            exception.literal.casefold()
-            for exception in worktree_exceptions
-            if exception.path == entry.path
-        }
-        snapshots = [(index_data, index_exceptions)]
-        if worktree_data is not None and (
-            worktree_data != index_data or worktree_allowed != index_allowed
-        ):
-            snapshots.append((worktree_data, worktree_exceptions))
+        if findings:
+            result = (findings, 0, 0)
+            return (*result, 0) if include_exception_count else result
 
-        found_text = False
-        for data, exceptions in snapshots:
-            text = decode_text(data)
-            if text is None:
-                continue
-            found_text = True
-            file_findings, file_context_hits = scan_text(
+        entries_by_path = {entry.path: entry for entry in entries}
+        index_exceptions = load_index_policy(
+            root,
+            policy_path,
+            entries_by_path,
+            reader=reader,
+        )
+        worktree_exceptions = load_policy(root, policy_path, reader=reader)
+        context_hits = 0
+        text_file_count = 0
+        for entry in entries:
+            index_data = read_index_blob(root, entry)
+            worktree_data = reader.read_regular_bytes(
                 entry.path,
-                text,
-                exceptions,
+                allow_missing=True,
             )
-            findings.extend(file_findings)
-            context_hits += file_context_hits
-        if found_text:
-            text_file_count += 1
-    return findings, text_file_count, context_hits
+            index_allowed = {
+                exception.literal.casefold()
+                for exception in index_exceptions
+                if exception.path == entry.path
+            }
+            worktree_allowed = {
+                exception.literal.casefold()
+                for exception in worktree_exceptions
+                if exception.path == entry.path
+            }
+            snapshots = [(index_data, index_exceptions)]
+            if worktree_data is not None and (
+                worktree_data != index_data or worktree_allowed != index_allowed
+            ):
+                snapshots.append((worktree_data, worktree_exceptions))
+
+            found_text = False
+            for data, exceptions in snapshots:
+                text = decode_text(data)
+                if text is None:
+                    continue
+                found_text = True
+                file_findings, file_context_hits = scan_text(
+                    entry.path,
+                    text,
+                    exceptions,
+                )
+                findings.extend(file_findings)
+                context_hits += file_context_hits
+            if found_text:
+                text_file_count += 1
+
+        result = (findings, text_file_count, context_hits)
+        if include_exception_count:
+            return (*result, len(worktree_exceptions))
+        return result
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--policy",
-        type=Path,
-        default=Path("scripts/public_scrub_exceptions.json"),
+        default="scripts/public_scrub_exceptions.json",
     )
     return parser.parse_args()
 
@@ -475,11 +749,18 @@ def main() -> int:
         text=True,
     )
     root = Path(root_result.stdout.strip())
-    policy_path = args.policy
-    if not policy_path.is_absolute():
-        policy_path = root / policy_path
     try:
-        findings, text_file_count, context_hits = check_repository(root, policy_path)
+        policy_path = Path(_policy_repository_path(args.policy))
+        (
+            findings,
+            text_file_count,
+            context_hits,
+            exception_count,
+        ) = check_repository(
+            root,
+            policy_path,
+            include_exception_count=True,
+        )
     except (OSError, ValueError, json.JSONDecodeError, subprocess.CalledProcessError) as exc:
         print(f"ERROR: scrub policy could not be evaluated: {exc}", file=sys.stderr)
         return 2
@@ -500,7 +781,7 @@ def main() -> int:
         "public_scrub_policy_passed "
         f"tracked_text_files={text_file_count} "
         f"contextual_review_hits={context_hits} "
-        f"site_fact_exceptions={len(load_policy(root, policy_path))}"
+        f"site_fact_exceptions={exception_count}"
     )
     return 0
 

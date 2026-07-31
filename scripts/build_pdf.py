@@ -15,9 +15,9 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from .pdf_manifest import load_manifest, output_path
+    from .pdf_manifest import load_manifest, output_path, workflow_metadata
 except ImportError:
-    from pdf_manifest import load_manifest, output_path
+    from pdf_manifest import load_manifest, output_path, workflow_metadata
 
 
 TOP_HEADING = re.compile(r"^# (?:[0-9]{2} )?(.+)$", re.MULTILINE)
@@ -255,7 +255,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--output", type=Path)
     parser.add_argument("--verify-reproducible", action="store_true")
-    parser.add_argument("--print-output-path", action="store_true")
+    output_mode = parser.add_mutually_exclusive_group()
+    output_mode.add_argument("--print-output-path", action="store_true")
+    output_mode.add_argument("--print-workflow-metadata", action="store_true")
     return parser.parse_args()
 
 
@@ -281,6 +283,10 @@ def main() -> int:
         expected_output = output_path(root, manifest)
         if args.print_output_path:
             print(expected_output.relative_to(root).as_posix())
+            return 0
+        if args.print_workflow_metadata:
+            for key, value in workflow_metadata(root, manifest).items():
+                print(f"{key}={value}")
             return 0
         output = args.output or expected_output
         if not output.is_absolute():

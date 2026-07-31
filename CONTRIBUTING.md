@@ -40,8 +40,10 @@ Expected behavior:
 - The scrub preflight reads NUL-safe index records and accepts only ordinary
   stage-zero regular or executable files. Tracked symbolic links, gitlinks,
   unmerged entries, and unsupported modes are repository-policy failures.
-  Worktree entries are inspected separately and regular files are opened
-  without following a final-component symbolic link.
+  Worktree entries are inspected separately from an open repository-root
+  descriptor. Every component is opened without following symbolic links,
+  every parent must be a directory, and the final component must be a regular
+  file.
 - Public site facts require exact, reasoned exceptions under `docs/sites/` in
   `scripts/public_scrub_exceptions.json`.
 - `make test-scrub` exercises scan coverage and exception failure paths.

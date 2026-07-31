@@ -26,8 +26,9 @@ Keep network-dependent dependency audits separate from this local gate.
   user-facing sources agree on a conservative supported value and the guide
   neither claims nor encourages the higher backend value.
 - Confirm README "Last updated" month/year is current.
-- Confirm candidate artifacts are labeled review-only and the stable release
-  link still points to the intended published version.
+- Confirm the manifest status, document version, output filename, workflow
+  artifact label, and distribution-status record all describe the same
+  candidate or final build.
 
 ## 2. Sensitive Data Scrub
 
@@ -44,10 +45,11 @@ generalize anything institution-specific that should not be public.
 
 The scrub preflight must accept only stage-zero regular or executable index
 entries. Fail on tracked symbolic links, gitlinks, unmerged entries,
-unsupported modes, or a worktree symbolic link replacing a regular file.
-Regular worktree reads must use the repository's no-follow boundary. A scrub
-pass is still one defense in depth, not proof that the repository is free of
-private data.
+unsupported modes, a symbolic link in any worktree path component, or a
+non-directory parent. Regular worktree reads, the policy, and site-exception
+targets must be opened one component at a time from the repository root
+through the no-follow boundary. A scrub pass is still one defense in depth,
+not proof that the repository is free of private data.
 
 ## 3. Screenshots and Assets
 
@@ -105,22 +107,30 @@ private data.
 - Treat OCR as a legibility regression check, not proof that screenshots or
   pages are safely redacted.
 - Complete the [manual accessibility review](docs/pdf-guide.md#manual-accessibility-review)
-  on the exact candidate hash using the documented NVDA, desktop Acrobat
-  Reader, keyboard, Magnifier, and reflow baseline. Record reviewer
-  proficiency, exact tools and versions, settings, date, itemized results,
-  remediations, retest results, and limitations. An author-assisted
-  screen-reader smoke test or Acrobat Read Out Loud is not a substitute for
-  the proficient human baseline.
+  on the exact PDF hash. Verify reading order with a screen reader or
+  read-aloud tool, or through an accessibility API; verify focus order with
+  keyboard traversal or a tool that exposes the PDF tab-order setting. Record
+  the reviewer profile, exact tools and versions, settings, date, tasks,
+  itemized results, remediations, retest results, and untested limitations.
+  Desktop Acrobat Reader plus NVDA on Windows is a recommended reference
+  environment, not an exclusive requirement. Acrobat Read Out Loud may
+  supplement a reading-order check, but Adobe states that it is not a screen
+  reader and it must not be reported as screen-reader evidence.
 - Do not describe automated tagging or veraPDF success as WCAG 2.1 AA
   certification, assistive-technology usability, or UTC accessibility
   approval.
+- For an independent GitHub release, state the exact evidence and untested
+  limitations without implying official endorsement. Institution-hosted or
+  officially endorsed publication remains subject to the institution's
+  documented accessibility review and publishing process.
 - For a GitHub Actions build, download the PDF, `build-toolchain.txt`, and
   `verapdf-report.xml` from the same workflow artifact and confirm the recorded
   PDF SHA-256 matches. `pdf/toolchain.lock.json` is the declared toolchain lock;
   the artifact record is run traceability, not signed provenance, and the
   artifact is transient.
 - For final promotion, review the successful artifact built from the exact
-  final `main` commit and confirm its SHA-256 before tagging.
+  final `main` commit and confirm its SHA-256 before tagging. Bind every manual
+  result to that same hash.
 - Attach the reviewed PDF to the matching GitHub release under the stable
   asset name `UTC_HPC_Guide.pdf`.
 - After publication, confirm the stable latest-release asset URL resolves:

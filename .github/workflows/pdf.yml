@@ -75,25 +75,18 @@ jobs:
             --output dist/build-toolchain.txt \
             --require-github-context
 
-      - name: Resolve manifest-derived review artifact
+      - name: Resolve manifest-derived artifact metadata
         id: pdf_output
         shell: bash
         run: |
           set -euo pipefail
-          pdf_path="$(python3 scripts/build_pdf.py --print-output-path)"
-          case "${pdf_path}" in
-            dist/*.pdf) ;;
-            *)
-              echo "Unexpected manifest-derived PDF path: ${pdf_path}" >&2
-              exit 1
-              ;;
-          esac
-          printf 'path=%s\n' "${pdf_path}" >> "${GITHUB_OUTPUT}"
+          python3 scripts/build_pdf.py --print-workflow-metadata \
+            >> "${GITHUB_OUTPUT}"
 
-      - name: Upload review-only RC.2 artifact
+      - name: Upload validated PDF artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: utc-hpc-guide-rc2-review-${{ github.sha }}
+          name: ${{ steps.pdf_output.outputs.artifact_label }}-${{ github.sha }}
           path: |
             ${{ steps.pdf_output.outputs.path }}
             dist/build-toolchain.txt

@@ -29,7 +29,7 @@ try:
         validate_pdfinfo,
         validate_qpdf_document,
     )
-    from .pdf_manifest import load_manifest, output_path
+    from .pdf_manifest import distribution_status, load_manifest, output_path
 except ImportError:
     from check_pdf_accessibility import (
         extract_metadata_stream,
@@ -44,7 +44,7 @@ except ImportError:
         validate_pdfinfo,
         validate_qpdf_document,
     )
-    from pdf_manifest import load_manifest, output_path
+    from pdf_manifest import distribution_status, load_manifest, output_path
 
 
 HEX_SHA256 = r"[0-9a-f]{64}"
@@ -266,6 +266,14 @@ def ci_context(
 
 def record_value(value: str) -> str:
     return " ".join(value.replace("\x00", "").split())
+
+
+def record_preamble(manifest: dict[str, object]) -> list[str]:
+    return [
+        "UTC HPC Guide PDF build traceability record",
+        f"distribution_status={distribution_status(manifest)}",
+        "",
+    ]
 
 
 def write_record(
@@ -531,9 +539,7 @@ def write_record(
     relative_report = report_path.relative_to(root).as_posix()
     relative_lock = lock_path.relative_to(root).as_posix()
     lines = [
-        "UTC HPC Guide PDF build traceability record",
-        "distribution_status=review-only release candidate; not stable",
-        "",
+        *record_preamble(manifest),
         "[run]",
         f"commit={commit}",
         f"repository={context['GITHUB_REPOSITORY']}",

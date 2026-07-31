@@ -5,7 +5,7 @@ Audited baseline: `0e000262a19ffaa4e9110427a3403f9464941ef7`
 
 This checklist records the focused final-promotion work following the RC.2
 audit. It deliberately excludes new cluster functionality, another PDF
-toolchain redesign, and new live UTC checks.
+toolchain redesign, and new live-site checks.
 
 ## Phase 0: Guard and Plan
 
@@ -13,8 +13,8 @@ toolchain redesign, and new live UTC checks.
 - [x] Confirm the fetched `origin/main` matches the audited baseline.
 - [x] Create the focused `agent/publish-v1.2.1-final` topic branch.
 - [x] Record this implementation plan before changing implementation files.
-- [x] Skip VPN and live-cluster checks because no administrative clarification
-  will be provided and the July 30 validation remains current.
+- [x] Leave the existing live-site evidence unchanged because no new
+  administrative clarification will be provided.
 
 ## Phase 1: Repository-Rooted Scrub Reads
 
@@ -63,15 +63,15 @@ toolchain redesign, and new live UTC checks.
 - [x] Replace candidate PDF/OCR text with final-version text.
 - [x] Move the completed changelog material into the dated `1.2.1` section.
 - [x] Replace stale RC.2 wording in release-facing documentation and Make help.
-- [x] Preserve the guide body, screenshots, July 30 field notes, and disclosed
-  120/128 discrepancy.
+- [x] Preserve the guide body, screenshots, and isolated site-note content and
+  evidence boundaries without duplicating site facts outside `docs/sites/`.
 
 ## Phase 5: Final Artifact Validation
 
 - [x] Run locked Node, scrub, asset, link, placeholder, shell, whitespace, and
   complete unit-test gates.
-- [x] Run the separate external-link monitor. Its VPN-only Open OnDemand target
-  remained DNS-inaccessible without VPN; all other monitored links passed.
+- [x] Run the separate external-link monitor and keep restricted-site results
+  in site-note or pull-request evidence rather than this generic checklist.
 - [x] Bootstrap and verify the locked PDF toolchain.
 - [x] Require byte-identical repeated PDF builds.
 - [x] Require structural, font, text, active-content, every-page render, OCR,
@@ -109,7 +109,7 @@ Validation evidence recorded before the publication workflow:
 - [ ] Commit and push the complete implementation.
 - [ ] Open a focused draft pull request against `main`.
 - [ ] Report hashes, tests, PDF properties, veraPDF counts, visual review,
-  manual evidence, limitations, and the absence of new VPN/HPC activity.
+  manual evidence, limitations, and the absence of new live-site activity.
 - [ ] Request review and resolve every actionable finding with revalidation.
 - [ ] Require all hosted checks to pass on the final PR head.
 
@@ -125,9 +125,8 @@ Validation evidence recorded before the publication workflow:
 - [ ] Verify the stable latest-download URL and published SHA-256.
 - [ ] Confirm `main` and the local worktree are clean and synchronized.
 
-## VPN Rule
+## Live-Site Rule
 
-No phase requires VPN. A new VPN/live-cluster check would only be reopened if
-an authoritative UTC change made the published site guidance ambiguous. The
-maintainer has confirmed that no such administrative clarification will be
-provided for this release.
+No phase requires new live-site access. Reopen live validation only if an
+authoritative change makes the isolated site guidance ambiguous. No new
+administrative clarification will be provided for this release.

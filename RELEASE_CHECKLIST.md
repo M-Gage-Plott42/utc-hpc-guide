@@ -107,15 +107,16 @@ not proof that the repository is free of private data.
 - Treat OCR as a legibility regression check, not proof that screenshots or
   pages are safely redacted.
 - Complete the [manual accessibility review](docs/pdf-guide.md#manual-accessibility-review)
-  on the exact PDF hash. Verify reading order with a screen reader or
-  read-aloud tool, or through an accessibility API; verify focus order with
-  keyboard traversal or a tool that exposes the PDF tab-order setting. Record
-  the reviewer profile, exact tools and versions, settings, date, tasks,
-  itemized results, remediations, retest results, and untested limitations.
-  Desktop Acrobat Reader plus NVDA on Windows is a recommended reference
-  environment, not an exclusive requirement. Acrobat Read Out Loud may
-  supplement a reading-order check, but Adobe states that it is not a screen
-  reader and it must not be reported as screen-reader evidence.
+  on the exact PDF hash. Verify reading order with a screen reader or through
+  an accessibility API; verify focus order with keyboard traversal or a tool
+  that exposes the PDF tab-order setting. Record the reviewer profile, exact
+  tools and versions, settings, date, tasks, itemized results, remediations,
+  retest results, and untested limitations. Desktop Acrobat Reader plus NVDA
+  on Windows is a recommended reference environment, not an exclusive
+  requirement. A read-aloud-only run is supplemental and leaves the full
+  manual reading-order result not tested. Adobe states that Acrobat Read Out
+  Loud is not a screen reader, and it must not be reported as screen-reader
+  evidence.
 - Do not describe automated tagging or veraPDF success as WCAG 2.1 AA
   certification, assistive-technology usability, or UTC accessibility
   approval.

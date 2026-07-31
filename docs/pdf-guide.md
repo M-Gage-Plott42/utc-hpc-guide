@@ -122,12 +122,17 @@ Complete this review only after source edits are finished, on the exact
 document identified by filename and SHA-256. Any PDF-changing commit
 invalidates earlier evidence.
 
-W3C PDF3 permits either of these reading-order methods:
+W3C PDF3 lists either of these reading-order methods:
 
 - read the document with a screen reader or read-aloud tool and listen for
   correct order; or
 - inspect the order with a tool that exposes the document through an
   accessibility API.
+
+This repository uses a stricter publication-evidence boundary: a completed
+manual reading-order result requires a screen reader or accessibility-API
+inspection. A read-aloud-only run is supplemental and must leave the full
+manual reading-order result recorded as not tested.
 
 It permits either keyboard traversal or a tool that exposes the page
 tab-order setting for focus-order review. Choose and record the methods
@@ -149,9 +154,10 @@ limitations are disclosed.
 
 Adobe explicitly states that
 [Read Out Loud is not a screen reader](https://helpx.adobe.com/reader/desktop/accessibility-features.html#use-the-read-out-loud-text-to-speech-tool).
-It may provide one W3C PDF3 reading-order check, but it does not exercise
-screen-reader navigation or establish screen-reader interoperability. Report
-it only as read-aloud evidence.
+Although it is a read-aloud tool described by one W3C PDF3 test option, this
+repository treats it only as supplemental evidence. It does not exercise
+screen-reader navigation, establish screen-reader interoperability, or
+complete this repository's manual reading-order review by itself.
 
 Complete and record each applicable result as pass, fail, or not tested:
 

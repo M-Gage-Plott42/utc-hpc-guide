@@ -1,6 +1,6 @@
 # v1.2.1 Final Promotion To-Do
 
-Status: in progress
+Status: complete — published as `v1.2.1`
 Audited baseline: `0e000262a19ffaa4e9110427a3403f9464941ef7`
 
 This checklist records the focused final-promotion work following the RC.2
@@ -79,7 +79,7 @@ toolchain redesign, and new live-site checks.
 - [x] Compare every final page at 200 DPI with the hash-verified RC.2 reference.
 - [x] Record the exact manual accessibility/interoperability evidence completed
   and disclose untested pairings without inventing results.
-- [ ] Verify final PDF, toolchain record, and veraPDF report hashes and state.
+- [x] Verify final PDF, toolchain record, and veraPDF report hashes and state.
 
 Validation evidence recorded before the publication workflow:
 
@@ -106,24 +106,53 @@ Validation evidence recorded before the publication workflow:
 
 ## Phase 6: Focused Pull Request
 
-- [ ] Commit and push the complete implementation.
-- [ ] Open a focused draft pull request against `main`.
-- [ ] Report hashes, tests, PDF properties, veraPDF counts, visual review,
+- [x] Commit and push the complete implementation.
+- [x] Open a focused draft pull request against `main`.
+- [x] Report hashes, tests, PDF properties, veraPDF counts, visual review,
   manual evidence, limitations, and the absence of new live-site activity.
-- [ ] Request review and resolve every actionable finding with revalidation.
-- [ ] Require all hosted checks to pass on the final PR head.
+- [x] Request review and resolve every actionable finding with revalidation.
+- [x] Require all hosted checks to pass on the final PR head.
 
 ## Phase 7: Publication
 
-- [ ] Merge the approved pull request.
-- [ ] Require all push-to-main checks to pass on the exact merge commit.
-- [ ] Download and verify the exact main-push PDF, toolchain record, and
+- [x] Merge the approved pull request.
+- [x] Require all push-to-main checks to pass on the exact merge commit.
+- [x] Download and verify the exact main-push PDF, toolchain record, and
   veraPDF report.
-- [ ] Confirm the main-push PDF is byte-identical to the reviewed final PDF.
-- [ ] Tag the exact main commit as `v1.2.1`.
-- [ ] Publish a non-prerelease GitHub release with the three verified assets.
-- [ ] Verify the stable latest-download URL and published SHA-256.
-- [ ] Confirm `main` and the local worktree are clean and synchronized.
+- [x] Confirm the main-push PDF is byte-identical to the reviewed final PDF.
+- [x] Tag the exact main commit as `v1.2.1`.
+- [x] Publish a non-prerelease GitHub release with the three verified assets.
+- [x] Verify the stable latest-download URL and published SHA-256.
+- [x] Confirm `main` and the local worktree are clean and synchronized.
+
+## Publication Record
+
+- Pull request
+  [`#27`](https://github.com/M-Gage-Plott42/utc-hpc-guide/pull/27)
+  merged as `3a937926455d0d17011df9dce0280843e1de4e78`.
+- Tag `v1.2.1` points to that exact reviewed and validated merge commit.
+- Main PDF workflow
+  [`30599818138`](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/runs/30599818138)
+  passed for the merge commit and produced artifact
+  `utc-hpc-guide-v1.2.1-final-3a937926455d0d17011df9dce0280843e1de4e78`.
+- Verified publication hashes:
+  - `UTC_HPC_Guide.pdf`:
+    `41f20791a9577fa263ea5a6444bc25264b27c582bd033237542e41c68f904643`
+  - `build-toolchain.txt`:
+    `0ec21cf4c6e34f22ae3fae3b9aff430c251fb8021e114487fe98214b9147d030`
+  - `verapdf-report.xml`:
+    `2129764669f72f42c046965ba2f163a6556040bda21e49f047928189b68733e1`
+- The final veraPDF report records one compliant job, 1,727 passed rules,
+  210,849 passed checks, no failed rules or checks, and no veraPDF
+  exceptions.
+- The final, non-prerelease
+  [`v1.2.1` release](https://github.com/M-Gage-Plott42/utc-hpc-guide/releases/tag/v1.2.1)
+  contains those three verified assets. The
+  [stable PDF download](https://github.com/M-Gage-Plott42/utc-hpc-guide/releases/latest/download/UTC_HPC_Guide.pdf)
+  was downloaded independently and matched the published PDF hash.
+- This post-publication checklist closure intentionally advances `main`
+  beyond the immutable `v1.2.1` tag; it does not alter the tagged source or
+  published assets.
 
 ## Live-Site Rule
 

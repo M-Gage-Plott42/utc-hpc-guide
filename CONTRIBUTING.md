@@ -43,7 +43,8 @@ Expected behavior:
   Worktree entries are inspected separately from an open repository-root
   descriptor. Every component is opened without following symbolic links,
   every parent must be a directory, and the final component must be a regular
-  file.
+  file. The opened chain remains retained through the read and every component
+  name is revalidated against its descriptor before the content is accepted.
 - Public site facts require exact, reasoned exceptions under `docs/sites/` in
   `scripts/public_scrub_exceptions.json`.
 - `make test-scrub` exercises scan coverage and exception failure paths.

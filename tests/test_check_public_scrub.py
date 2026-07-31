@@ -468,6 +468,125 @@ class PublicScrubTests(unittest.TestCase):
         )
         self.assertEqual(raced.rule, "tracked_worktree_path_changed")
 
+    def test_rejects_parent_replacement_after_descriptor_open(self) -> None:
+        temp_dir, root, policy = self.make_repo(
+            {"docs/example.md": "Safe indexed copy."}
+        )
+        self.addCleanup(temp_dir.cleanup)
+        replacement = root / "replacement-docs"
+        replacement.mkdir()
+        (replacement / "example.md").write_text(
+            "sim" + "center",
+            encoding="utf-8",
+        )
+        real_open = os.open
+        docs_open_count = 0
+        swapped = False
+
+        def open_spy(
+            path: os.PathLike[str] | str,
+            flags: int,
+            *,
+            dir_fd: int | None = None,
+        ) -> int:
+            nonlocal docs_open_count, swapped
+            descriptor = real_open(path, flags, dir_fd=dir_fd)
+            if path == "docs" and dir_fd is not None:
+                docs_open_count += 1
+                if docs_open_count == 2:
+                    swapped = True
+                    (root / "docs").rename(root / "docs-before-race")
+                    replacement.rename(root / "docs")
+            return descriptor
+
+        with mock.patch(
+            "scripts.check_public_scrub.os.open",
+            side_effect=open_spy,
+        ):
+            findings, _, _ = check_repository(root, policy)
+
+        self.assertTrue(swapped)
+        raced = next(
+            finding
+            for finding in findings
+            if finding.path == "docs/example.md"
+        )
+        self.assertEqual(raced.rule, "tracked_worktree_path_changed")
+
+    def test_rejects_parent_and_final_replacement_during_read(self) -> None:
+        for component_kind in ("parent", "final"):
+            with self.subTest(component_kind=component_kind):
+                tracked_path = (
+                    "docs/example.md"
+                    if component_kind == "parent"
+                    else "README.md"
+                )
+                temp_dir, root, policy = self.make_repo(
+                    {tracked_path: "Safe indexed copy."}
+                )
+                try:
+                    tracked_file = root / tracked_path
+                    tracked_identity = (
+                        tracked_file.stat().st_dev,
+                        tracked_file.stat().st_ino,
+                    )
+                    if component_kind == "parent":
+                        replacement = root / "replacement-docs"
+                        replacement.mkdir()
+                        (replacement / "example.md").write_text(
+                            "sim" + "center",
+                            encoding="utf-8",
+                        )
+                    else:
+                        replacement = root / "replacement-readme"
+                        replacement.write_text(
+                            "sim" + "center",
+                            encoding="utf-8",
+                        )
+
+                    real_read = os.read
+                    swapped = False
+
+                    def read_spy(descriptor: int, length: int) -> bytes:
+                        nonlocal swapped
+                        opened = os.fstat(descriptor)
+                        if (
+                            not swapped
+                            and (opened.st_dev, opened.st_ino)
+                            == tracked_identity
+                        ):
+                            swapped = True
+                            if component_kind == "parent":
+                                (root / "docs").rename(
+                                    root / "docs-before-read-race"
+                                )
+                                replacement.rename(root / "docs")
+                            else:
+                                (root / "README.md").rename(
+                                    root / "README-before-read-race"
+                                )
+                                replacement.rename(root / "README.md")
+                        return real_read(descriptor, length)
+
+                    with mock.patch(
+                        "scripts.check_public_scrub.os.read",
+                        side_effect=read_spy,
+                    ):
+                        findings, _, _ = check_repository(root, policy)
+
+                    self.assertTrue(swapped)
+                    raced = next(
+                        finding
+                        for finding in findings
+                        if finding.path == tracked_path
+                    )
+                    self.assertEqual(
+                        raced.rule,
+                        "tracked_worktree_path_changed",
+                    )
+                finally:
+                    temp_dir.cleanup()
+
     def test_rejects_final_component_replacement_race(self) -> None:
         temp_dir, root, policy = self.make_repo({"README.md": "Safe copy."})
         self.addCleanup(temp_dir.cleanup)

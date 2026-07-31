@@ -31,7 +31,10 @@ repository-rooted, directory-relative operations. Every path component is
 opened without following symbolic links, each parent must be a directory, and
 the final component must be the same regular file before and after opening. A
 symbolic link anywhere in that chain is a policy failure; the scanner does not
-resolve, read, or print the link target.
+resolve, read, or print the link target. Open component descriptors remain
+retained through the content read, after which every named component is
+revalidated against its retained identity. A rename or replacement observed
+during that interval fails closed.
 
 GitHub documents automatic secret scanning for public repositories and
 user-level push protection for supported secret patterns. That standard

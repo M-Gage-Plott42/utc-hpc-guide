@@ -91,6 +91,26 @@ class IndexEntry:
     path: str
 
 
+@dataclass
+class OpenedRepositoryPath:
+    """Own the descriptors and identities for one opened repository path."""
+
+    repository_path: str
+    components: list[str]
+    descriptors: list[int]
+    identities: list[tuple[int, int]]
+    directory_flags: list[bool]
+
+    @property
+    def descriptor(self) -> int:
+        return self.descriptors[-1]
+
+    def close(self) -> None:
+        while self.descriptors:
+            descriptor = self.descriptors.pop()
+            os.close(descriptor)
+
+
 ALLOWED_INDEX_MODES = frozenset(("100644", "100755"))
 OPEN_SUPPORTS_DIR_FD = os.open in os.supports_dir_fd
 STAT_SUPPORTS_DIR_FD = os.stat in os.supports_dir_fd
@@ -139,6 +159,7 @@ class RepositoryReader:
     def __init__(self, root: Path) -> None:
         self.root = root
         self._root_descriptor: int | None = None
+        self._root_identity: tuple[int, int] | None = None
 
     def __enter__(self) -> RepositoryReader:
         required_flags = ("O_DIRECTORY", "O_NOFOLLOW", "O_CLOEXEC", "O_NONBLOCK")
@@ -168,18 +189,26 @@ class RepositoryReader:
             os.close(descriptor)
             raise OSError("repository root changed while being opened")
         self._root_descriptor = descriptor
+        self._root_identity = (opened.st_dev, opened.st_ino)
         return self
 
     def __exit__(self, *args: object) -> None:
         if self._root_descriptor is not None:
             os.close(self._root_descriptor)
             self._root_descriptor = None
+            self._root_identity = None
 
     @property
     def root_descriptor(self) -> int:
         if self._root_descriptor is None:
             raise RuntimeError("repository reader is not open")
         return self._root_descriptor
+
+    @property
+    def root_identity(self) -> tuple[int, int]:
+        if self._root_identity is None:
+            raise RuntimeError("repository reader is not open")
+        return self._root_identity
 
     @staticmethod
     def _type_error(
@@ -207,6 +236,79 @@ class RepositoryReader:
                 else "worktree_entry_is_not_regular"
             ),
         )
+
+    @staticmethod
+    def _path_changed(display_path: str) -> WorktreeBoundaryError:
+        return WorktreeBoundaryError(
+            display_path,
+            "tracked_worktree_path_changed",
+            "worktree_path_changed_while_opening_or_reading",
+        )
+
+    def _revalidate_root(self, display_path: str) -> None:
+        try:
+            current = os.stat(self.root, follow_symlinks=False)
+            opened = os.fstat(self.root_descriptor)
+        except (FileNotFoundError, NotADirectoryError):
+            raise self._path_changed(display_path) from None
+        if (
+            not stat.S_ISDIR(current.st_mode)
+            or not stat.S_ISDIR(opened.st_mode)
+            or (current.st_dev, current.st_ino) != self.root_identity
+            or (opened.st_dev, opened.st_ino) != self.root_identity
+        ):
+            raise self._path_changed(display_path)
+
+    def _revalidate_opened_path(self, opened_path: OpenedRepositoryPath) -> None:
+        """Require every retained descriptor to remain at its repository name."""
+
+        self._revalidate_root(opened_path.repository_path)
+        parent_descriptor = self.root_descriptor
+        for component, descriptor, identity, is_directory in zip(
+            opened_path.components,
+            opened_path.descriptors,
+            opened_path.identities,
+            opened_path.directory_flags,
+            strict=True,
+        ):
+            try:
+                current = os.stat(
+                    component,
+                    dir_fd=parent_descriptor,
+                    follow_symlinks=False,
+                )
+                retained = os.fstat(descriptor)
+            except (FileNotFoundError, NotADirectoryError):
+                raise self._path_changed(opened_path.repository_path) from None
+            expected_type = stat.S_ISDIR if is_directory else stat.S_ISREG
+            if (
+                not expected_type(current.st_mode)
+                or not expected_type(retained.st_mode)
+                or (current.st_dev, current.st_ino) != identity
+                or (retained.st_dev, retained.st_ino) != identity
+            ):
+                raise self._path_changed(opened_path.repository_path)
+            parent_descriptor = descriptor
+
+    def _confirm_missing_component(
+        self,
+        parent_descriptor: int,
+        component: str,
+        display_path: str,
+    ) -> None:
+        """Accept an absent worktree component only if it remains absent."""
+
+        try:
+            os.stat(
+                component,
+                dir_fd=parent_descriptor,
+                follow_symlinks=False,
+            )
+        except FileNotFoundError:
+            return
+        except NotADirectoryError:
+            raise self._path_changed(display_path) from None
+        raise self._path_changed(display_path)
 
     def _open_checked_component(
         self,
@@ -251,11 +353,7 @@ class RepositoryReader:
             )
         except OSError as exc:
             if exc.errno in (errno.ELOOP, errno.ENOENT, errno.ENOTDIR):
-                raise WorktreeBoundaryError(
-                    display_path,
-                    "tracked_worktree_path_changed",
-                    "worktree_path_changed_while_opening",
-                ) from None
+                raise self._path_changed(display_path) from None
             raise
 
         try:
@@ -272,11 +370,7 @@ class RepositoryReader:
             )
         if (before.st_dev, before.st_ino) != (opened.st_dev, opened.st_ino):
             os.close(descriptor)
-            raise WorktreeBoundaryError(
-                display_path,
-                "tracked_worktree_path_changed",
-                "worktree_path_changed_while_opening",
-            )
+            raise self._path_changed(display_path)
         return descriptor
 
     def _open_regular(
@@ -284,33 +378,45 @@ class RepositoryReader:
         repository_path: str,
         *,
         allow_missing: bool,
-    ) -> int | None:
+    ) -> OpenedRepositoryPath | None:
         components = validate_repository_path(repository_path)
         parent_descriptor = self.root_descriptor
-        opened_parents: list[int] = []
+        opened_path = OpenedRepositoryPath(
+            repository_path=repository_path,
+            components=[],
+            descriptors=[],
+            identities=[],
+            directory_flags=[],
+        )
         try:
-            for component in components[:-1]:
-                next_descriptor = self._open_checked_component(
+            for index, component in enumerate(components):
+                is_parent = index < len(components) - 1
+                descriptor = self._open_checked_component(
                     parent_descriptor,
                     component,
                     repository_path,
-                    is_parent=True,
+                    is_parent=is_parent,
                     allow_missing=allow_missing,
                 )
-                if next_descriptor is None:
+                if descriptor is None:
+                    self._revalidate_opened_path(opened_path)
+                    self._confirm_missing_component(
+                        parent_descriptor,
+                        component,
+                        repository_path,
+                    )
+                    opened_path.close()
                     return None
-                opened_parents.append(next_descriptor)
-                parent_descriptor = next_descriptor
-            return self._open_checked_component(
-                parent_descriptor,
-                components[-1],
-                repository_path,
-                is_parent=False,
-                allow_missing=allow_missing,
-            )
-        finally:
-            for descriptor in reversed(opened_parents):
-                os.close(descriptor)
+                opened_path.components.append(component)
+                opened_path.descriptors.append(descriptor)
+                retained = os.fstat(descriptor)
+                opened_path.identities.append((retained.st_dev, retained.st_ino))
+                opened_path.directory_flags.append(is_parent)
+                parent_descriptor = descriptor
+            return opened_path
+        except BaseException:
+            opened_path.close()
+            raise
 
     def validate_regular(
         self,
@@ -318,14 +424,17 @@ class RepositoryReader:
         *,
         allow_missing: bool,
     ) -> bool:
-        descriptor = self._open_regular(
+        opened_path = self._open_regular(
             repository_path,
             allow_missing=allow_missing,
         )
-        if descriptor is None:
+        if opened_path is None:
             return False
-        os.close(descriptor)
-        return True
+        try:
+            self._revalidate_opened_path(opened_path)
+            return True
+        finally:
+            opened_path.close()
 
     def read_regular_bytes(
         self,
@@ -333,22 +442,23 @@ class RepositoryReader:
         *,
         allow_missing: bool,
     ) -> bytes | None:
-        descriptor = self._open_regular(
+        opened_path = self._open_regular(
             repository_path,
             allow_missing=allow_missing,
         )
-        if descriptor is None:
+        if opened_path is None:
             return None
         try:
             chunks: list[bytes] = []
             while True:
-                chunk = os.read(descriptor, 1024 * 1024)
+                chunk = os.read(opened_path.descriptor, 1024 * 1024)
                 if not chunk:
                     break
                 chunks.append(chunk)
+            self._revalidate_opened_path(opened_path)
             return b"".join(chunks)
         finally:
-            os.close(descriptor)
+            opened_path.close()
 
 
 def tracked_entries(root: Path) -> list[IndexEntry]:
@@ -689,10 +799,14 @@ def check_repository(
         text_file_count = 0
         for entry in entries:
             index_data = read_index_blob(root, entry)
-            worktree_data = reader.read_regular_bytes(
-                entry.path,
-                allow_missing=True,
-            )
+            try:
+                worktree_data = reader.read_regular_bytes(
+                    entry.path,
+                    allow_missing=True,
+                )
+            except WorktreeBoundaryError as exc:
+                findings.append(Finding(exc.path, 0, exc.rule, exc.value))
+                continue
             index_allowed = {
                 exception.literal.casefold()
                 for exception in index_exceptions

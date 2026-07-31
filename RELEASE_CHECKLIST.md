@@ -48,8 +48,10 @@ entries. Fail on tracked symbolic links, gitlinks, unmerged entries,
 unsupported modes, a symbolic link in any worktree path component, or a
 non-directory parent. Regular worktree reads, the policy, and site-exception
 targets must be opened one component at a time from the repository root
-through the no-follow boundary. A scrub pass is still one defense in depth,
-not proof that the repository is free of private data.
+through the no-follow boundary. Retain that descriptor chain through the read
+and reject any component name that no longer matches its opened identity
+afterward. A scrub pass is still one defense in depth, not proof that the
+repository is free of private data.
 
 ## 3. Screenshots and Assets
 

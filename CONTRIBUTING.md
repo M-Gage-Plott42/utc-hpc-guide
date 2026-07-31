@@ -37,6 +37,11 @@ Expected behavior:
   `markdownlint` installation is neither required nor used.
 - `make scrub` scans every Git-tracked text file and prints
   `public_scrub_policy_passed` or fails on repository-policy patterns.
+- The scrub preflight reads NUL-safe index records and accepts only ordinary
+  stage-zero regular or executable files. Tracked symbolic links, gitlinks,
+  unmerged entries, and unsupported modes are repository-policy failures.
+  Worktree entries are inspected separately and regular files are opened
+  without following a final-component symbolic link.
 - Public site facts require exact, reasoned exceptions under `docs/sites/` in
   `scripts/public_scrub_exceptions.json`.
 - `make test-scrub` exercises scan coverage and exception failure paths.
@@ -52,20 +57,24 @@ Expected behavior:
 
 ## Release Validation
 
-For a release-affecting change, install ShellCheck plus the Pandoc, XeLaTeX,
-qpdf, Poppler, Tesseract English OCR, and DejaVu font packages described in
-[the PDF guide](docs/pdf-guide.md), then run:
+For a release-affecting change, use the Ubuntu 24.04 x86_64 host, install
+ShellCheck and the prerequisites listed in
+[the PDF guide](docs/pdf-guide.md), then bootstrap the locked PDF toolchain and
+run:
 
 ```bash
 npm ci
+make setup-pdf-tools
 make release-check
 ```
 
 The release gate runs the routine checks, applies `bash -n` and ShellCheck to
 each tracked `examples/*.sbatch` file, requires a byte-identical PDF rebuild
-that passes structural, rendering, text-extraction, and every-page OCR QA, and
-checks staged and unstaged changes for whitespace errors. Network-dependent
-dependency audits remain separate.
+that passes structural, PDF/UA-2 machine, rendering, text-extraction, and
+every-page OCR QA, and checks staged and unstaged changes for whitespace
+errors. The pinned veraPDF result covers machine-verifiable conformance only;
+it does not certify WCAG 2.1 AA or replace the manual accessibility checklist.
+Network-dependent dependency audits remain separate.
 
 If you change image assets, manually confirm screenshots do not expose usernames, hostnames, account/allocation IDs, or private paths.
 The automated asset gate checks paths, structure, decoding, and metadata; it
@@ -83,6 +92,8 @@ does not inspect pixels or prove that an image is safely redacted.
 
 - For a single maintainer, direct pushes to `main` are acceptable.
 - For larger or risky changes, prefer a topic branch and PR for reviewable history.
+- Treat PDF toolchain, accessibility, and release-promotion changes as
+  substantial work that requires a topic branch and pull request.
 
 ## Commit Guidance
 

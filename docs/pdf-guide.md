@@ -1,75 +1,238 @@
 # Printable PDF Guide
 
-The printable guide is assembled from the tracked numbered chapters,
-site appendix, and runnable Slurm templates. Those files remain the canonical
+The printable guide is assembled from the tracked numbered chapters, site
+appendix, and runnable Slurm templates. Those files remain the canonical
 editable sources; the repository does not maintain a second hand-edited copy
 of the same content.
 
-The ordered source manifest is `pdf/guide_manifest.json`. Build the current
-release candidate with:
+The document contract is `pdf/guide_manifest.json`. The PDF toolchain contract
+is `pdf/toolchain.lock.json`. Build and validation commands derive the output
+path from the manifest rather than maintaining a second filename setting.
+
+## Locked Toolchain
+
+The current Ubuntu 24.04 x86_64 toolchain pins:
+
+- [Pandoc 3.10.1](https://github.com/jgm/pandoc/releases/tag/3.10.1);
+- a frozen TeX Live 2025 repository with LuaLaTeX and the recorded LaTeX
+  kernel and package revisions;
+- [Eclipse Temurin 21.0.11+10](https://github.com/adoptium/temurin21-binaries/releases/tag/jdk-21.0.11%2B10);
+- [veraPDF 1.30.2](https://software.verapdf.org/rel/1.30/) with its built-in
+  `ua2` profile; and
+- exact expected versions of qpdf, Poppler, Tesseract English OCR, Fontconfig,
+  and the DejaVu fonts used by the build.
+
+The bootstrap requires Ubuntu 24.04 x86_64, Python 3, GnuPG, Perl, network
+access, and the exact host QA packages recorded in the lock. It downloads into
+the ignored `.cache/pdf-toolchain/` directory, verifies declared checksums and
+release signatures, binds the signed TeX Live checksum to the installer,
+verifies signing-key fingerprints, verifies every explicitly installed TeX
+package container against its locked SHA-512, and checks exact installed
+versions:
+
+```bash
+make setup-pdf-tools
+```
+
+After a complete verification, the cache receives an attestation containing
+the exact lock-file digest. A missing or different attestation fails closed;
+move the old cache aside and bootstrap again rather than reusing it under a
+changed lock.
+
+Do not substitute Ubuntu's distribution Pandoc or TeX packages for release
+validation. The lock file, bootstrap, local Make targets, and hosted workflow
+define one release toolchain.
+
+## Build and Automated Validation
+
+Build the current review candidate:
 
 ```bash
 make pdf
 ```
 
-Run the full PDF gate with:
+The manifest currently produces:
+
+```text
+dist/UTC_HPC_Guide_v1.2.1-rc.2.pdf
+```
+
+Run the accessibility gate against an existing build:
+
+```bash
+make check-pdf-accessibility
+```
+
+Run the complete PDF gate:
 
 ```bash
 make check-pdf
 ```
 
-For release-affecting work, use the repository-wide gate instead:
+For release-affecting work, run the repository-wide gate:
 
 ```bash
 npm ci
+make setup-pdf-tools
 make release-check
 ```
 
-That target includes the routine content checks, Bash syntax and ShellCheck
-validation, the full PDF gate, and `git diff --check`.
-
-The full gate:
+The PDF gate:
 
 - builds twice with the manifest's fixed `SOURCE_DATE_EPOCH` and requires
   byte-identical PDFs;
-- validates the PDF structure with `qpdf`;
-- checks letter page size, metadata, encryption state, embedded fonts, and
-  Unicode mappings with Poppler;
-- extracts text and checks required guide sections and examples; and
-- rasterizes every page to ensure the complete document renders;
-- runs Tesseract against every rendered page and requires a minimum amount of
-  visible OCR text on each one; and
-- checks representative guide and appendix headings in the combined OCR
-  output.
+- generates PDF 2.0 through Pandoc's supported LuaLaTeX
+  `pdfstandard=ua-2` path;
+- validates basic PDF structure with qpdf;
+- checks US Letter page size, title, author, encryption state, embedded fonts,
+  and Unicode mappings with Poppler;
+- requires `Tagged: yes`, a structure tree, marked content, `en-US`, and the
+  expected PDF/UA-2 identification;
+- requires representative heading, list, table, table-header, table-cell,
+  link, figure, and code structure;
+- renders screenshots as non-floating, source-position figures with nearby
+  contextual labels, and rejects detached caption structures that could move
+  ahead of their headings or figures in logical reading order;
+- checks the expected meaningful alternative descriptions for all three Open
+  OnDemand screenshots;
+- rejects forms, JavaScript, attachments, embedded files, and other prohibited
+  active content;
+- runs the pinned veraPDF `ua2` profile and preserves the machine-readable
+  result as `dist/verapdf-report.xml`;
+- extracts text and checks required guide sections and examples;
+- rasterizes every page and requires the complete document to render; and
+- runs Tesseract against every rendered page, enforces the per-page text
+  threshold, and checks representative headings in the combined OCR output.
 
-The OCR check is a legibility regression test, not a claim that OCR can prove
-privacy or redaction quality. Human review of every page and source image
-remains mandatory. The local PDF toolchain therefore also requires the
-`tesseract` command with English language data.
+The [Pandoc LaTeX variables](https://pandoc.org/demo/example33/19.1-latex.html)
+enable the source-generated PDF-standard path. The
+[LaTeX tagging project instructions](https://latex3.github.io/tagging-project/documentation/usage-instructions)
+describe the underlying tagging support, and the
+[veraPDF CLI documentation](https://docs.verapdf.org/cli/validation/) describes
+the independent machine validator.
+
+The OCR check is a legibility regression test, not proof of privacy,
+redaction, or accessibility. Likewise, a tagged PDF and passing veraPDF report
+cover machine-verifiable requirements only. They do not certify WCAG 2.1 AA,
+prove usable reading order, or constitute UTC accessibility approval.
+
+## Manual Accessibility Review
+
+Complete this review only after source edits are finished, on the exact
+candidate identified by filename and SHA-256. Any PDF-changing commit
+invalidates earlier evidence.
+
+The required release baseline is the current desktop Adobe Acrobat Reader and
+current stable NVDA on Windows 11, with exact versions recorded. Open the
+local PDF in Reader rather than a browser PDF viewer, use the tagged document
+structure rather than a reading-order override, and record relevant Reader
+and NVDA reading settings. The reviewer should be an experienced screen-reader
+user or otherwise proficient enough to complete the tasks without relying on
+visual order. A sighted maintainer's author-assisted NVDA smoke test is useful
+supplemental evidence, but it is not the required proficient human review.
+Adobe explicitly notes that
+[Read Out Loud is not a screen reader](https://helpx.adobe.com/uk/acrobat/using/reading-pdfs-reflow-accessibility-features.html#read-a-pdf-with-read-out-loud),
+so it cannot satisfy this baseline.
+
+Complete and record each result as pass, fail, or not tested:
+
+- Use NVDA browse-mode heading navigation and the Elements List to confirm the
+  heading hierarchy and document title.
+- Navigate forward and backward by list and list item; confirm boundaries,
+  counts, and nesting.
+- Navigate the UTC partition table by table and cell. Confirm NVDA announces
+  the correct `Partition` or `Public UTC notes` column header and retains the
+  correct row and column relationship for every cell.
+- Navigate by graphic and read sequentially around all three Open OnDemand
+  figures. Confirm each useful alternative description is spoken once at the
+  intended source position, without a filename, identifier, or detached
+  caption.
+- Navigate links through both NVDA's Elements List and Tab/Shift+Tab. Confirm
+  meaningful purpose, logical focus order, visible focus, and keyboard
+  activation for representative contents and external links.
+- Complete an end-to-end Say All reading-order pass from the title through
+  Appendix B. Meaningful content must be read once in logical order; repeated
+  running headers, page numbers, rules, and decorative elements must not
+  interrupt it.
+- With punctuation and indentation reporting enabled, read representative
+  narrative commands and the complete CPU and TensorFlow Appendix B templates
+  line by line. Confirm quoting, variables, comments, indentation, wrapping,
+  and page transitions remain understandable.
+- Inspect every page at 200% zoom and in Acrobat Reflow. Use Windows Magnifier
+  as a supplemental low-vision check and record whether narrative content
+  remains present and readable without clipping, overlap, or unnecessary
+  two-dimensional scrolling. A table or indentation-dependent code may retain
+  two-dimensional layout; no information may disappear.
+- Complete all link navigation without a mouse, then confirm the separate
+  visual review found no clipping, broken glyphs, unintended blanks, malformed
+  code, table overflow, insufficient contrast, or exposed private information.
+
+The [NVDA user guide](https://download.nvaccess.org/releases/stable/documentation/en/userGuide.html#BrowseMode)
+documents Adobe Reader browse mode and structural navigation for headings,
+lists, tables, links, and graphics. W3C's
+[PDF reading- and tab-order test](https://www.w3.org/WAI/WCAG21/Techniques/pdf/PDF3)
+requires assistive-technology or accessibility-API reading-order inspection
+plus keyboard focus-order inspection. Adobe documents
+[tag-dependent reflow](https://helpx.adobe.com/uk/acrobat/using/reading-pdfs-reflow-accessibility-features.html#reflow-a-pdf),
+and Section508.gov provides a
+[manual PDF testing and remediation series](https://www.section508.gov/create/pdfs/).
+
+JAWS with Acrobat or VoiceOver with a supported macOS viewer can broaden
+confidence, but a second pairing is not required for this repository's RC
+baseline. A clean result demonstrates only the named environment and tasks; it
+does not establish universal assistive-technology interoperability, WCAG or
+Section 508 certification, disability-user testing, or UTC accessibility
+approval.
+
+Record the following evidence in a pull-request comment so recording the
+review does not alter the PDF that was tested:
+
+```text
+Reviewer and tester profile:
+Review date:
+PDF filename:
+SHA-256 before and after review:
+Windows edition and build:
+Adobe Acrobat Reader version:
+NVDA version, synthesizer, and keyboard layout:
+Reader and NVDA reading settings:
+Heading/list/table/figure/link/code/end-to-end results:
+Keyboard-only result:
+Magnifier/reflow result:
+Defects, remediations, and retest result:
+Unresolved limitations:
+```
+
+Omitted, duplicated, materially reordered, mislabeled, or unusable meaningful
+content is a release blocker even when veraPDF passes. If machine validation,
+visual quality, reproducibility, OCR, or manual accessibility review
+conflicts, stop with a release-candidate report. Do not weaken or allowlist the
+failed gate and do not promote an unreviewed PDF.
+
+## Reproducibility and Artifacts
 
 The fixed build epoch follows Pandoc's
 [reproducible-build guidance](https://pandoc.org/demo/example33/18-reproducible-builds.html).
-The tracked XeLaTeX header also supplies a stable PDF trailer identifier so the
-repository's supported Pandoc 3.1 toolchain produces identical bytes.
+The LuaLaTeX build uses Pandoc's supported deterministic trailer-identifier
+path, fixed source ordering, and the locked toolchain. Reproducibility means
+byte-identical output under that declared environment; it is not a claim of
+signed or hermetic provenance.
 
-The generated release candidate is
-`dist/UTC_HPC_Guide_v1.2.1-rc.1.pdf`. The `dist/` directory is intentionally
-ignored: reviewed final release binaries belong on the corresponding GitHub
-release, while the tracked Markdown, manifest, and build scripts remain
-authoritative.
+After PDF QA passes, the hosted workflow uploads these files together:
 
-Reproducibility here means byte-identical output from the same source and
-declared toolchain. A different Pandoc, XeLaTeX, or font package version can
-produce different typesetting even when the guide content is unchanged.
+- `UTC_HPC_Guide_v1.2.1-rc.2.pdf`;
+- `build-toolchain.txt`; and
+- `verapdf-report.xml`.
 
-The PDF workflow runs on `ubuntu-24.04`. After PDF QA passes, it uploads the
-PDF and `build-toolchain.txt` together as one review artifact. The record
-captures the commit and workflow run, runner image, operating system, command
-and package versions, resolved DejaVu fonts, and PDF SHA-256 observed during
-that run.
+The toolchain record captures the commit and workflow run, runner image,
+toolchain-lock digest, observed tool versions, structural and accessibility
+results, and PDF SHA-256. The lock declares the expected inputs; the run record
+describes one observed build. The hosted Ubuntu runner image and transitive
+system dependencies are not digest-pinned, so this remains a reference build
+rather than hermetic or signed provenance. The workflow artifact has a short
+retention period.
 
-This is traceability, not a complete toolchain lock or signed build
-provenance. The fixed runner label does not freeze future runner-image or apt
-package updates, and the workflow artifact has a short retention period.
-Publish a separately reviewed PDF on the matching GitHub release for durable
-distribution.
+The stable latest-release URL continues to serve `v1.2.0`.
+`v1.2.1-rc.2` artifacts are review-only and are not for redistribution.
+Reviewed final binaries belong on the matching GitHub release under the stable
+asset name `UTC_HPC_Guide.pdf`.

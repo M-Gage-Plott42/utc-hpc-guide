@@ -19,94 +19,84 @@ permissions:
 jobs:
   pdf:
     runs-on: ubuntu-24.04
+    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Install PDF toolchain
-        run: |
-          sudo apt-get update
-          sudo apt-get install --yes \
-            fonts-dejavu-core \
-            pandoc \
-            poppler-utils \
-            qpdf \
-            tesseract-ocr \
-            tesseract-ocr-eng \
-            texlive-latex-extra \
-            texlive-xetex
+      - name: Test toolchain-record failure paths
+        run: python3 -m unittest tests.test_write_pdf_toolchain_record
 
-      - name: Build twice and validate PDF
-        run: make check-pdf
-
-      - name: Record build toolchain
+      - name: Install exact host PDF QA packages
         shell: bash
         run: |
-          {
-            echo "UTC HPC Guide PDF build traceability record"
-            echo
-            echo "[run]"
-            echo "commit=${GITHUB_SHA}"
-            echo "repository=${GITHUB_REPOSITORY}"
-            echo "workflow=${GITHUB_WORKFLOW}"
-            echo "event=${GITHUB_EVENT_NAME}"
-            echo "ref=${GITHUB_REF}"
-            echo "run_id=${GITHUB_RUN_ID}"
-            echo "run_number=${GITHUB_RUN_NUMBER}"
-            echo "run_attempt=${GITHUB_RUN_ATTEMPT}"
-            echo "run_url=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            echo
-            echo "[runner]"
-            echo "runner_os=${RUNNER_OS}"
-            echo "runner_arch=${RUNNER_ARCH}"
-            echo "ImageOS=${ImageOS:-unavailable}"
-            echo "ImageVersion=${ImageVersion:-unavailable}"
-            echo
-            echo "[os-release]"
-            cat /etc/os-release
-            echo
-            echo "[command-versions]"
-            python3 --version
-            pandoc --version
-            xelatex --version
-            qpdf --version
-            pdfinfo -v 2>&1
-            pdffonts -v 2>&1
-            pdftotext -v 2>&1
-            pdftoppm -v 2>&1
-            tesseract --version
-            tesseract --list-langs
-            fc-match --version
-            echo
-            echo "[package-versions]"
-            dpkg-query -W -f='${binary:Package}\t${Version}\n' \
-              fonts-dejavu-core \
-              pandoc \
-              poppler-utils \
-              qpdf \
-              tesseract-ocr \
-              tesseract-ocr-eng \
-              texlive-latex-extra \
-              texlive-xetex
-            echo
-            echo "[font-resolution]"
-            printf "requested=DejaVu Serif\t"
-            fc-match -f='family=%{family}\tfile=%{file}\n' "DejaVu Serif"
-            printf "requested=DejaVu Sans\t"
-            fc-match -f='family=%{family}\tfile=%{file}\n' "DejaVu Sans"
-            printf "requested=DejaVu Sans Mono\t"
-            fc-match -f='family=%{family}\tfile=%{file}\n' "DejaVu Sans Mono"
-            echo
-            echo "[pdf-sha256]"
-            sha256sum dist/UTC_HPC_Guide_v1.2.1-rc.1.pdf
-          } > dist/build-toolchain.txt
+          set -euo pipefail
+          mapfile -t qa_packages < <(
+            python3 -c '
+          import json
+          from pathlib import Path
 
-      - name: Upload PDF review artifact
+          lock = json.loads(
+              Path("pdf/toolchain.lock.json").read_text(encoding="utf-8")
+          )
+          for package, version in lock["ubuntu_24_04_qa_packages"].items():
+              print(f"{package}={version}")
+          '
+          )
+          if (( ${#qa_packages[@]} == 0 )); then
+            echo "The PDF toolchain lock contains no host QA packages." >&2
+            exit 1
+          fi
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            "${qa_packages[@]}"
+
+      - name: Bootstrap and verify locked PDF toolchain
+        run: |
+          python3 scripts/bootstrap_pdf_toolchain.py \
+            --lock pdf/toolchain.lock.json \
+            --root .cache/pdf-toolchain
+
+      - name: Build twice and validate PDF
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          make check-pdf 2>&1 | tee dist/check-pdf.log
+
+      - name: Record build toolchain
+        run: |
+          python3 scripts/write_pdf_toolchain_record.py \
+            --manifest pdf/guide_manifest.json \
+            --lock pdf/toolchain.lock.json \
+            --toolchain-root .cache/pdf-toolchain \
+            --report dist/verapdf-report.xml \
+            --check-log dist/check-pdf.log \
+            --output dist/build-toolchain.txt \
+            --require-github-context
+
+      - name: Resolve manifest-derived review artifact
+        id: pdf_output
+        shell: bash
+        run: |
+          set -euo pipefail
+          pdf_path="$(python3 scripts/build_pdf.py --print-output-path)"
+          case "${pdf_path}" in
+            dist/*.pdf) ;;
+            *)
+              echo "Unexpected manifest-derived PDF path: ${pdf_path}" >&2
+              exit 1
+              ;;
+          esac
+          printf 'path=%s\n' "${pdf_path}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload review-only RC.2 artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: utc-hpc-guide-pdf-${{ github.sha }}
+          name: utc-hpc-guide-rc2-review-${{ github.sha }}
           path: |
-            dist/UTC_HPC_Guide_v1.2.1-rc.1.pdf
+            ${{ steps.pdf_output.outputs.path }}
             dist/build-toolchain.txt
+            dist/verapdf-report.xml
           if-no-files-found: error
           retention-days: 14

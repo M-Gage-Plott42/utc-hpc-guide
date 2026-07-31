@@ -1,15 +1,20 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "title": "Practical HPC Onboarding Guide",
   "subtitle": "SLURM, Open OnDemand, SSH, Python, and GPU Workflows",
   "author": "Gage Plott",
   "date": "July 2026",
+  "release_status": "candidate",
   "release_target": "1.2.1",
-  "document_version": "1.2.1-rc.1",
+  "document_version": "1.2.1-rc.2",
   "source_date_epoch": 1785326400,
-  "pdf_trailer_id": "273da9da44fa4a552a55481a7c61049d",
-  "output_filename": "UTC_HPC_Guide_v1.2.1-rc.1.pdf",
+  "pdf_trailer_id": "705115f6a95b49c83c9bc7898fb89ea2",
+  "output_filename": "UTC_HPC_Guide_v1.2.1-rc.2.pdf",
+  "pdf_standard": "ua-2",
+  "language": "en-US",
   "header_source": "pdf/header.tex",
+  "template_source": "pdf/tagged-template.latex",
+  "code_filter_source": "pdf/code-blocks.lua",
   "core_sources": [
     "docs/00-overview.md",
     "docs/01-access-ssh.md",
@@ -46,6 +51,11 @@
     "Appendix B: Runnable Slurm Templates",
     "slurm_cpu_example.sbatch",
     "slurm_tensorflow_gpu_probe.sbatch"
+  ],
+  "expected_figure_alt_text": [
+    "Open OnDemand desktop request form showing resource and launch controls",
+    "Running Open OnDemand desktop session card showing allocation and launch controls",
+    "Open OnDemand file shortcuts for home, scratch, public, and group storage"
   ],
   "ocr_dpi": 150,
   "ocr_min_alnum_per_page": 200,

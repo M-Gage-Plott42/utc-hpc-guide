@@ -16,6 +16,21 @@ cannot prove that a repository contains no secrets or private information.
 Treat it as one defense in depth alongside review and provider-backed secret
 scanning.
 
+### Tracked Entry Boundary
+
+This public documentation repository allows only stage-zero regular
+(`100644`) and executable (`100755`) Git index entries. `make scrub` rejects
+tracked symbolic links, gitlinks, unmerged entries, and any unsupported index
+mode before it loads the policy or reads content.
+
+The scanner evaluates the indexed blob for every accepted entry and also scans
+a differing worktree version. A genuinely deleted worktree file therefore does
+not remove its indexed content from scrutiny. Existing worktree entries,
+including the policy file and site-exception targets, are inspected with
+`lstat`, opened with a no-follow flag, and verified as the same regular file
+after opening. A symbolic link that replaces an indexed regular file is a
+policy failure; the scanner does not resolve, read, or print the link target.
+
 GitHub documents automatic secret scanning for public repositories and
 user-level push protection for supported secret patterns. That standard
 service is the preferred complement to the local policy scanner because it

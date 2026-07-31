@@ -13,8 +13,9 @@ Last updated: July 2026
 
 [Download the latest printable PDF](https://github.com/M-Gage-Plott42/utc-hpc-guide/releases/latest/download/UTC_HPC_Guide.pdf)
 or review the [PDF build and validation instructions](docs/pdf-guide.md).
-The stable download remains `v1.2.0`; `v1.2.1-rc.2` workflow artifacts are
-review candidates and are not for redistribution.
+This source revision defines final `v1.2.1` and the stable
+`UTC_HPC_Guide.pdf` release asset. The latest-release link serves it after the
+matching GitHub release is published.
 
 ## How to Use This Repo in 15 Minutes
 
@@ -121,7 +122,7 @@ Do not commit credentials, usernames, internal hostnames, or allocation IDs.
   triggers so checks stay stable on pull requests and merge queues.
 - The Quality Gate is the single Markdown-lint authority and uses the locked
   repository-local toolchain.
-- PDF workflow runs upload the validated review candidate,
+- PDF workflow runs upload the manifest-identified validated PDF,
   `build-toolchain.txt`, and `verapdf-report.xml` together for short-lived
   review traceability. `pdf/toolchain.lock.json` pins the declared PDF
   toolchain inputs; the run record describes the observed build and is not

@@ -71,9 +71,13 @@ Keep network-dependent dependency audits separate.
 
 The repository scrub accepts only ordinary stage-zero regular or executable
 Git index entries. Tracked symbolic links, gitlinks, unmerged entries,
-unsupported modes, and a worktree symbolic link replacing a regular file are
-policy failures. Worktree content must be opened through the repository's
-no-follow regular-file boundary.
+unsupported modes, a symbolic link in any worktree path component, and a
+worktree symbolic link replacing a regular file are policy failures. Worktree
+content, including the policy and exception targets, must be opened one
+component at a time from the repository root through the no-follow
+regular-file boundary. Retain the opened component chain through each read,
+then revalidate every repository name against its retained descriptor before
+accepting the content.
 
 Manual-review scrub hits such as `login`, `partition`, `account`, or `allocation` are expected in generic placeholders and may be expected in `docs/sites/`, but each hit must be reviewed before release. Then manually review `assets/` for redaction quality.
 

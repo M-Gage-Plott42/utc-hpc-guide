@@ -9,13 +9,33 @@ from pathlib import Path
 from unittest import mock
 
 from scripts.build_pdf import assemble_markdown, build_once
-from scripts.pdf_manifest import load_manifest, output_path
+from scripts.pdf_manifest import (
+    derive_pdf_trailer_id,
+    distribution_status,
+    load_manifest,
+    output_path,
+    workflow_metadata,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
 CURRENT_MANIFEST = json.loads(
     (ROOT / "pdf/guide_manifest.json").read_text(encoding="utf-8")
 )
+
+
+def candidate_manifest(
+    base: dict[str, object] | None = None,
+) -> dict[str, object]:
+    manifest = copy.deepcopy(base if base is not None else CURRENT_MANIFEST)
+    manifest["release_status"] = "candidate"
+    manifest["document_version"] = "1.2.1-rc.2"
+    manifest["output_filename"] = "UTC_HPC_Guide_v1.2.1-rc.2.pdf"
+    manifest["pdf_trailer_id"] = derive_pdf_trailer_id(
+        str(manifest["document_version"]),
+        int(manifest["source_date_epoch"]),
+    )
+    return manifest
 
 
 class PdfManifestTests(unittest.TestCase):
@@ -28,7 +48,7 @@ class PdfManifestTests(unittest.TestCase):
         path.write_text(json.dumps(manifest), encoding="utf-8")
         return path
 
-    def test_accepts_rc2_candidate_and_derives_output(self) -> None:
+    def test_checked_in_manifest_is_final_and_derives_output(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             manifest = load_manifest(
@@ -36,11 +56,24 @@ class PdfManifestTests(unittest.TestCase):
             )
             self.assertEqual(
                 output_path(root, manifest),
-                root / "dist/UTC_HPC_Guide_v1.2.1-rc.2.pdf",
+                root / "dist/UTC_HPC_Guide.pdf",
             )
+        self.assertEqual(manifest["release_status"], "final")
+
+    def test_accepts_explicit_rc2_candidate_fixture(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manifest = load_manifest(
+                self.write_manifest(root, candidate_manifest())
+            )
+        self.assertEqual(manifest["release_status"], "candidate")
+        self.assertEqual(
+            output_path(root, manifest),
+            root / "dist/UTC_HPC_Guide_v1.2.1-rc.2.pdf",
+        )
 
     def test_rejects_candidate_version_mismatch(self) -> None:
-        manifest = copy.deepcopy(CURRENT_MANIFEST)
+        manifest = candidate_manifest()
         manifest["document_version"] = "1.2.1"
         with tempfile.TemporaryDirectory() as temporary:
             path = self.write_manifest(Path(temporary), manifest)
@@ -48,7 +81,7 @@ class PdfManifestTests(unittest.TestCase):
                 load_manifest(path)
 
     def test_rejects_candidate_filename_mismatch(self) -> None:
-        manifest = copy.deepcopy(CURRENT_MANIFEST)
+        manifest = candidate_manifest()
         manifest["output_filename"] = "UTC_HPC_Guide.pdf"
         with tempfile.TemporaryDirectory() as temporary:
             path = self.write_manifest(Path(temporary), manifest)
@@ -57,14 +90,93 @@ class PdfManifestTests(unittest.TestCase):
 
     def test_accepts_final_state_without_changing_builder_shape(self) -> None:
         manifest = copy.deepcopy(CURRENT_MANIFEST)
-        manifest["release_status"] = "final"
-        manifest["document_version"] = "1.2.1"
-        manifest["output_filename"] = "UTC_HPC_Guide.pdf"
         with tempfile.TemporaryDirectory() as temporary:
             parsed = load_manifest(
                 self.write_manifest(Path(temporary), manifest)
             )
         self.assertEqual(parsed["release_status"], "final")
+
+    def test_final_trailer_id_has_documented_deterministic_derivation(self) -> None:
+        self.assertEqual(
+            derive_pdf_trailer_id("1.2.1", 1785412800),
+            "8ea9f52d5afad85d958495b620dbf86a",
+        )
+        self.assertEqual(
+            CURRENT_MANIFEST["pdf_trailer_id"],
+            derive_pdf_trailer_id(
+                str(CURRENT_MANIFEST["document_version"]),
+                int(CURRENT_MANIFEST["source_date_epoch"]),
+            ),
+        )
+
+    def test_rejects_stale_deterministic_trailer_id(self) -> None:
+        manifest = copy.deepcopy(CURRENT_MANIFEST)
+        manifest["source_date_epoch"] = int(manifest["source_date_epoch"]) + 1
+        with tempfile.TemporaryDirectory() as temporary:
+            path = self.write_manifest(Path(temporary), manifest)
+            with self.assertRaisesRegex(
+                ValueError,
+                "document_version/source_date_epoch",
+            ):
+                load_manifest(path)
+
+    def test_workflow_metadata_is_manifest_derived(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            metadata = workflow_metadata(
+                Path(temporary),
+                copy.deepcopy(CURRENT_MANIFEST),
+            )
+        self.assertEqual(
+            metadata,
+            {
+                "path": "dist/UTC_HPC_Guide.pdf",
+                "document_version": "1.2.1",
+                "release_status": "final",
+                "artifact_label": "utc-hpc-guide-v1.2.1-final",
+            },
+        )
+
+    def test_candidate_workflow_metadata_is_manifest_derived(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            metadata = workflow_metadata(
+                Path(temporary),
+                candidate_manifest(),
+            )
+        self.assertEqual(
+            metadata,
+            {
+                "path": "dist/UTC_HPC_Guide_v1.2.1-rc.2.pdf",
+                "document_version": "1.2.1-rc.2",
+                "release_status": "candidate",
+                "artifact_label": "utc-hpc-guide-v1.2.1-rc.2-candidate",
+            },
+        )
+
+    def test_workflow_metadata_rejects_unsafe_version_token(self) -> None:
+        manifest = copy.deepcopy(CURRENT_MANIFEST)
+        manifest["release_target"] = "1.2.1\ninjected=true"
+        manifest["document_version"] = manifest["release_target"]
+        with tempfile.TemporaryDirectory() as temporary:
+            with self.assertRaisesRegex(ValueError, "safe numeric"):
+                workflow_metadata(Path(temporary), manifest)
+
+    def test_workflow_metadata_rejects_oversized_artifact_label(self) -> None:
+        manifest = copy.deepcopy(CURRENT_MANIFEST)
+        manifest["release_target"] = f"{'1' * 120}.2.3"
+        manifest["document_version"] = manifest["release_target"]
+        with tempfile.TemporaryDirectory() as temporary:
+            with self.assertRaisesRegex(ValueError, "workflow-safe"):
+                workflow_metadata(Path(temporary), manifest)
+
+    def test_distribution_status_does_not_claim_publication(self) -> None:
+        self.assertEqual(
+            distribution_status(CURRENT_MANIFEST),
+            "final document build for v1.2.1; publication is separate",
+        )
+        self.assertEqual(
+            distribution_status(candidate_manifest()),
+            "review-only release candidate for v1.2.1; not stable",
+        )
 
 
 class PdfAssemblyTests(unittest.TestCase):
@@ -110,16 +222,13 @@ class PdfAssemblyTests(unittest.TestCase):
     def test_candidate_and_final_labels_are_manifest_controlled(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            candidate = self.minimal_source_tree(root)
+            candidate = candidate_manifest(self.minimal_source_tree(root))
             candidate_text = assemble_markdown(root, candidate)
             self.assertIn("Release candidate for v1.2.1", candidate_text)
             self.assertIn("Candidate identifier: `v1.2.1-rc.2`", candidate_text)
             self.assertNotIn("\\lstset", candidate_text)
 
-            final = copy.deepcopy(candidate)
-            final["release_status"] = "final"
-            final["document_version"] = "1.2.1"
-            final["output_filename"] = "UTC_HPC_Guide.pdf"
+            final = self.minimal_source_tree(root)
             final_text = assemble_markdown(root, final)
             self.assertIn("**Version 1.2.1**", final_text)
             self.assertIn("Document identifier: `v1.2.1`", final_text)

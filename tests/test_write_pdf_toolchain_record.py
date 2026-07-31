@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 import unittest
@@ -9,11 +10,16 @@ from unittest import mock
 from scripts.write_pdf_toolchain_record import (
     ci_context,
     parse_check_log,
+    record_preamble,
     require_exact_line,
 )
 
 
 PDF_SHA256 = "1" * 64
+ROOT = Path(__file__).resolve().parents[1]
+FINAL_MANIFEST = json.loads(
+    (ROOT / "pdf/guide_manifest.json").read_text(encoding="utf-8")
+)
 
 
 def passing_log(pdf: Path) -> str:
@@ -136,6 +142,32 @@ class ExactToolVersionTests(unittest.TestCase):
                 "pandoc 3.10.1",
                 "Pandoc",
             )
+
+
+class RecordPreambleTests(unittest.TestCase):
+    def test_final_record_does_not_claim_publication(self) -> None:
+        self.assertEqual(
+            record_preamble(FINAL_MANIFEST),
+            [
+                "UTC HPC Guide PDF build traceability record",
+                (
+                    "distribution_status=final document build for v1.2.1; "
+                    "publication is separate"
+                ),
+                "",
+            ],
+        )
+
+    def test_candidate_record_remains_review_only(self) -> None:
+        candidate = dict(FINAL_MANIFEST)
+        candidate["release_status"] = "candidate"
+        candidate["document_version"] = "1.2.1-rc.2"
+        candidate["output_filename"] = "UTC_HPC_Guide_v1.2.1-rc.2.pdf"
+        self.assertIn(
+            "distribution_status=review-only release candidate for v1.2.1; "
+            "not stable",
+            record_preamble(candidate),
+        )
 
 
 class CiContextTests(unittest.TestCase):

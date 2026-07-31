@@ -22,6 +22,7 @@ Describe what changed and why.
 - [ ] Site facts cite official public sources and field-note status is explicit
 - [ ] Screenshot alternative text is meaningful
 - [ ] Candidate/final labeling and output filename match the PDF manifest
+- [ ] Scrub reads reject symbolic links in every worktree path component
 - [ ] No WCAG, PDF/UA, or UTC approval claim relies only on automation
 
 ## Validation Performed
@@ -45,15 +46,17 @@ make release-check
 For PDF or release changes, complete the
 [public release checklist](../RELEASE_CHECKLIST.md) and report:
 
-- Candidate version and filename:
+- Document version, release status, and filename:
 - PDF page count and SHA-256:
 - Two-build byte-identity result:
 - `Tagged`, `StructTreeRoot`, `MarkInfo`, and `Lang` results:
 - veraPDF profile, result, and report artifact:
 - All-page visual-review result:
 - Manual accessibility reviewer and tester profile:
-- Windows, desktop Acrobat Reader, and NVDA exact versions and settings:
-- Heading/list/table/figure/link/code/end-to-end results:
-- Keyboard-only and Magnifier/reflow results:
+- Exact tools, versions, settings, and reading-order method:
+- Focus-order method and result:
+- Heading/list/table/figure/link/code/end-to-end results, as tested:
+- Keyboard, magnification, and reflow results, as tested:
 - Accessibility defects, remediations, retest results, and limitations:
-- UTC live-validation status:
+- Independent or UTC-hosted publication scope:
+- UTC live-validation status, if site facts changed:

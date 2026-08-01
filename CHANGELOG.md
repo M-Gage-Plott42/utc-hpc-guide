@@ -17,6 +17,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   the exact embedded font-family set, and page contracts for document-title
   display, structure tab order, contiguous structure-parent identifiers, and
   distinct cover, contents, and body page labels.
+- Added an additive, review-only code-typeface proof matrix using a larger
+  DejaVu Sans Mono control and pinned upstream Cascadia Mono and Fira Code
+  Regular/Bold faces, with archive, member, license, and file provenance.
+- Added exact fixed-pitch extraction checks for indentation and meaningful
+  interior spaces, plus MuPDF glyph-trace checks requiring one visible glyph
+  per typed character and the default cmap glyph IDs in regular and bold
+  ambiguous-character specimens.
+- Locked the proof profiles' actual units-per-em and lowercase-`x` metrics so
+  their effective x-heights remain within the declared `0.02 pt` tolerance.
 
 ### Changed
 
@@ -35,6 +44,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Assigned the physical cover the unique `Cover` label, used lowercase Roman
   labels for contents and Arabic labels for the body, and kept cover, header,
   footer, rule, and code-rail decoration out of logical reading order.
+- Kept the hash-verified RC.1 build immutable while applying three overlong
+  shell-line wraps only in proof assembly. The selected typeface and wraps will
+  move into canonical sources under a later formal candidate identifier.
 
 ## [1.2.1] - 2026-07-30
 

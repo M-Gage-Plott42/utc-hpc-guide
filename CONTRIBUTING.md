@@ -79,6 +79,16 @@ errors. The pinned veraPDF result covers machine-verifiable conformance only;
 it does not certify WCAG 2.1 AA or replace the manual accessibility checklist.
 Network-dependent dependency audits remain separate.
 
+While the typeface bake-off recorded in `TODO.md` is active, Ubuntu's exact
+locked `mupdf-tools` and `python3-fonttools` packages are also required.
+`make release-check` runs the additive `make check-font-proofs` gate: it
+preserves the RC.1 hash guard and validates three explicitly review-only
+full-guide proofs. Run
+`make setup-font-proof-tools` to verify the vendored font/license hashes and
+host packages before a focused proof build. Proofs are not release artifacts;
+only the subsequently selected profile may enter a newly identified formal
+candidate.
+
 If you change image assets, manually confirm screenshots do not expose usernames, hostnames, account/allocation IDs, or private paths.
 The automated asset gate checks paths, structure, decoding, and metadata; it
 does not inspect pixels or prove that an image is safely redacted.

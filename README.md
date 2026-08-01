@@ -16,6 +16,9 @@ or review the [PDF build and validation instructions](docs/pdf-guide.md).
 The latest-release link continues to serve the published stable `v1.2.1`
 artifact. This source revision defines `v1.2.2-rc.1` as a review-only PDF
 candidate; its workflow artifact is not a stable or supported release artifact.
+It also builds three explicitly labelled typeface proofs for user comparison.
+Those proofs are a separate short-lived workflow bundle, not release
+candidates, and do not replace the hash-verified RC.1 artifact.
 
 ## How to Use This Repo in 15 Minutes
 
@@ -48,9 +51,11 @@ make release-check
 `make release-check` adds per-file Bash syntax checks, ShellCheck, a
 byte-identical tagged-PDF build, structural and PDF/UA-2 machine validation,
 rendering and every-page OCR QA, and staged/unstaged whitespace checks to the
-routine gate. Automated PDF/UA validation is not a WCAG 2.1 AA certification;
-manual accessibility review remains required. Dependency audits and other
-network-dependent checks remain separate.
+routine gate. While the typeface review is active, it also validates all three
+proof profiles twice, including exact fixed-pitch extraction and checks that
+require one glyph per character. Automated PDF/UA validation is not a WCAG
+2.1 AA certification; manual accessibility review remains required.
+Dependency audits and other network-dependent checks remain separate.
 
 ## Purpose
 
@@ -127,6 +132,10 @@ Do not commit credentials, usernames, internal hostnames, or allocation IDs.
   review traceability. `pdf/toolchain.lock.json` pins the declared PDF
   toolchain inputs; the run record describes the observed build and is not
   signed provenance or a permanent archive.
+- During the typeface bake-off, the same workflow uploads a separate,
+  commit-bound bundle containing the DejaVu Sans Mono, Cascadia Mono, and Fira
+  Code proof PDFs plus per-profile logs, veraPDF reports, records, and hashes.
+  The bundle is review evidence only and must not be published as a release.
 - External HTTP(S) links are monitored only on a schedule or manual dispatch,
   with retries, timeouts, and an exact reasoned allowlist; network availability
   does not gate ordinary pull requests.

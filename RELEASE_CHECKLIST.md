@@ -95,6 +95,17 @@ repository is free of private data.
   byte-identical rebuilds plus passing structure, metadata, font,
   text-extraction, rendering, every-page OCR, and
   `make check-pdf-accessibility` checks.
+- When a review-only typeface matrix is present, run
+  `make setup-font-proof-tools` and `make check-font-proofs`. Confirm the
+  immutable baseline hash, all three byte-identical rebuilds, exact embedded
+  font sets and Unicode maps, fixed-pitch indentation/interior-space
+  extraction, matched and font-verified effective x-heights, default-cmap
+  one-glyph-per-character traces, full rendering/OCR, exact semantic counts,
+  and one compliant veraPDF PDF/UA-2 job per profile.
+- Keep parallel typeface proofs clearly labelled as proofs rather than release
+  candidates. Do not publish or attach them to a stable release. After review,
+  promote only the selected profile and source wraps under a new formal
+  candidate identifier, then repeat every PDF-changing gate.
 - Confirm `pdfinfo` reports `Tagged: yes` and PDF 2.0.
 - Confirm the catalog has a structure tree, marked-content metadata, `en-US`,
   and the expected PDF/UA-2 identification.

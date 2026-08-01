@@ -64,6 +64,10 @@ $endif$
   \GuideCoverRule
   \\[0.30in]%
   \GuideCoverRelease{$cover-release-label$}%
+$if(cover-profile-label)$
+  \\[0.12in]%
+  \GuideCoverMeta{$cover-profile-label$}%
+$endif$
 }
 $endif$
 \author{\GuideCoverAuthor{$for(author)$$author$$sep$ \and $endfor$}}

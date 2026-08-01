@@ -50,8 +50,15 @@ local function code_line(text)
 end
 
 function CodeBlock(block)
+  local begin_environment = "\\begin{GuideCode}"
+  for _, class in ipairs(block.classes) do
+    if class == "font-proof-bold" then
+      begin_environment = begin_environment .. "\\bfseries"
+      break
+    end
+  end
   local blocks = {
-    pandoc.RawBlock("latex", "\\begin{GuideCode}"),
+    pandoc.RawBlock("latex", begin_environment),
   }
   for line in (block.text .. "\n"):gmatch("(.-)\n") do
     table.insert(blocks, code_line(line))

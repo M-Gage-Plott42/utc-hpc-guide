@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help setup setup-pdf-tools lint scrub test-scrub check-assets test-assets check-links test-links test-external-links check-external-links check-placeholders test-placeholders test-build-pdf test-pdf-ocr test-pdf-accessibility test-pdf-toolchain-bootstrap test-pdf-toolchain-record check-shell-syntax check-shell-lint check-whitespace pdf check-pdf-ocr check-pdf-accessibility check-pdf check release-check
+.PHONY: help setup setup-pdf-tools setup-font-proof-tools lint scrub test-scrub check-assets test-assets check-links test-links test-external-links check-external-links check-placeholders test-placeholders test-build-pdf test-pdf-qa test-font-proofs test-pdf-ocr test-pdf-accessibility test-pdf-toolchain-bootstrap test-pdf-toolchain-record check-shell-syntax check-shell-lint check-whitespace pdf font-proofs check-pdf-ocr check-pdf-accessibility check-pdf check-font-proofs check release-check
 
 ASSET_CHECK_SCRIPT := scripts/check_assets.py
 MARKDOWNLINT := ./node_modules/.bin/markdownlint
@@ -19,11 +19,14 @@ PDF_TOOLCHAIN_LOCK := pdf/toolchain.lock.json
 PDF_TOOLCHAIN_ROOT ?= .cache/pdf-toolchain
 PDF_TOOLCHAIN_BIN := $(abspath $(PDF_TOOLCHAIN_ROOT))/bin
 PDF_MANIFEST := pdf/guide_manifest.json
+FONT_PROOF_CONFIG := pdf/font_proofs.json
+FONT_PROOF_CHECK_SCRIPT := scripts/check_font_proofs.py
 
 help:
 	@echo "Available targets:"
 	@echo "  make setup       - Install the locked local Node quality toolchain"
 	@echo "  make setup-pdf-tools - Verify and install the locked tagged-PDF toolchain"
+	@echo "  make setup-font-proof-tools - Verify additive proof fonts and QA pins"
 	@echo "  make lint        - Run markdown lint checks"
 	@echo "  make scrub       - Scan every tracked text file against public scrub policy"
 	@echo "  make test-scrub  - Run scrub-checker failure-path tests"
@@ -36,6 +39,8 @@ help:
 	@echo "  make check-placeholders - Reject unsafe angle placeholders in shell examples"
 	@echo "  make test-placeholders - Run shell-placeholder failure-path tests"
 	@echo "  make test-build-pdf - Run PDF manifest/build failure-path tests"
+	@echo "  make test-pdf-qa - Run PDF rendering/extraction failure-path tests"
+	@echo "  make test-font-proofs - Run proof resolver/orchestrator failure-path tests"
 	@echo "  make test-pdf-ocr - Run PDF OCR checker failure-path tests"
 	@echo "  make test-pdf-accessibility - Run PDF accessibility failure-path tests"
 	@echo "  make test-pdf-toolchain-bootstrap - Run locked-bootstrap failure-path tests"
@@ -44,9 +49,11 @@ help:
 	@echo "  make check-shell-lint - Run ShellCheck on tracked sbatch examples"
 	@echo "  make check-whitespace - Check staged/unstaged lines for whitespace errors"
 	@echo "  make pdf         - Build the manifest-selected printable PDF"
+	@echo "  make font-proofs - Build all three review-only typeface proofs once"
 	@echo "  make check-pdf-ocr - OCR every page of the manifest-selected PDF"
 	@echo "  make check-pdf-accessibility - Run structural and veraPDF PDF/UA-2 QA"
 	@echo "  make check-pdf   - Rebuild twice and run structural/PDF-UA/OCR QA"
+	@echo "  make check-font-proofs - Fully validate all three typeface proofs"
 	@echo "  make check       - Run lint + scrub + asset + link + placeholder checks"
 	@echo "  make release-check - Run the complete local release gate"
 
@@ -55,6 +62,9 @@ setup:
 
 setup-pdf-tools:
 	@python3 $(PDF_TOOLCHAIN_BOOTSTRAP) --lock $(PDF_TOOLCHAIN_LOCK) --root $(PDF_TOOLCHAIN_ROOT)
+
+setup-font-proof-tools: setup-pdf-tools
+	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(FONT_PROOF_CHECK_SCRIPT) --manifest $(PDF_MANIFEST) --proof-config $(FONT_PROOF_CONFIG) --verify-inputs-only
 
 lint:
 	@test -x "$(MARKDOWNLINT)" || { echo "Local markdownlint not found; run 'npm ci' first."; exit 1; }
@@ -92,6 +102,12 @@ test-placeholders:
 
 test-build-pdf:
 	@python3 -m unittest tests.test_build_pdf
+
+test-pdf-qa:
+	@python3 -m unittest tests.test_check_code_width tests.test_check_pdf
+
+test-font-proofs:
+	@python3 -m unittest tests.test_font_proofs tests.test_font_proof_assembly tests.test_check_font_proofs
 
 test-pdf-ocr:
 	@python3 -m unittest tests.test_check_pdf_ocr
@@ -138,6 +154,13 @@ check-whitespace:
 pdf: setup-pdf-tools
 	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_BUILD_SCRIPT) --manifest $(PDF_MANIFEST)
 
+font-proofs: setup-font-proof-tools
+	@for profile in dejavu-large cascadia-mono fira-code; do \
+		PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_BUILD_SCRIPT) \
+			--manifest $(PDF_MANIFEST) --proof-config $(FONT_PROOF_CONFIG) \
+			--proof-profile "$$profile"; \
+	done
+
 check-pdf-ocr: setup-pdf-tools
 	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_OCR_CHECK_SCRIPT) --manifest $(PDF_MANIFEST)
 
@@ -150,6 +173,9 @@ check-pdf: setup-pdf-tools
 	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_OCR_CHECK_SCRIPT) --manifest $(PDF_MANIFEST)
 	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_ACCESSIBILITY_CHECK_SCRIPT) --manifest $(PDF_MANIFEST) --verapdf "$(PDF_TOOLCHAIN_BIN)/verapdf" --report dist/verapdf-report.xml
 
-check: lint scrub test-scrub check-assets test-assets check-links test-links test-external-links check-placeholders test-placeholders test-build-pdf test-pdf-ocr test-pdf-accessibility test-pdf-toolchain-bootstrap test-pdf-toolchain-record
+check-font-proofs: setup-font-proof-tools
+	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(FONT_PROOF_CHECK_SCRIPT) --manifest $(PDF_MANIFEST) --proof-config $(FONT_PROOF_CONFIG)
 
-release-check: check check-shell-syntax check-shell-lint check-pdf check-whitespace
+check: lint scrub test-scrub check-assets test-assets check-links test-links test-external-links check-placeholders test-placeholders test-build-pdf test-pdf-qa test-font-proofs test-pdf-ocr test-pdf-accessibility test-pdf-toolchain-bootstrap test-pdf-toolchain-record
+
+release-check: check check-shell-syntax check-shell-lint check-pdf check-font-proofs check-whitespace

@@ -15,8 +15,22 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from .check_code_width import validate_fenced_code_width
+    from .font_proofs import (
+        ProofContext,
+        effective_manifest,
+        load_proof_context,
+        proof_output_path,
+    )
     from .pdf_manifest import load_manifest, output_path, workflow_metadata
 except ImportError:
+    from check_code_width import validate_fenced_code_width
+    from font_proofs import (
+        ProofContext,
+        effective_manifest,
+        load_proof_context,
+        proof_output_path,
+    )
     from pdf_manifest import load_manifest, output_path, workflow_metadata
 
 
@@ -66,11 +80,35 @@ def rewrite_example_links(text: str, examples: list[str]) -> str:
     return text
 
 
-def assemble_markdown(root: Path, manifest: dict[str, Any]) -> str:
+def apply_proof_transforms(
+    text: str,
+    path: str,
+    proof: ProofContext,
+) -> str:
+    """Apply the exact review-only wraps owned by the proof config."""
+    for transform in proof.source_transforms:
+        if transform.path != path:
+            continue
+        if text.count(transform.original) != 1:
+            raise ValueError(
+                "font proof source transform no longer matches exactly once: "
+                f"{path}"
+            )
+        text = text.replace(transform.original, transform.replacement, 1)
+    return text
+
+
+def assemble_markdown(
+    root: Path,
+    manifest: dict[str, Any],
+    proof: ProofContext | None = None,
+) -> str:
     examples = list(manifest["examples"])
     core_sections: list[str] = []
     for chapter_number, path in enumerate(manifest["core_sources"], start=1):
         text = (root / path).read_text(encoding="utf-8")
+        if proof is not None:
+            text = apply_proof_transforms(text, path, proof)
         core_sections.append(
             normalize_chapter(
                 rewrite_example_links(text, examples),
@@ -81,6 +119,8 @@ def assemble_markdown(root: Path, manifest: dict[str, Any]) -> str:
     appendix_sections: list[str] = []
     for appendix in manifest["site_appendices"]:
         text = (root / appendix["path"]).read_text(encoding="utf-8")
+        if proof is not None:
+            text = apply_proof_transforms(text, appendix["path"], proof)
         appendix_sections.append(
             normalize_chapter(
                 rewrite_example_links(text, examples),
@@ -96,6 +136,8 @@ def assemble_markdown(root: Path, manifest: dict[str, Any]) -> str:
     )
     for index, path in enumerate(examples):
         source = (root / path).read_text(encoding="utf-8").rstrip()
+        if proof is not None:
+            source = apply_proof_transforms(source, path, proof)
         anchor = example_anchor(path)
         example_sections.extend(
             (
@@ -109,10 +151,36 @@ def assemble_markdown(root: Path, manifest: dict[str, Any]) -> str:
     for appendix in appendix_sections:
         document += "\n\n\\newpage\n\n" + appendix.strip()
     document += "\n\n\\newpage\n\n" + "\n\n".join(example_sections)
+    if proof is not None:
+        transformed_paths = {transform.path for transform in proof.source_transforms}
+        assembled_paths = {
+            *manifest["core_sources"],
+            *(item["path"] for item in manifest["site_appendices"]),
+            *examples,
+        }
+        if not transformed_paths <= assembled_paths:
+            missing = sorted(transformed_paths - assembled_paths)
+            raise ValueError(
+                "font proof transforms reference unassembled sources: "
+                + ", ".join(missing)
+            )
+        supplement = proof.supplement.read_text(encoding="utf-8").strip()
+        document += "\n\n\\newpage\n\n" + supplement
+        validate_fenced_code_width(document, limit=80)
     return document + "\n"
 
 
-def cover_variables(manifest: dict[str, Any]) -> dict[str, str]:
+def cover_variables(
+    manifest: dict[str, Any],
+    proof: ProofContext | None = None,
+) -> dict[str, str]:
+    if proof is not None:
+        return {
+            "cover-release-label": proof.proof_label,
+            "cover-profile-label": f"Code-block profile: {proof.profile.label}",
+            "cover-identifier-label": "Proof identifier",
+            "document-version": proof.proof_identifier,
+        }
     if manifest["release_status"] == "candidate":
         release_label = f"Release candidate for v{manifest['release_target']}"
         identifier_label = "Candidate identifier"
@@ -264,22 +332,105 @@ def locked_font_variables(root: Path) -> list[str]:
     return variables
 
 
+def locked_tex_font_paths(root: Path, filenames: tuple[str, ...]) -> tuple[Path, ...]:
+    """Resolve exact regular files from the attested TeX distribution."""
+    kpsewhich = command_path("kpsewhich")
+    texmf_dist = attested_texmf_dist(root, kpsewhich)
+    resolved: list[Path] = []
+    for filename in filenames:
+        result = subprocess.run(
+            [kpsewhich, filename],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        value = result.stdout.strip()
+        if not value or "\n" in value:
+            raise RuntimeError(
+                f"kpsewhich returned an invalid path for locked font: {filename}"
+            )
+        path = Path(value)
+        if not path.is_file() or path.is_symlink():
+            raise RuntimeError(f"locked PDF font is unavailable: {filename}")
+        resolved_path = path.resolve()
+        if not resolved_path.is_relative_to(texmf_dist):
+            raise RuntimeError(
+                "locked PDF font resolved outside the attested TEXMFDIST: "
+                f"{filename} -> {resolved_path}"
+            )
+        if resolved_path.name != filename:
+            raise RuntimeError(
+                f"locked PDF font resolved to an unexpected file: {resolved_path}"
+            )
+        resolved.append(resolved_path)
+    return tuple(resolved)
+
+
+def proof_font_definition(root: Path, proof: ProofContext) -> str:
+    """Create a fontspec family from only hash-locked regular/bold files."""
+    if proof.regular_font_path is None or proof.bold_font_path is None:
+        regular, bold = locked_tex_font_paths(
+            root,
+            ("DejaVuSansMono.ttf", "DejaVuSansMono-Bold.ttf"),
+        )
+    else:
+        regular = proof.regular_font_path.resolve(strict=True)
+        bold = proof.bold_font_path.resolve(strict=True)
+    if regular.parent != bold.parent:
+        raise RuntimeError("font proof regular and bold faces must share a directory")
+    directory = regular.parent.as_posix() + "/"
+    if any(character in directory for character in "{},\n\r"):
+        raise RuntimeError("font proof path contains a TeX-unsafe character")
+    profile = proof.profile
+    options = [
+        f"Path={directory}",
+        "Extension=.ttf",
+        f"UprightFont={profile.upright_pattern}",
+        f"BoldFont={profile.bold_pattern}",
+        *(f"Ligatures={feature}" for feature in proof.fontspec_ligatures),
+        *(f"RawFeature={feature}" for feature in proof.raw_features),
+    ]
+    return (
+        "\\newfontfamily\\GuideCodeFont[\n  "
+        + ",\n  ".join(options)
+        + f"\n]{{{profile.font_stem}}}"
+    )
+
+
 def build_once(
     root: Path,
     manifest: dict[str, Any],
     output: Path,
     work_dir: Path,
+    proof: ProofContext | None = None,
 ) -> None:
     pandoc = command_path("pandoc")
     lualatex = command_path("lualatex")
     assembled = work_dir / "UTC_HPC_Guide_assembled.md"
-    assembled.write_text(assemble_markdown(root, manifest), encoding="utf-8")
+    assembled.write_text(
+        assemble_markdown(root, manifest, proof),
+        encoding="utf-8",
+    )
     header = work_dir / "header.tex"
     header_text = (root / manifest["header_source"]).read_text(encoding="utf-8")
-    header_text = header_text.replace(
-        "@DOCUMENT_VERSION@",
-        manifest["document_version"],
-    )
+    if proof is None:
+        header_replacements = {
+            "@DOCUMENT_VERSION@": manifest["document_version"],
+            "@CODE_FONT_DEFINITION@": "",
+            "@CODE_FONT_COMMAND@": r"\ttfamily",
+            "@CODE_FONT_SIZE@": "8.8",
+            "@CODE_FONT_LEADING@": "11",
+        }
+    else:
+        header_replacements = {
+            "@DOCUMENT_VERSION@": proof.proof_identifier,
+            "@CODE_FONT_DEFINITION@": proof_font_definition(root, proof),
+            "@CODE_FONT_COMMAND@": r"\GuideCodeFont",
+            "@CODE_FONT_SIZE@": f"{proof.profile.font_size:g}",
+            "@CODE_FONT_LEADING@": f"{proof.profile.leading:g}",
+        }
+    for token, value in header_replacements.items():
+        header_text = header_text.replace(token, value)
     if re.search(r"@[A-Z][A-Z0-9_]+@", header_text):
         raise ValueError("PDF header contains an unresolved manifest token")
     header.write_text(header_text, encoding="utf-8")
@@ -288,7 +439,7 @@ def build_once(
     env = os.environ.copy()
     env["SOURCE_DATE_EPOCH"] = str(manifest["source_date_epoch"])
     env["TZ"] = "UTC"
-    cover = cover_variables(manifest)
+    cover = cover_variables(manifest, proof)
     command = [
         pandoc,
         str(assembled),
@@ -366,6 +517,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--output", type=Path)
     parser.add_argument("--verify-reproducible", action="store_true")
+    parser.add_argument(
+        "--proof-config",
+        type=Path,
+        default=Path("pdf/font_proofs.json"),
+    )
+    parser.add_argument("--proof-profile")
     output_mode = parser.add_mutually_exclusive_group()
     output_mode.add_argument("--print-output-path", action="store_true")
     output_mode.add_argument("--print-workflow-metadata", action="store_true")
@@ -386,16 +543,35 @@ def main() -> int:
     if not manifest_path.is_absolute():
         manifest_path = root / manifest_path
     try:
-        manifest = load_manifest(
+        base_manifest = load_manifest(
             manifest_path,
             root=root,
             validate_sources=True,
         )
-        expected_output = output_path(root, manifest)
+        proof: ProofContext | None = None
+        if args.proof_profile:
+            proof_config = args.proof_config
+            if not proof_config.is_absolute():
+                proof_config = root / proof_config
+            proof = load_proof_context(
+                root,
+                proof_config,
+                args.proof_profile,
+                manifest_path,
+            )
+            manifest = effective_manifest(base_manifest, proof)
+            expected_output = proof_output_path(root, proof)
+        else:
+            manifest = base_manifest
+            expected_output = output_path(root, manifest)
         if args.print_output_path:
             print(expected_output.relative_to(root).as_posix())
             return 0
         if args.print_workflow_metadata:
+            if proof is not None:
+                raise ValueError(
+                    "typeface proofs use their separate proof-bundle workflow metadata"
+                )
             for key, value in workflow_metadata(root, manifest).items():
                 print(f"{key}={value}")
             return 0
@@ -409,11 +585,11 @@ def main() -> int:
             )
         with tempfile.TemporaryDirectory(prefix="utc-hpc-pdf-") as first_temp:
             first = Path(first_temp) / output.name
-            build_once(root, manifest, first, Path(first_temp))
+            build_once(root, manifest, first, Path(first_temp), proof)
             if args.verify_reproducible:
                 with tempfile.TemporaryDirectory(prefix="utc-hpc-pdf-") as second_temp:
                     second = Path(second_temp) / output.name
-                    build_once(root, manifest, second, Path(second_temp))
+                    build_once(root, manifest, second, Path(second_temp), proof)
                     first_hash = sha256(first)
                     second_hash = sha256(second)
                     if first_hash != second_hash:

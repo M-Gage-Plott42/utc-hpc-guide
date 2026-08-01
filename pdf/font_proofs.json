@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "proof_set": "v1.2.2-typeface-proof-1",
+  "proof_identifier": "1.2.2-typeface-proof.1",
+  "proof_label": "TYPEFACE PROOF — NOT A RELEASE CANDIDATE",
+  "base_manifest": "pdf/guide_manifest.json",
+  "base_manifest_sha256": "293160fe9b7df4d12994eb4eed2b9813e6994b76d38474c48cc9b3366fcc4061",
+  "base_toolchain_lock": "pdf/toolchain.lock.json",
+  "base_toolchain_lock_sha256": "5a9dbc2219946816bab5d7a3a6ae12f2d088111afccb41c3f8a3fca47b1a8d35",
+  "font_lock": "pdf/font_proofs.lock.json",
+  "baseline": {
+    "commit": "73801e110c99727327a1d7fe27e4f1804e9a8602",
+    "document_version": "1.2.2-rc.1",
+    "filename": "UTC_HPC_Guide_v1.2.2-rc.1.pdf",
+    "sha256": "209193e9b0cadd583fa0c809d44c945fbb1ec49bd239578419636cbe38cd8964"
+  },
+  "supplement": "pdf/font-proof-specimen.md",
+  "structure_count_deltas": {
+    "H1": 1,
+    "Code": 2
+  },
+  "required_pdf_text": [
+    "Typeface Proof Specimen",
+    "EXTRACTION-PROOF-START",
+    "REGULAR AMBIGUOUS GLYPHS",
+    "BOLD AMBIGUOUS GLYPHS"
+  ],
+  "required_ocr_text": [
+    "Typeface Proof Specimen",
+    "Regular Ambiguous Glyphs",
+    "Bold Ambiguous Glyphs"
+  ],
+  "fontspec_ligatures": [
+    "RequiredOff",
+    "CommonOff",
+    "ContextualOff",
+    "DiscretionaryOff",
+    "HistoricOff",
+    "TeXOff"
+  ],
+  "raw_features": [
+    "-calt",
+    "-liga",
+    "-clig",
+    "-dlig",
+    "-hlig",
+    "-rlig",
+    "-tlig"
+  ],
+  "source_transforms": [
+    {
+      "path": "docs/03-slurm-basics.md",
+      "original": "sacct -j \"$JOB_ID\" \\\n  --format=JobID,JobName,Partition,ReqMem,AllocTRES,AllocCPUS,Elapsed,State,ExitCode,MaxRSS",
+      "replacement": "SACCT_FIELDS=\"JobID,JobName,Partition,ReqMem,AllocTRES,AllocCPUS\"\nSACCT_FIELDS=\"${SACCT_FIELDS},Elapsed,State,ExitCode,MaxRSS\"\nsacct -j \"$JOB_ID\" --format=\"$SACCT_FIELDS\""
+    },
+    {
+      "path": "docs/05-python-envs.md",
+      "original": "INSTALLER_SHA256=\"ecb43ee4ae30a7a5af87737e9548ceb21f0a10ec55b8dc40d247aa925b80bfec\"",
+      "replacement": "INSTALLER_SHA256=\"ecb43ee4ae30a7a5af87737e9548ceb21\\\nf0a10ec55b8dc40d247aa925b80bfec\""
+    },
+    {
+      "path": "docs/05-python-envs.md",
+      "original": "python -m pip download --only-binary=:all: --no-deps \"numpy==2.2.6\" -d /tmp/wheels_test",
+      "replacement": "python -m pip download --only-binary=:all: --no-deps \\\n  \"numpy==2.2.6\" -d /tmp/wheels_test"
+    }
+  ],
+  "profiles": {
+    "dejavu-large": {
+      "label": "DejaVu Sans Mono — larger",
+      "font_source": "texlive-dejavu",
+      "font_stem": "DejaVuSansMono",
+      "upright_pattern": "*",
+      "bold_pattern": "*-Bold",
+      "regular_postscript": "DejaVuSansMono",
+      "bold_postscript": "DejaVuSansMono-Bold",
+      "font_size": 9.0,
+      "leading": 11.5,
+      "extraction_pitch": 4.40,
+      "units_per_em": 2048,
+      "x_height_units": 1120,
+      "output_filename": "UTC_HPC_Guide_v1.2.2-font-proof-dejavu-large.pdf"
+    },
+    "cascadia-mono": {
+      "label": "Cascadia Mono",
+      "font_source": "cascadia-mono-2407.24",
+      "font_stem": "CascadiaMono-",
+      "upright_pattern": "*Regular",
+      "bold_pattern": "*Bold",
+      "regular_postscript": "CascadiaMono-Regular",
+      "bold_postscript": "CascadiaMono-Bold",
+      "font_size": 9.5,
+      "leading": 11.8,
+      "extraction_pitch": 4.65,
+      "units_per_em": 2048,
+      "x_height_units": 1060,
+      "output_filename": "UTC_HPC_Guide_v1.2.2-font-proof-cascadia-mono.pdf"
+    },
+    "fira-code": {
+      "label": "Fira Code — ligatures disabled",
+      "font_source": "fira-code-6.2",
+      "font_stem": "FiraCode-",
+      "upright_pattern": "*Regular",
+      "bold_pattern": "*Bold",
+      "regular_postscript": "FiraCode-Regular",
+      "bold_postscript": "FiraCode-Bold",
+      "font_size": 9.1,
+      "leading": 11.5,
+      "extraction_pitch": 4.52,
+      "units_per_em": 1950,
+      "x_height_units": 1053,
+      "output_filename": "UTC_HPC_Guide_v1.2.2-font-proof-fira-code.pdf"
+    }
+  }
+}

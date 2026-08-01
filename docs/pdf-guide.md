@@ -79,6 +79,86 @@ and `52%` widths to the three screenshots. Their ordinary Markdown image
 labels remain the canonical alternatives and must reach the three `Figure`
 structures unchanged and in source order.
 
+## Review-Only Code Typeface Proofs
+
+The active typography bake-off is additive to the formal RC.1 manifest. Its
+three PDFs say `TYPEFACE PROOF — NOT A RELEASE CANDIDATE` on the cover, use
+profile-specific trailer identifiers and filenames, and append one unlisted
+specimen page. The normal RC.1 build still reproduces SHA-256
+`209193e9b0cadd583fa0c809d44c945fbb1ec49bd239578419636cbe38cd8964`.
+
+The proof matrix is `pdf/font_proofs.json`; its additive provenance lock is
+`pdf/font_proofs.lock.json`. It compares code blocks only:
+
+- DejaVu Sans Mono at `9.0/11.5 pt` as the larger control;
+- Cascadia Mono `2407.24` at `9.5/11.8 pt`; and
+- Fira Code `6.2` at `9.1/11.5 pt`.
+
+These starting sizes match perceived lowercase height rather than nominal
+point value. The configured units-per-em and lowercase-`x` heights produce
+effective regular-face heights of `4.9219 pt` (DejaVu), `4.9170 pt`
+(Cascadia), and `4.9140 pt` (Fira), a spread below `0.01 pt`; the gate checks
+the declared metrics against the pinned TTFs and rejects a spread over
+`0.02 pt`. The Cascadia and Fira static Regular/Bold TTFs were extracted from
+the named members of their official release archives during proof preparation.
+The offline gate verifies their exact recorded bytes but does not redownload
+the archives; the archive origin remains recorded provenance, not an online
+re-attestation. The OFL 1.1 license texts are retained beside the fonts.
+Cascadia's CRLF license copy is normalized to LF and its one trailing space is
+removed for repository whitespace policy; the lock records both transforms
+and the gate reconstructs and verifies the upstream hash. The proof lock also
+records official release/archive URLs, release commits,
+archive sizes and SHA-256 digests, archive-member names, vendored file sizes
+and digests, PostScript names, and tag-pinned license URLs and digests. The
+base PDF toolchain lock remains unchanged.
+
+[Cascadia's upstream documentation](https://github.com/microsoft/cascadia-code/blob/v2407.24/README.md#font-variants)
+defines Cascadia Mono as the no-ligature variant. Fira Code's programming
+substitutions use contextual OpenType behavior, so every proof profile applies
+both fontspec's `RequiredOff`, `CommonOff`, `ContextualOff`,
+`DiscretionaryOff`, `HistoricOff`, and `TeXOff` settings and the explicit raw
+feature denylist `-calt`, `-liga`, `-clig`, `-dlig`, `-hlig`, `-rlig`, and
+`-tlig`. This defense-in-depth setting keeps the proof literal even if a font
+or shaping default changes.
+
+The three original fenced lines longer than 80 characters are transformed at
+exact, configured boundaries only while assembling proofs. The transformations
+use valid Bash backslash-newline or variable composition and preserve the
+original command values. Canonical chapters remain unchanged so rebuilding
+RC.1 cannot silently produce different bytes under the same identifier. After
+selection, the wraps and chosen profile move together into a newly identified
+formal candidate. This follows Google's guidance to keep printable code near
+80 characters and to use valid command continuations:
+[code samples](https://developers.google.com/style/code-samples) and
+[command-line syntax](https://developers.google.com/style/code-syntax).
+
+Run the proof-only targets with the exact Ubuntu 24.04 `mupdf-tools` and
+`python3-fonttools` packages recorded in the proof lock:
+
+```bash
+make setup-font-proof-tools
+make font-proofs
+make check-font-proofs
+```
+
+`make check-font-proofs` builds every complete proof twice, enforces the
+expected embedded font set and Unicode maps, validates exact structure counts,
+renders and OCRs every page, and requires one compliant veraPDF `ua2` job per
+profile. Locked Poppler `pdftotext -fixed` checks three unique spans for exact
+four-space indentation and two-space separators. MuPDF's glyph trace checks
+that every character in both regular and bold versions of the ambiguous-glyph
+row maps to one glyph rather than a programming ligature. It also compares
+every traced glyph identifier with that character's default cmap glyph in the
+pinned face, rejecting one-character contextual alternates.
+
+The extraction result is evidence for the locked Poppler path, not proof that
+every viewer preserves spaces on its clipboard. Likewise, the glyph trace,
+OCR, tagging, and veraPDF checks do not replace visual comparison or real
+assistive-technology review. The hosted workflow uploads the proofs and their
+per-profile logs, records, veraPDF reports, and `SHA256SUMS` as a separate
+commit-bound review bundle. From the downloaded bundle root, verify every
+entry with `sha256sum -c font-proofs/SHA256SUMS`.
+
 ## Build and Automated Validation
 
 Build the manifest-selected document:

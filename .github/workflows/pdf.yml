@@ -36,10 +36,23 @@ jobs:
           import json
           from pathlib import Path
 
-          lock = json.loads(
-              Path("pdf/toolchain.lock.json").read_text(encoding="utf-8")
-          )
-          for package, version in lock["ubuntu_24_04_qa_packages"].items():
+          package_versions = {}
+          for path in (
+              "pdf/toolchain.lock.json",
+              "pdf/font_proofs.lock.json",
+          ):
+              lock = json.loads(Path(path).read_text(encoding="utf-8"))
+              for package, version in lock[
+                  "ubuntu_24_04_qa_packages"
+              ].items():
+                  previous = package_versions.get(package)
+                  if previous is not None and previous != version:
+                      raise SystemExit(
+                          f"conflicting package pin for {package}: "
+                          f"{previous} != {version}"
+                      )
+                  package_versions[package] = version
+          for package, version in sorted(package_versions.items()):
               print(f"{package}={version}")
           '
           )
@@ -63,6 +76,12 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           make check-pdf 2>&1 | tee dist/check-pdf.log
+
+      - name: Build twice and validate review-only typeface proofs
+        shell: bash
+        run: |
+          set -euo pipefail
+          make check-font-proofs 2>&1 | tee dist/font-proofs-check.log
 
       - name: Record build toolchain
         run: |
@@ -91,5 +110,18 @@ jobs:
             ${{ steps.pdf_output.outputs.path }}
             dist/build-toolchain.txt
             dist/verapdf-report.xml
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload validated review-only typeface proof bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: utc-hpc-guide-v1.2.2-typeface-proofs-${{ github.sha }}
+          path: |
+            dist/UTC_HPC_Guide_v1.2.2-font-proof-dejavu-large.pdf
+            dist/UTC_HPC_Guide_v1.2.2-font-proof-cascadia-mono.pdf
+            dist/UTC_HPC_Guide_v1.2.2-font-proof-fira-code.pdf
+            dist/font-proofs/
+            dist/font-proofs-check.log
           if-no-files-found: error
           retention-days: 14

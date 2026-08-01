@@ -23,8 +23,18 @@ from pathlib import Path
 from typing import Any, Iterator
 
 try:
+    from .font_proofs import (
+        effective_manifest,
+        load_proof_context,
+        proof_output_path,
+    )
     from .pdf_manifest import load_manifest, output_path
 except ImportError:
+    from font_proofs import (
+        effective_manifest,
+        load_proof_context,
+        proof_output_path,
+    )
     from pdf_manifest import load_manifest, output_path
 
 
@@ -880,6 +890,12 @@ def parse_args() -> argparse.Namespace:
         default=Path("pdf/guide_manifest.json"),
     )
     parser.add_argument("--pdf", type=Path)
+    parser.add_argument(
+        "--proof-config",
+        type=Path,
+        default=Path("pdf/font_proofs.json"),
+    )
+    parser.add_argument("--proof-profile")
     parser.add_argument("--verapdf", default="verapdf")
     parser.add_argument(
         "--report",
@@ -903,11 +919,35 @@ def main() -> int:
         manifest_path = args.manifest
         if not manifest_path.is_absolute():
             manifest_path = root / manifest_path
-        manifest = load_manifest(manifest_path)
-        pdf = args.pdf or output_path(root, manifest)
+        base_manifest = load_manifest(manifest_path)
+        if args.proof_profile:
+            proof_config = args.proof_config
+            if not proof_config.is_absolute():
+                proof_config = root / proof_config
+            proof = load_proof_context(
+                root,
+                proof_config,
+                args.proof_profile,
+                manifest_path,
+            )
+            manifest = effective_manifest(base_manifest, proof)
+            default_pdf = proof_output_path(root, proof)
+        else:
+            proof = None
+            manifest = base_manifest
+            default_pdf = output_path(root, manifest)
+        pdf = args.pdf or default_pdf
         if not pdf.is_absolute():
             pdf = root / pdf
+        if pdf.resolve() != default_pdf.resolve():
+            raise ValueError(
+                "PDF path must match the manifest/profile-derived output path"
+            )
         report = args.report
+        if proof is not None and report == Path("dist/verapdf-report.xml"):
+            report = Path(
+                f"dist/verapdf-report-font-proof-{proof.profile.id}.xml"
+            )
         if not report.is_absolute():
             report = root / report
         validate_pdf_accessibility(

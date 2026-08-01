@@ -283,31 +283,31 @@ Local candidate evidence recorded August 1, 2026:
 
 ### Phase 5: Code Typography Bake-Off
 
-Status: in progress — three review-only full-guide font proofs will be
-validated before a family is selected
+Status: local proof bundle complete — hosted validation and user selection
+remain pending
 
-- [ ] Preserve the hash-verified RC.1 PDF as the comparison baseline and keep
+- [x] Preserve the hash-verified RC.1 PDF as the comparison baseline and keep
   all typography proofs explicitly review-only.
-- [ ] Pin official static Regular and Bold sources for upstream Cascadia Mono
+- [x] Pin official static Regular and Bold sources for upstream Cascadia Mono
   and Fira Code, including release, archive, file, and license provenance.
-- [ ] Define reproducible DejaVu Sans Mono, Cascadia Mono, and Fira Code proof
+- [x] Define reproducible DejaVu Sans Mono, Cascadia Mono, and Fira Code proof
   profiles with matched perceived size rather than a blind nominal-size swap.
-- [ ] Keep one visible glyph per literal character; use Cascadia Mono's
+- [x] Keep one visible glyph per literal character; use Cascadia Mono's
   no-ligature face and explicitly disable Fira Code common, discretionary,
   contextual, and TeX ligature features.
-- [ ] Manually wrap the three current source lines longer than 80 characters
+- [x] Manually wrap the three current source lines longer than 80 characters
   at valid shell boundaries, with explicit continuation syntax where needed.
-- [ ] Add an ambiguous-glyph proof containing `0 O o 1 l I | < > <= >= == !=
+- [x] Add an ambiguous-glyph proof containing `0 O o 1 l I | < > <= >= == !=
   -> -- _ ~ \ / ' " ( ) [ ] { }`.
-- [ ] Add exact extraction regression coverage for indentation and meaningful
+- [x] Add exact extraction regression coverage for indentation and meaningful
   interior spaces rather than treating page-density OCR as clipboard proof.
-- [ ] Build each complete proof twice and require byte identity, the expected
+- [x] Build each complete proof twice and require byte identity, the expected
   embedded font family and Unicode maps, structural checks, every-page
   rendering and OCR, exact semantic contracts, and veraPDF PDF/UA-2 success.
-- [ ] Inspect matched representative pages and all-page contact sheets at high
+- [x] Inspect matched representative pages and all-page contact sheets at high
   resolution for glyph distinction, code size and leading, wrapping,
   clipping, pagination, figure/table placement, and overall visual balance.
-- [ ] Copy all passing proof PDFs to the Windows Desktop with unambiguous
+- [x] Copy all passing proof PDFs to the Windows Desktop with unambiguous
   filenames and verify their hashes after copying.
 - [ ] Record proof hashes, validation evidence, and limitations; commit and
   push the implementation to draft pull request #28 and require hosted checks
@@ -319,6 +319,62 @@ The bake-off follows Google's current code-sample and command-line guidance:
 prefer actual semantic code text, keep printable lines near 80 characters,
 use valid continuation characters, and distinguish commands from output. No
 VPN or live-cluster activity is required.
+
+Local evidence recorded August 1, 2026:
+
+- The standalone proof guard rebuilt the current base sources twice and
+  reproduced the immutable 27-page RC.1 SHA-256
+  `209193e9b0cadd583fa0c809d44c945fbb1ec49bd239578419636cbe38cd8964`.
+  All proof covers say `TYPEFACE PROOF — NOT A RELEASE CANDIDATE`; none changes
+  the formal candidate manifest or stable-release artifact.
+- The exact proof sizes and verified regular-face metrics are DejaVu Sans Mono
+  `9.0/11.5 pt` at `4.9219 pt` effective x-height, Cascadia Mono
+  `9.5/11.8 pt` at `4.9170 pt`, and Fira Code `9.1/11.5 pt` at `4.9140 pt`.
+  The locked gate reads these metrics from each pinned TTF and limits their
+  spread to `0.02 pt`.
+- The complete `npm ci` and `make release-check` gate passed 203 routine/unit
+  checks, Bash syntax, ShellCheck, whitespace, base-candidate validation, and
+  every proof gate. The proof-specific Ubuntu pins are
+  `mupdf-tools=1.23.10+ds1-1build3` and
+  `python3-fonttools=4.46.0-1build2`.
+- Each proof is a tagged 28-page PDF 2.0 with Unicode-mapped embedded fonts,
+  exact structure counts, all-page 150-DPI OCR, fixed-pitch extraction for
+  four-space indentation and two-space separators, and MuPDF traces matching
+  one default cmap glyph per literal character in both regular and bold rows:
+  - DejaVu Sans Mono:
+    `fbb826b7514a09a816973220f7b87543088052cac601b09a382e67679590b719`
+  - Cascadia Mono:
+    `99297697eab91ce8ee5ac743fda21e35767628e9cd57ddf06a51e7bdf31f9371`
+  - Fira Code:
+    `263371523226872363b9f67c311e6eac6d6d187f0292f53d1761545cea440534`
+- Each veraPDF 1.30.2 `ua2` report records one compliant job, 1,727 passed
+  rules, no failed rules/checks or exceptions, and respectively 185,534,
+  185,748, and 185,526 passed checks for DejaVu, Cascadia, and Fira.
+- All 84 rendered pages were reviewed in contact sheets, with seven matched
+  representative-page comparisons and a 600-DPI ambiguous-glyph specimen.
+  No blank page, clipping, overlap, malformed wrap, displaced screenshot or
+  table, broken glyph, or code crowding was found. All three distinguish
+  `0/O/o` and `1/l/I/|`; Cascadia is darkest/widest, Fira is lightest/openest,
+  and DejaVu leaves the most right-margin reserve.
+- One selection-relevant pagination difference remains visible: DejaVu and
+  Fira leave the `B.4 slurm_tensorflow_gpu_probe.sbatch` heading at the bottom
+  of physical page 25 while its code starts on page 26; Cascadia keeps that
+  heading with its code on page 26. Apply a keep-with-next correction with the
+  selected font if the chosen profile otherwise retains the orphan.
+- The exact three passing PDFs were copied to the Windows Desktop with their
+  unambiguous proof filenames; the destination SHA-256 values match the three
+  hashes above.
+- The offline gate verifies the recorded vendored font and license bytes but
+  does not redownload the official release archives. For Cascadia's license it
+  also reconstructs the upstream CRLF form and its one stripped trailing space
+  from the policy-clean copy, then verifies the upstream byte hash. The lock
+  retains release/archive URLs,
+  archive digests and members, release commits, local digests, PostScript
+  names, and license provenance for review.
+- Locked Poppler extraction does not establish clipboard fidelity in every
+  viewer. No screen-reader/viewer pairing, keyboard traversal, reflow-mode
+  review, or other real assistive-technology interoperability test was
+  performed; the proofs make no WCAG or universal-accessibility claim.
 
 ### Phase 6: Publication Boundary
 

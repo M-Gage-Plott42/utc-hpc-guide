@@ -283,8 +283,8 @@ Local candidate evidence recorded August 1, 2026:
 
 ### Phase 5: Code Typography Bake-Off
 
-Status: local proof bundle complete — hosted validation and user selection
-remain pending
+Status: proof bundle ready for user selection — local and hosted validation
+complete
 
 - [x] Preserve the hash-verified RC.1 PDF as the comparison baseline and keep
   all typography proofs explicitly review-only.
@@ -309,10 +309,10 @@ remain pending
   clipping, pagination, figure/table placement, and overall visual balance.
 - [x] Copy all passing proof PDFs to the Windows Desktop with unambiguous
   filenames and verify their hashes after copying.
-- [ ] Record proof hashes, validation evidence, and limitations; commit and
+- [x] Record proof hashes, validation evidence, and limitations; commit and
   push the implementation to draft pull request #28 and require hosted checks
   to pass before the selection handoff.
-- [ ] Stop for user selection. Promote only the chosen profile in a later
+- [x] Stop for user selection. Promote only the chosen profile in a later
   PDF-changing candidate with a new formal identifier and complete revalidation.
 
 The bake-off follows Google's current code-sample and command-line guidance:
@@ -375,6 +375,10 @@ Local evidence recorded August 1, 2026:
   viewer. No screen-reader/viewer pairing, keyboard traversal, reflow-mode
   review, or other real assistive-technology interoperability test was
   performed; the proofs make no WCAG or universal-accessibility claim.
+- Draft pull request
+  [`#28`](https://github.com/M-Gage-Plott42/utc-hpc-guide/pull/28) carries the
+  commit-bound proof-bundle hashes. Its PDF, quality, ShellCheck, dependency
+  review, and CodeQL checks passed before this user-selection handoff.
 
 ### Phase 6: Publication Boundary
 

@@ -162,8 +162,9 @@ administrative clarification will be provided for this release.
 
 ## v1.2.2-rc.1 Polished PDF Redesign
 
-Status: in progress — implementation and focused machine checks complete;
-release-wide and human review remain pending
+Status: candidate ready for user inspection — local and hosted automation plus
+visual review complete; real assistive-technology and final promotion remain
+pending
 
 Audit date: July 31, 2026
 
@@ -237,11 +238,11 @@ uses a new review-only `v1.2.2-rc.1` identity and does not alter the published
   TeX, to the Windows Desktop for user review.
 - [x] Record the exact reviewed PDF and local veraPDF report hashes, completed
   machine and visual evidence, and untested manual accessibility limitations.
-- [ ] Bind the commit-specific hosted toolchain record and veraPDF report
+- [x] Bind the commit-specific hosted toolchain record and veraPDF report
   hashes to the focused draft pull-request evidence after the first push.
-- [ ] Commit and push the complete candidate, then open a focused draft pull
+- [x] Commit and push the complete candidate, then open a focused draft pull
   request and require every hosted check to pass.
-- [ ] Stop for user inspection and approval before merge or final promotion.
+- [x] Stop for user inspection and approval before merge or final promotion.
 
 Local candidate evidence recorded August 1, 2026:
 
@@ -275,6 +276,10 @@ Local candidate evidence recorded August 1, 2026:
   other real assistive-technology interoperability test was performed. The
   candidate makes no WCAG, universal assistive-technology, or UTC approval
   claim; that manual review remains a final-publication limitation.
+- Draft pull request
+  [`#28`](https://github.com/M-Gage-Plott42/utc-hpc-guide/pull/28) carries the
+  commit-bound hosted artifact hashes. PDF, quality, ShellCheck, dependency
+  review, and CodeQL checks all passed before the user-inspection handoff.
 
 ### Phase 5: Publication Boundary
 

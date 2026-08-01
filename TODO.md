@@ -281,7 +281,46 @@ Local candidate evidence recorded August 1, 2026:
   commit-bound hosted artifact hashes. PDF, quality, ShellCheck, dependency
   review, and CodeQL checks all passed before the user-inspection handoff.
 
-### Phase 5: Publication Boundary
+### Phase 5: Code Typography Bake-Off
+
+Status: in progress — three review-only full-guide font proofs will be
+validated before a family is selected
+
+- [ ] Preserve the hash-verified RC.1 PDF as the comparison baseline and keep
+  all typography proofs explicitly review-only.
+- [ ] Pin official static Regular and Bold sources for upstream Cascadia Mono
+  and Fira Code, including release, archive, file, and license provenance.
+- [ ] Define reproducible DejaVu Sans Mono, Cascadia Mono, and Fira Code proof
+  profiles with matched perceived size rather than a blind nominal-size swap.
+- [ ] Keep one visible glyph per literal character; use Cascadia Mono's
+  no-ligature face and explicitly disable Fira Code common, discretionary,
+  contextual, and TeX ligature features.
+- [ ] Manually wrap the three current source lines longer than 80 characters
+  at valid shell boundaries, with explicit continuation syntax where needed.
+- [ ] Add an ambiguous-glyph proof containing `0 O o 1 l I | < > <= >= == !=
+  -> -- _ ~ \ / ' " ( ) [ ] { }`.
+- [ ] Add exact extraction regression coverage for indentation and meaningful
+  interior spaces rather than treating page-density OCR as clipboard proof.
+- [ ] Build each complete proof twice and require byte identity, the expected
+  embedded font family and Unicode maps, structural checks, every-page
+  rendering and OCR, exact semantic contracts, and veraPDF PDF/UA-2 success.
+- [ ] Inspect matched representative pages and all-page contact sheets at high
+  resolution for glyph distinction, code size and leading, wrapping,
+  clipping, pagination, figure/table placement, and overall visual balance.
+- [ ] Copy all passing proof PDFs to the Windows Desktop with unambiguous
+  filenames and verify their hashes after copying.
+- [ ] Record proof hashes, validation evidence, and limitations; commit and
+  push the implementation to draft pull request #28 and require hosted checks
+  to pass before the selection handoff.
+- [ ] Stop for user selection. Promote only the chosen profile in a later
+  PDF-changing candidate with a new formal identifier and complete revalidation.
+
+The bake-off follows Google's current code-sample and command-line guidance:
+prefer actual semantic code text, keep printable lines near 80 characters,
+use valid continuation characters, and distinguish commands from output. No
+VPN or live-cluster activity is required.
+
+### Phase 6: Publication Boundary
 
 - [ ] After candidate approval, prepare a separate final-promotion change for
   `v1.2.2` and re-run all PDF-changing validation on its exact hash.

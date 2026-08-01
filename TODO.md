@@ -160,42 +160,128 @@ No phase requires new live-site access. Reopen live validation only if an
 authoritative change makes the isolated site guidance ambiguous. No new
 administrative clarification will be provided for this release.
 
-## Parked Follow-Up: Polished PDF Redesign
+## v1.2.2-rc.1 Polished PDF Redesign
 
-Status: parked for the next work session
+Status: in progress — implementation and focused machine checks complete;
+release-wide and human review remain pending
 
 Audit date: July 31, 2026
 
 Reviewed prototype PDF SHA-256:
 `29ca3b095aade4bb267a781348154265b3b5c377f77aacd8b7a7e910ce5d3d2e`
 
-Accept the prototype's visual design direction, but do not replace the
-published PDF with that exact file. The 27-page LuaLaTeX prototype is visually
-complete, has embedded Unicode fonts, includes every expected section,
-screenshot, and template, and preserves the visible canonical content. It is
-not a release artifact because it is an untagged PDF 1.7 build outside the
-locked reproducible pipeline.
+The audited 27-page prototype established the visual direction but remains an
+untagged PDF 1.7 reference outside the locked pipeline. The redesign therefore
+uses a new review-only `v1.2.2-rc.1` identity and does not alter the published
+`v1.2.1` release.
 
-When work resumes:
+### Phase 0: Guard and Candidate Boundary
 
-- Port the design into the existing manifest-driven Pandoc/LuaLaTeX pipeline;
-  retain the numbered chapters, `docs/sites/` page, examples, and manifest as
-  the only canonical editable sources. Do not commit the aggregate root
-  Markdown or TeX as a second hand-maintained copy.
-- Preserve standard image alternatives through the tagged-PDF path. The
-  prototype's empty Markdown image labels plus custom `fig-alt` attributes do
-  not survive its direct TeX build, and the resulting figures have no
-  PDF-level alternatives.
-- Change the 12-point gold-on-white `Version 1.2.1` text. Its approximately
-  1.75:1 contrast is insufficient, and the locked OCR gate misses that required
-  phrase even though every page otherwise satisfies the OCR density threshold.
-  Prefer navy text while keeping gold as a decorative accent.
-- Restore the manifest-required `Appendix A:` and `Appendix B:` punctuation.
-- Remove the duplicate logical page label `1` for the cover and first body
-  page, and resolve the nonfatal `tocloft` redefinition warning.
-- Produce the redesign only through the locked PDF 2.0/PDF/UA-2 toolchain,
-  then run reproducibility, structure, veraPDF, every-page render, OCR, visual,
-  and manual accessibility reviews on the exact final hash.
+- [x] Create the focused `agent/polished-pdf-redesign` topic branch at the
+  audited `v1.2.1` post-publication baseline.
+- [x] Move the manifest to review-only `v1.2.2-rc.1` metadata, output naming,
+  deterministic epoch, and trailer identifier before changing PDF bytes.
+- [x] Retain the numbered chapters, `docs/sites/` page, examples, manifest,
+  header, template, and Lua filter as the canonical editable sources.
+- [x] Keep the aggregate prototype Markdown, TeX, and PDF out of the commit.
+- [x] Confirm no VPN or new live-cluster validation is required for this
+  presentation-only migration.
+
+### Phase 1: Tagging-Safe Visual Port
+
+- [x] Lock the exact TeX Live Noto archive and require Noto Sans plus DejaVu
+  Sans Mono to resolve from the pinned toolchain trees.
+- [x] Port the navy, ink, link, code-rail, and restrained gold palette
+  while keeping gold decorative rather than using it as low-contrast text.
+- [x] Add the polished cover, two-column contents, running navigation,
+  heading hierarchy, semantic code rails, and reviewed whitespace without
+  replacing the standard tagging-aware document commands.
+- [x] Avoid the prototype's tagging-incompatible or only partially compatible
+  `titlesec`, `tocloft`, `needspace`, `listings`, `multirow`, and `tcolorbox`
+  path.
+- [x] Derive chapter, subsection, and appendix-template numbering during PDF
+  assembly and apply reviewed screenshot widths through the PDF Lua filter.
+- [x] Preserve the normal Markdown image alternatives through the three
+  source-position `Figure` structures.
+
+### Phase 2: Page, Semantic, and OCR Contracts
+
+- [x] Give the physical cover the unique label `Cover`, use lowercase Roman
+  contents labels, and restart Arabic numbering at body page `1`.
+- [x] Require structure tab order on every page, unique contiguous structure
+  parents, document-title display, and the exact manifest-owned logical role
+  counts.
+- [x] Keep cover, header, footer, rule, page-number, and code-rail decoration
+  out of logical reading order as marked-content layout artifacts.
+- [x] Require physical page 1 OCR to find the guide title and release-candidate
+  label, in addition to complete-document and per-page-density OCR checks.
+- [x] Add regression tests for candidate/final metadata, locked fonts,
+  numbering, image sizing, page labels, structure contracts, and cover OCR.
+
+### Phase 3: Completed Focused Validation
+
+- [x] Run the focused build, manifest, toolchain-bootstrap, OCR,
+  accessibility, and build-record unit suites.
+- [x] Build the candidate twice with the locked toolchain and complete the
+  reproducibility, structural, font, text, render, OCR, and PDF/UA-2 machine
+  checks completed to date.
+
+### Phase 4: Release and Human Review
+
+- [x] Run the complete `npm ci` and `make release-check` gate on the final
+  candidate worktree.
+- [x] Render every page at high resolution and complete contact-sheet plus
+  representative original-resolution visual inspection for reflow, clipping,
+  overlap, malformed code, tables, figures, links, page labels, and contrast.
+- [x] Copy the exact candidate PDF, and any deliberately generated inspection
+  TeX, to the Windows Desktop for user review.
+- [x] Record the exact reviewed PDF and local veraPDF report hashes, completed
+  machine and visual evidence, and untested manual accessibility limitations.
+- [ ] Bind the commit-specific hosted toolchain record and veraPDF report
+  hashes to the focused draft pull-request evidence after the first push.
+- [ ] Commit and push the complete candidate, then open a focused draft pull
+  request and require every hosted check to pass.
+- [ ] Stop for user inspection and approval before merge or final promotion.
+
+Local candidate evidence recorded August 1, 2026:
+
+- `UTC_HPC_Guide_v1.2.2-rc.1.pdf` is 27-page US Letter PDF 2.0 with SHA-256
+  `209193e9b0cadd583fa0c809d44c945fbb1ec49bd239578419636cbe38cd8964`.
+  It is tagged, unencrypted, contains XMP metadata, has no forms or JavaScript,
+  and embeds exactly four Unicode-mapped Noto Sans and DejaVu Sans Mono fonts.
+- The complete release gate passed byte-identical repeated builds, qpdf,
+  required-text extraction, all-page rendering, OCR at 150 DPI, exact cover
+  OCR, exact logical-role counts, page contracts, and veraPDF 1.30.2 `ua2`.
+  The local veraPDF report has SHA-256
+  `aec1e8589025703050532f7121ca5be92f9616962775fd8b6304b26ef7a8aee5`
+  and records one compliant job, 1,727 passed rules, 181,527 passed checks,
+  and no failed rules, checks, or exceptions.
+- Page labels progress from `Cover` to lowercase Roman `i` and Arabic `1`.
+  Named destination `page.i` resolves once to physical page 2, `page.1`
+  resolves once to physical page 3, all 27 pages use `/Tabs /S`, and structure
+  parents are contiguous from 0 through 26.
+- Every page was rerendered at 200 DPI. Contact-sheet and representative
+  original-resolution review found no blank pages, reflow, clipping, overlap,
+  malformed code, table or screenshot displacement, broken glyphs, or
+  unintended low-contrast text. Gold remains decorative.
+- The exact PDF was copied to the Windows Desktop as
+  `UTC_HPC_Guide_v1.2.2-rc.1.pdf`; the Windows copy matches the reviewed
+  SHA-256. No standalone inspection TeX was generated.
+- The local traceability-record generator completed with both font packages,
+  the explicit unversioned Noto state, and hashes for all eight configured font
+  source files. Its commit-bound hosted artifact hash remains pull-request
+  evidence rather than pre-commit evidence.
+- No screen-reader/viewer pairing, keyboard traversal, reflow-mode review, or
+  other real assistive-technology interoperability test was performed. The
+  candidate makes no WCAG, universal assistive-technology, or UTC approval
+  claim; that manual review remains a final-publication limitation.
+
+### Phase 5: Publication Boundary
+
+- [ ] After candidate approval, prepare a separate final-promotion change for
+  `v1.2.2` and re-run all PDF-changing validation on its exact hash.
+- [ ] Merge, tag, and publish only the reviewed final artifact; do not attach
+  the candidate to a stable release or overwrite the existing `v1.2.1` asset.
 
 No VPN or new live-cluster validation is needed for this design migration.
 Reopen live validation only under the existing live-site rule above.

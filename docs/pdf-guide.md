@@ -19,8 +19,17 @@ The current Ubuntu 24.04 x86_64 toolchain pins:
 - [Eclipse Temurin 21.0.11+10](https://github.com/adoptium/temurin21-binaries/releases/tag/jdk-21.0.11%2B10);
 - [veraPDF 1.30.2](https://software.verapdf.org/rel/1.30/) with its built-in
   `ua2` profile; and
-- exact expected versions of qpdf, Poppler, Tesseract English OCR, Fontconfig,
-  and the DejaVu fonts used by the build.
+- exact expected versions of qpdf, Poppler, Tesseract English OCR, and
+  Fontconfig, plus revision- and archive-digest-pinned Noto Sans for body and
+  display text and DejaVu Sans Mono for code.
+
+The frozen TeX Live repository supplies the Noto archive at revision `77677`.
+The lock records that it has no catalogue version and binds its container to
+SHA-512
+`2e94b1490e1682391f66fe03ca46a70d2fa697eb71ae02b6d675a7b71b42c94e449f846fe459f3fd873450b1de5fd022bde96d8a96bb82e14db545800ccee5a6`.
+The bootstrap rejects a different revision, digest, or an unexpected catalogue
+version. Font files must resolve from the locked TeX trees; unrecorded host
+font substitution is not a release build.
 
 The bootstrap requires Ubuntu 24.04 x86_64, Python 3, GnuPG, Perl, network
 access, and the exact host QA packages recorded in the lock. It downloads into
@@ -43,6 +52,33 @@ Do not substitute Ubuntu's distribution Pandoc or TeX packages for release
 validation. The lock file, bootstrap, local Make targets, and hosted workflow
 define one release toolchain.
 
+## Presentation and Tagging Contract
+
+The polished presentation remains part of the source-generated tagged build,
+not a second hand-maintained Markdown or TeX document. The PDF uses Noto Sans,
+DejaVu Sans Mono, and this reviewed palette:
+
+- navy `#112E51` for the cover and primary navigation text;
+- ink `#172033` for body and code text on white;
+- code rail `#335E8A` and link blue `#1D4ED8`; and
+- gold `#FDB736` only for decorative rules and accents, never as text on
+  white.
+
+The build retains the tagging-aware standard Article title, section,
+table-of-contents, list, table, figure, and link commands. Code remains in the
+custom semantic `Code` structure. It deliberately avoids `titlesec`,
+`tocloft`, `needspace`, `listings`, `multirow`, and other packages that are
+incompatible with the locked LaTeX tagging path. Decorative cover elements,
+running headers, footers, rules, and code rails are marked as layout artifacts
+rather than placed in logical reading order.
+
+Chapter and subsection numbers are derived during assembly from the ordered
+manifest. Appendix A and the four Appendix B templates receive corresponding
+lettered numbers. The PDF-only Lua filter applies the reviewed `84%`, `78%`,
+and `52%` widths to the three screenshots. Their ordinary Markdown image
+labels remain the canonical alternatives and must reach the three `Figure`
+structures unchanged and in source order.
+
 ## Build and Automated Validation
 
 Build the manifest-selected document:
@@ -51,11 +87,14 @@ Build the manifest-selected document:
 make pdf
 ```
 
-The final v1.2.1 manifest produces:
+The review-only `v1.2.2-rc.1` manifest produces:
 
 ```text
-dist/UTC_HPC_Guide.pdf
+dist/UTC_HPC_Guide_v1.2.2-rc.1.pdf
 ```
+
+The published `v1.2.1` stable asset remains unchanged while this candidate is
+under review.
 
 Run the accessibility gate against an existing build:
 
@@ -84,12 +123,21 @@ The PDF gate:
 - generates PDF 2.0 through Pandoc's supported LuaLaTeX
   `pdfstandard=ua-2` path;
 - validates basic PDF structure with qpdf;
-- checks US Letter page size, title, author, encryption state, embedded fonts,
-  and Unicode mappings with Poppler;
+- checks US Letter page size, title, author, encryption state, the exact
+  embedded Noto Sans and DejaVu Sans Mono family set, and Unicode mappings with
+  Poppler;
 - requires `Tagged: yes`, a structure tree, marked content, `en-US`, and the
   expected PDF/UA-2 identification;
 - requires representative heading, list, table, table-header, table-cell,
   link, figure, and code structure;
+- requires the manifest's exact semantic role counts for headings, lists,
+  table components, links, figures, code, and contents references so an
+  omitted, duplicated, or reclassified meaningful element fails closed;
+- requires every page to use structure tab order `/Tabs /S`, requires unique
+  contiguous `/StructParents` values, and requires the viewer preference to
+  display the document title;
+- requires one physical `Cover` label, lowercase Roman contents labels
+  starting at `i`, and Arabic body labels restarting at `1`;
 - renders screenshots as non-floating, source-position figures with nearby
   contextual labels, and rejects detached caption structures that could move
   ahead of their headings or figures in logical reading order;
@@ -102,7 +150,9 @@ The PDF gate:
 - extracts text and checks required guide sections and examples;
 - rasterizes every page and requires the complete document to render; and
 - runs Tesseract against every rendered page, enforces the per-page text
-  threshold, and checks representative headings in the combined OCR output.
+  threshold, checks representative headings in the combined OCR output, and
+  separately requires `Practical HPC Onboarding Guide` and
+  `Release candidate for v1.2.2` to be legible on physical page 1.
 
 The [Pandoc LaTeX variables](https://pandoc.org/demo/example33/19.1-latex.html)
 enable the source-generated PDF-standard path. The
@@ -244,7 +294,8 @@ signed or hermetic provenance.
 
 After PDF QA passes, the hosted workflow uploads these files together:
 
-- `UTC_HPC_Guide.pdf`;
+- the manifest-selected PDF, currently
+  `UTC_HPC_Guide_v1.2.2-rc.1.pdf`;
 - `build-toolchain.txt`; and
 - `verapdf-report.xml`.
 
@@ -256,6 +307,8 @@ system dependencies are not digest-pinned, so this remains a reference build
 rather than hermetic or signed provenance. The workflow artifact has a short
 retention period.
 
-The reviewed final binary belongs on the matching `v1.2.1` GitHub release
-under the stable asset name `UTC_HPC_Guide.pdf`. Once that release is
-published, the repository's latest-release URL serves the final artifact.
+The existing `v1.2.1` GitHub release remains the stable publication. A
+candidate artifact is review-only: complete the exact-hash automated, visual,
+OCR, and manual review before changing the manifest to final. Only a reviewed
+final build belongs on a matching GitHub release under the stable asset name
+`UTC_HPC_Guide.pdf`; a candidate must not overwrite the existing release.

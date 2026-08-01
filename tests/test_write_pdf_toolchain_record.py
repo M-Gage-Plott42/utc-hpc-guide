@@ -12,12 +12,15 @@ from scripts.write_pdf_toolchain_record import (
     parse_check_log,
     record_preamble,
     require_exact_line,
+    require_locked_font_source,
+    texlive_package_version,
+    validate_tlmgr_package,
 )
 
 
 PDF_SHA256 = "1" * 64
 ROOT = Path(__file__).resolve().parents[1]
-FINAL_MANIFEST = json.loads(
+CURRENT_MANIFEST = json.loads(
     (ROOT / "pdf/guide_manifest.json").read_text(encoding="utf-8")
 )
 
@@ -144,14 +147,78 @@ class ExactToolVersionTests(unittest.TestCase):
             )
 
 
+class TexLivePackageTests(unittest.TestCase):
+    def test_formats_omitted_null_version_as_none(self) -> None:
+        details = {"installed": "Yes", "revision": "77677"}
+        validate_tlmgr_package(
+            "noto",
+            details,
+            {"revision": "77677", "version": None},
+        )
+        self.assertEqual(texlive_package_version(details), "none")
+
+    def test_rejects_catalogue_version_for_unversioned_lock(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "does not match lock"):
+            validate_tlmgr_package(
+                "noto",
+                {
+                    "installed": "Yes",
+                    "revision": "77677",
+                    "cat-version": "2025.01.01",
+                },
+                {"revision": "77677", "version": None},
+            )
+
+
+class LockedFontSourceTests(unittest.TestCase):
+    def test_accepts_regular_font_within_locked_texmf_dist(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            texmf_dist = Path(temporary) / "texlive2025/texmf-dist"
+            font = texmf_dist / "fonts/NotoSans-Regular.ttf"
+            font.parent.mkdir(parents=True)
+            font.write_bytes(b"font")
+            self.assertEqual(
+                require_locked_font_source(
+                    font,
+                    filename=font.name,
+                    texmf_dist=texmf_dist,
+                ),
+                font.resolve(),
+            )
+
+    def test_rejects_external_font_and_parent_escape(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            texmf_dist = root / "texlive2025/texmf-dist"
+            texmf_dist.mkdir(parents=True)
+            external = root / "NotoSans-Regular.ttf"
+            external.write_bytes(b"shadow")
+            candidates = (external, texmf_dist / "../.." / external.name)
+            for candidate in candidates:
+                with self.subTest(candidate=candidate):
+                    with self.assertRaisesRegex(
+                        RuntimeError,
+                        "outside the locked TeX tree",
+                    ):
+                        require_locked_font_source(
+                            candidate,
+                            filename=external.name,
+                            texmf_dist=texmf_dist,
+                        )
+
+
 class RecordPreambleTests(unittest.TestCase):
     def test_final_record_does_not_claim_publication(self) -> None:
+        final = dict(CURRENT_MANIFEST)
+        final["release_status"] = "final"
+        final["document_version"] = "1.2.2"
+        final["output_filename"] = "UTC_HPC_Guide.pdf"
         self.assertEqual(
-            record_preamble(FINAL_MANIFEST),
+            record_preamble(final),
             [
                 "UTC HPC Guide PDF build traceability record",
                 (
-                    "distribution_status=final document build for v1.2.1; "
+                    "distribution_status=final document build for v1.2.2; "
                     "publication is separate"
                 ),
                 "",
@@ -159,14 +226,10 @@ class RecordPreambleTests(unittest.TestCase):
         )
 
     def test_candidate_record_remains_review_only(self) -> None:
-        candidate = dict(FINAL_MANIFEST)
-        candidate["release_status"] = "candidate"
-        candidate["document_version"] = "1.2.1-rc.2"
-        candidate["output_filename"] = "UTC_HPC_Guide_v1.2.1-rc.2.pdf"
         self.assertIn(
-            "distribution_status=review-only release candidate for v1.2.1; "
+            "distribution_status=review-only release candidate for v1.2.2; "
             "not stable",
-            record_preamble(candidate),
+            record_preamble(CURRENT_MANIFEST),
         )
 
 

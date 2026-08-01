@@ -387,6 +387,41 @@ def texlive_package_details(tlmgr: Path, package: str) -> dict[str, str]:
     return details
 
 
+def validate_texlive_package_details(
+    package: str,
+    details: dict[str, str],
+    expected: dict[str, Any],
+) -> None:
+    if details.get("installed") != "Yes":
+        raise RuntimeError(f"required TeX Live package is absent: {package}")
+    if details.get("revision") != expected["revision"]:
+        raise RuntimeError(
+            f"TeX Live package revision mismatch for {package}: "
+            f"{details.get('revision')} != {expected['revision']}"
+        )
+    if "version" not in expected:
+        raise ValueError(
+            f"TeX Live package lock must declare version for {package}"
+        )
+    expected_version = expected["version"]
+    if expected_version is None:
+        if "cat-version" in details:
+            raise RuntimeError(
+                f"TeX Live package version mismatch for {package}: "
+                f"unexpected catalogue version {details['cat-version']}"
+            )
+    elif isinstance(expected_version, str):
+        if details.get("cat-version") != expected_version:
+            raise RuntimeError(
+                f"TeX Live package version mismatch for {package}: "
+                f"{details.get('cat-version')} != {expected_version}"
+            )
+    else:
+        raise ValueError(
+            f"TeX Live package lock version must be a string or null: {package}"
+        )
+
+
 def verify_texlive(lock: dict[str, Any], destination: Path) -> tuple[Path, Path]:
     binary_dir = destination / "bin" / "x86_64-linux"
     lualatex = binary_dir / "lualatex"
@@ -424,18 +459,7 @@ def verify_texlive(lock: dict[str, Any], destination: Path) -> tuple[Path, Path]
         )
     for package, expected in lock["packages"].items():
         details = texlive_package_details(tlmgr, package)
-        if details.get("installed") != "Yes":
-            raise RuntimeError(f"required TeX Live package is absent: {package}")
-        if details.get("revision") != expected["revision"]:
-            raise RuntimeError(
-                f"TeX Live package revision mismatch for {package}: "
-                f"{details.get('revision')} != {expected['revision']}"
-            )
-        if details.get("cat-version") != expected["version"]:
-            raise RuntimeError(
-                f"TeX Live package version mismatch for {package}: "
-                f"{details.get('cat-version')} != {expected['version']}"
-            )
+        validate_texlive_package_details(package, details, expected)
     print(
         "texlive_verified "
         f"release={lock['release']} kernel={lock['latex_kernel']} "

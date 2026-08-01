@@ -54,26 +54,62 @@ $if(pdf-trailer-id)$
 $endif$
 
 $if(title)$
-\title{$title$$if(thanks)$\thanks{$thanks$}$endif$}
-$endif$
+\title{%
+  \GuideTitle{$title$$if(thanks)$\thanks{$thanks$}$endif$}%
 $if(subtitle)$
-\usepackage{etoolbox}
-\makeatletter
-\providecommand{\subtitle}[1]{% add subtitle to \maketitle
-  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
-}
-\makeatother
-\subtitle{$subtitle$}
+  \\[0.34in]%
+  \GuideSubtitle{$subtitle$}%
 $endif$
-\author{$for(author)$$author$$sep$ \and $endfor$}
-\date{$date$}
+  \\[0.34in]%
+  \GuideCoverRule
+  \\[0.30in]%
+  \GuideCoverRelease{$cover-release-label$}%
+}
+$endif$
+\author{\GuideCoverAuthor{$for(author)$$author$$sep$ \and $endfor$}}
+\date{%
+  \GuideCoverDate{$date$}%
+  \\[0.38in]%
+  \GuideCoverMeta{%
+    $cover-identifier-label$: \texttt{v$document-version$}%
+  }%
+  \\[0.10in]%
+  \GuideCoverMeta{%
+    \href{https://github.com/M-Gage-Plott42/utc-hpc-guide}{%
+      \textcolor{white}{github.com/M-Gage-Plott42/utc-hpc-guide}%
+    }%
+  }%
+  \\[0.18in]%
+  \parbox{0.86\textwidth}{\raggedright
+    \GuideCoverMeta{%
+      Canonical source: tracked repository chapters, site appendix,
+      examples, and \texttt{pdf/guide\_manifest.json}.%
+    }%
+  }%
+  \\[0.34in]%
+  \parbox{0.86\textwidth}{\raggedright
+    \GuideCoverMeta{%
+      This guide is a practical baseline, not official cluster policy.
+      Verify site-specific limits, software, storage, and access rules
+      against current institutional documentation and live scheduler
+      commands.%
+    }%
+  }%
+}
 
 \begin{document}
 $if(has-frontmatter)$
 \frontmatter
 $endif$
 $if(title)$
+\hypersetup{pageanchor=false}
+\pagenumbering{gobble}
+\pagecolor{UTCNavy}
+\thispdfpagelabel{Cover}
 \maketitle
+\nopagecolor
+\hypersetup{pageanchor=true}
+\pagenumbering{roman}
 $if(abstract)$
 \begin{abstract}
 $abstract$
@@ -96,8 +132,13 @@ $if(toccolor)$
 $endif$
 $endif$
 \setcounter{tocdepth}{$toc-depth$}
+\begin{multicols}{2}
 \tableofcontents
+\end{multicols}
 }
+\clearpage
+\pagenumbering{arabic}
+\thispagestyle{fancy}
 $endif$
 $if(lof)$
 \listoffigures

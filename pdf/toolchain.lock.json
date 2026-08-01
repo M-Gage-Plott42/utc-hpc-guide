@@ -64,6 +64,11 @@
         "version": "2.34",
         "container_sha512": "40ec3fc1fd156a5f8bfa9e9f86aba655f113c2db62241d740a7efce9576ede3b6041bc78e5c4b160f5d447d1c83c207b2914f53e6b0d06619ee289778abfe8ad"
       },
+      "noto": {
+        "revision": "77677",
+        "version": null,
+        "container_sha512": "2e94b1490e1682391f66fe03ca46a70d2fa697eb71ae02b6d675a7b71b42c94e449f846fe459f3fd873450b1de5fd022bde96d8a96bb82e14db545800ccee5a6"
+      },
       "tagpdf": {
         "revision": "77539",
         "version": "0.99y",

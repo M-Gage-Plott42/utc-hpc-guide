@@ -49,15 +49,12 @@ except ImportError:
 
 HEX_SHA256 = r"[0-9a-f]{64}"
 LOCK_STAMP_NAME = "lock-attestation.txt"
+UNVERSIONED_TEXLIVE_PACKAGE = "none"
 FONT_FILES = (
-    "DejaVuSerif.ttf",
-    "DejaVuSerif-Bold.ttf",
-    "DejaVuSerif-Italic.ttf",
-    "DejaVuSerif-BoldItalic.ttf",
-    "DejaVuSans.ttf",
-    "DejaVuSans-Bold.ttf",
-    "DejaVuSans-Oblique.ttf",
-    "DejaVuSans-BoldOblique.ttf",
+    "NotoSans-Regular.ttf",
+    "NotoSans-Bold.ttf",
+    "NotoSans-Italic.ttf",
+    "NotoSans-BoldItalic.ttf",
     "DejaVuSansMono.ttf",
     "DejaVuSansMono-Bold.ttf",
     "DejaVuSansMono-Oblique.ttf",
@@ -230,6 +227,57 @@ def parse_tlmgr_details(output: str) -> dict[str, str]:
             key, value = line.split(":", 1)
             details[key.strip()] = value.strip()
     return details
+
+
+def texlive_package_version(details: dict[str, str]) -> str:
+    """Return a stable record token even when tlmgr has no catalogue version."""
+    return details.get("cat-version", UNVERSIONED_TEXLIVE_PACKAGE)
+
+
+def validate_tlmgr_package(
+    package: str,
+    details: dict[str, str],
+    expected: dict[str, object],
+) -> None:
+    expected_version = expected["version"]
+    version_matches = (
+        "cat-version" not in details
+        if expected_version is None
+        else details.get("cat-version") == expected_version
+    )
+    if (
+        details.get("installed") != "Yes"
+        or details.get("revision") != expected["revision"]
+        or not version_matches
+    ):
+        raise RuntimeError(
+            f"installed TeX Live package does not match lock: {package}"
+        )
+
+
+def require_locked_font_source(
+    path: Path,
+    *,
+    filename: str,
+    texmf_dist: Path,
+) -> Path:
+    """Require a regular font resolved from the locked TeX distribution."""
+    if not texmf_dist.is_dir():
+        raise RuntimeError(f"locked TeX font root is missing: {texmf_dist}")
+    require_regular_file(path, f"locked font {filename}")
+    locked_root = texmf_dist.resolve(strict=True)
+    resolved = path.resolve(strict=True)
+    try:
+        resolved.relative_to(locked_root)
+    except ValueError as exc:
+        raise RuntimeError(
+            f"locked font resolved outside the locked TeX tree: {path}"
+        ) from exc
+    if resolved.name != filename:
+        raise RuntimeError(
+            f"locked font resolved to an unexpected file: {resolved}"
+        )
+    return resolved
 
 
 def package_version(name: str) -> str:
@@ -440,16 +488,13 @@ def write_record(
                 env=tool_env,
             )
         )
-        if (
-            details.get("installed") != "Yes"
-            or details.get("revision") != expected["revision"]
-            or details.get("cat-version") != expected["version"]
-        ):
-            raise RuntimeError(
-                f"installed TeX Live package does not match lock: {package}"
-            )
+        validate_tlmgr_package(package, details, expected)
         texlive_packages[package] = details
-    font_package = texlive_packages["dejavu"]
+    font_packages = {
+        name: texlive_packages[name]
+        for name in ("noto", "dejavu")
+    }
+    texmf_dist = toolchain_root / "texlive2025" / "texmf-dist"
     font_hashes: dict[str, str] = {}
     for filename in FONT_FILES:
         resolved = run(
@@ -458,10 +503,11 @@ def write_record(
         )
         if "\n" in resolved or not resolved:
             raise RuntimeError(f"unexpected font resolution for {filename}")
-        path = Path(resolved)
-        require_regular_file(path, f"locked font {filename}")
-        if path.name != filename:
-            raise RuntimeError(f"locked font resolved to an unexpected file: {path}")
+        path = require_locked_font_source(
+            Path(resolved),
+            filename=filename,
+            texmf_dist=texmf_dist,
+        )
         font_hashes[filename] = sha256(path)
 
     qa_versions: dict[str, str] = {}
@@ -616,7 +662,7 @@ def write_record(
     ]
     lines.extend(
         (
-            f"{package}={details['cat-version']} "
+            f"{package}={texlive_package_version(details)} "
             f"revision={details['revision']}"
         )
         for package, details in sorted(texlive_packages.items())
@@ -625,10 +671,16 @@ def write_record(
         (
             "",
             "[fonts]",
-            f"tex_live_package=dejavu {font_package['cat-version']}",
-            f"tex_live_package_revision={font_package['revision']}",
         )
     )
+    for package, details in font_packages.items():
+        lines.extend(
+            (
+                f"{package}.tex_live_package_version="
+                f"{texlive_package_version(details)}",
+                f"{package}.tex_live_package_revision={details['revision']}",
+            )
+        )
     lines.extend(
         f"{filename}.sha256={font_hashes[filename]}"
         for filename in FONT_FILES

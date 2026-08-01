@@ -2,6 +2,12 @@
 -- This avoids tagging-incompatible listings/fvextra packages while preserving
 -- line breaks and indentation in the printable guide.
 
+local image_widths = {
+  ["ood_desktop_request_form_sanitized.png"] = "84%",
+  ["ood_session_card_sanitized.png"] = "78%",
+  ["ood_storage_shortcuts_sanitized.png"] = "52%",
+}
+
 local function horizontal_space(count)
   return pandoc.RawInline(
     "latex",
@@ -52,4 +58,16 @@ function CodeBlock(block)
   end
   table.insert(blocks, pandoc.RawBlock("latex", "\\end{GuideCode}"))
   return blocks
+end
+
+-- Keep responsive Markdown sources presentation-neutral while applying the
+-- reviewed printable-guide scale to the three sanitized screenshots. Image
+-- content and normal alternative text remain owned by the Markdown source.
+function Image(image)
+  local filename = image.src:match("([^/]+)$")
+  local width = image_widths[filename]
+  if width then
+    image.attributes.width = width
+  end
+  return image
 end

@@ -23,7 +23,29 @@ class PdfOcrCheckerTests(unittest.TestCase):
                 "UTC MocsHPC Site Notes",
             ],
             40,
+            {1: ["Practical HPC Onboarding Guide"]},
         )
+
+    def test_rejects_cover_phrase_found_only_on_later_page(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "page 1"):
+            validate_ocr_pages(
+                [
+                    "Practical HPC Onboarding Guide " + ("intro " * 10),
+                    "Release candidate for v1.2.2 " + ("details " * 10),
+                ],
+                ["Release candidate for v1.2.2"],
+                40,
+                {1: ["Release candidate for v1.2.2"]},
+            )
+
+    def test_rejects_page_specific_requirement_for_missing_page(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "missing page 2"):
+            validate_ocr_pages(
+                ["Practical HPC Onboarding Guide " * 3],
+                ["Practical HPC Onboarding Guide"],
+                40,
+                {2: ["Appendix"]},
+            )
 
     def test_rejects_page_with_too_little_text(self) -> None:
         with self.assertRaisesRegex(RuntimeError, "page 2"):

@@ -1,17 +1,26 @@
+\usepackage{etoolbox}
 \usepackage{fancyhdr}
 \usepackage{hyperref}
+\usepackage{microtype}
+\usepackage{multicol}
+\usepackage{setspace}
 
 % Pandoc emits DocumentMetadata before the document class and owns the
 % engine-neutral trailer identifier. Keep this header to tagging-compatible
-% presentation settings.
+% presentation settings. In particular, do not replace the standard title,
+% section, table-of-contents, list, table, figure, or link commands.
 
-\definecolor{GuideBlue}{HTML}{174A7E}
+\definecolor{UTCNavy}{HTML}{112E51}
+\definecolor{UTCGold}{HTML}{FDB736}
+\definecolor{UTCInk}{HTML}{172033}
+\definecolor{UTCCodeRail}{HTML}{335E8A}
+\definecolor{UTCLink}{HTML}{1D4ED8}
 
 \hypersetup{
   colorlinks=true,
-  linkcolor=GuideBlue,
-  urlcolor=GuideBlue,
-  citecolor=GuideBlue,
+  linkcolor=UTCNavy,
+  urlcolor=UTCLink,
+  citecolor=UTCNavy,
   pdfborder={0 0 0}
 }
 
@@ -20,29 +29,86 @@
   table/header-rows={1}
 }
 
+\newcommand{\GuideTitle}[1]{%
+  {\color{white}\sffamily\bfseries\fontsize{30}{34}\selectfont #1}%
+}
+\newcommand{\GuideSubtitle}[1]{%
+  {\color{white}\sffamily\fontsize{15}{19}\selectfont #1}%
+}
+\newcommand{\GuideCoverRelease}[1]{%
+  {\color{white}\sffamily\bfseries\fontsize{12}{15}\selectfont #1}%
+}
+\newcommand{\GuideCoverAuthor}[1]{%
+  {\color{white}\sffamily\bfseries\fontsize{13}{16}\selectfont #1}%
+}
+\newcommand{\GuideCoverDate}[1]{%
+  {\color{white}\sffamily\fontsize{11}{14}\selectfont #1}%
+}
+\newcommand{\GuideCoverMeta}[1]{%
+  {\color{white}\sffamily\fontsize{8.8}{11.5}\selectfont #1}%
+}
+\newcommand{\GuideCoverRule}{%
+  \tagmcbegin{artifact=layout}%
+  {\color{UTCGold}\rule{2.2in}{2.2pt}}%
+  \tagmcend
+}
+
+\newcommand{\GuideCodeRail}{%
+  \tagmcbegin{artifact=layout}%
+  \llap{\color{UTCCodeRail}\rule{3pt}{1.08\baselineskip}\hspace{0.65em}}%
+  \tagmcend
+}
+
 \NewDocumentEnvironment{GuideCode}{}{%
-  \par
+  \par\addvspace{0.55\baselineskip}%
   \tagstructbegin{tag=Code}%
   \begingroup
-  \ttfamily\small\raggedright
+  \ttfamily\fontsize{8.8}{11}\selectfont\color{UTCInk}\raggedright
   \setlength{\parindent}{0pt}%
   \setlength{\parskip}{0pt}%
+  \setlength{\leftskip}{1.05em}%
+  \setlength{\rightskip}{0.35em plus 1fil}%
+  \everypar{\GuideCodeRail}%
 }{%
   \par
   \endgroup
   \tagstructend
-  \par\addvspace{0.5\baselineskip}
+  \par\addvspace{0.65\baselineskip}%
 }
 
+% Patch only the visual font fragments in the standard article commands.
+% Retaining the commands themselves preserves LaTeX-lab heading semantics.
+\makeatletter
+\patchcmd{\section}
+  {\normalfont\Large\bfseries}
+  {\normalfont\sffamily\bfseries\color{UTCNavy}\fontsize{20}{23}\selectfont}
+  {}
+  {\PackageError{utc-hpc-guide}{Unable to style standard section command}{}}
+\patchcmd{\subsection}
+  {\normalfont\large\bfseries}
+  {\normalfont\sffamily\bfseries\color{UTCNavy}\fontsize{13.2}{16}\selectfont}
+  {}
+  {\PackageError{utc-hpc-guide}{Unable to style standard subsection command}{}}
+\makeatother
+
+\setstretch{1.10}
 \setlength{\emergencystretch}{3em}
 \setlength{\parindent}{0pt}
-\setlength{\parskip}{0.45em}
+\setlength{\parskip}{0.50em plus 0.08em minus 0.05em}
+\setlength{\columnsep}{1.5em}
 \setcounter{secnumdepth}{0}
+\widowpenalty=10000
+\clubpenalty=10000
+\displaywidowpenalty=10000
+\raggedbottom
+\urlstyle{same}
 
+\AtBeginDocument{\color{UTCInk}}
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\small Practical HPC Onboarding Guide}
-\fancyhead[R]{\small v@DOCUMENT_VERSION@}
-\fancyfoot[C]{\thepage}
-\renewcommand{\headrulewidth}{0.3pt}
+\fancyhead[L]{\fontsize{8.5}{10}\selectfont\color{UTCNavy}\textbf{Practical HPC Onboarding Guide}}
+\fancyhead[R]{\fontsize{8.5}{10}\selectfont\color{UTCNavy}v@DOCUMENT_VERSION@}
+\fancyfoot[C]{\color{UTCGold}\rule{1.05em}{1.3pt}\hspace{0.55em}\color{UTCNavy}\textbf{\thepage}}
+\renewcommand{\headrulewidth}{0.45pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{UTCNavy}\leaders\hrule height \headrulewidth\hfill}}
 \renewcommand{\footrulewidth}{0pt}

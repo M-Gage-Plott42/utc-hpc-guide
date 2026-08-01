@@ -23,6 +23,12 @@ FONT_FLAGS = re.compile(
     r"\s+(yes|no)\s+(yes|no)\s+(yes|no)\s+\d+\s+\d+\s*$",
     re.IGNORECASE,
 )
+EXPECTED_EMBEDDED_FONTS = {
+    "NotoSans-Bold",
+    "NotoSans-Regular",
+    "DejaVuSansMono",
+    "DejaVuSansMono-Bold",
+}
 
 
 def run_text(command: list[str]) -> str:
@@ -62,6 +68,7 @@ def validate_fonts(output: str) -> int:
     ]
     if not rows:
         raise RuntimeError("pdffonts reported no fonts")
+    observed_fonts: set[str] = set()
     for row in rows:
         match = FONT_FLAGS.search(row)
         if not match:
@@ -71,6 +78,14 @@ def validate_fonts(output: str) -> int:
             raise RuntimeError(f"font is not embedded: {row}")
         if unicode_map != "yes":
             raise RuntimeError(f"font lacks a Unicode map: {row}")
+        font_name = row.split(maxsplit=1)[0]
+        observed_fonts.add(font_name.split("+", 1)[-1])
+    if observed_fonts != EXPECTED_EMBEDDED_FONTS:
+        raise RuntimeError(
+            "PDF embedded font families changed: "
+            f"observed {sorted(observed_fonts)}, "
+            f"expected {sorted(EXPECTED_EMBEDDED_FONTS)}"
+        )
     return len(rows)
 
 

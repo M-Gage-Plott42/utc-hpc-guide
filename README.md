@@ -9,13 +9,13 @@
 Practical HPC onboarding and workflows guide (SLURM + Open OnDemand + SSH + Python-first tooling).  
 Originally developed for a university research environment and sanitized for public release.
 
-Last updated: July 2026
+Last updated: August 2026
 
 [Download the latest printable PDF](https://github.com/M-Gage-Plott42/utc-hpc-guide/releases/latest/download/UTC_HPC_Guide.pdf)
 or review the [PDF build and validation instructions](docs/pdf-guide.md).
-This source revision defines final `v1.2.1` and the stable
-`UTC_HPC_Guide.pdf` release asset. The latest-release link serves it after the
-matching GitHub release is published.
+The latest-release link continues to serve the published stable `v1.2.1`
+artifact. This source revision defines `v1.2.2-rc.1` as a review-only PDF
+candidate; its workflow artifact is not a stable or supported release artifact.
 
 ## How to Use This Repo in 15 Minutes
 

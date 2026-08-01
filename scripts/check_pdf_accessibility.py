@@ -29,6 +29,9 @@ except ImportError:
 
 
 OBJECT_REFERENCE = re.compile(r"^(\d+)\s+(\d+)\s+R$")
+PDFINFO_DESTINATION = re.compile(
+    r'^\s*(?P<page>\d+)\s+\[[^\]]+\]\s+"(?P<name>[^"]+)"\s*$'
+)
 PDFUA_ID_NAMESPACE = "http://www.aiim.org/pdfua/ns/id/"
 VERAPDF_PROFILE = "ua2"
 
@@ -243,6 +246,118 @@ def find_catalog(objects: dict[str, dict[str, Any]]) -> dict[str, Any]:
     return catalogs[0]
 
 
+def validate_page_contract(
+    catalog: dict[str, Any],
+    objects: dict[str, dict[str, Any]],
+) -> tuple[int, int]:
+    pages: list[dict[str, Any]] = []
+    for payload in objects.values():
+        value = object_value(payload)
+        if isinstance(value, dict) and value.get("/Type") == "/Page":
+            pages.append(value)
+    if len(pages) < 3:
+        raise RuntimeError("tagged guide must contain cover, contents, and body pages")
+
+    structure_parents: list[int] = []
+    for page in pages:
+        if page.get("/Tabs") != "/S":
+            raise RuntimeError("every PDF page must use structure tab order /Tabs /S")
+        parent = page.get("/StructParents")
+        if not isinstance(parent, int) or isinstance(parent, bool):
+            raise RuntimeError("every PDF page must have an integer StructParents value")
+        structure_parents.append(parent)
+    if sorted(structure_parents) != list(range(len(pages))):
+        raise RuntimeError(
+            "PDF page StructParents values must be unique and contiguous from zero"
+        )
+
+    viewer_preferences = resolve_reference(
+        catalog.get("/ViewerPreferences"),
+        objects,
+        description="catalog ViewerPreferences",
+    )
+    if (
+        not isinstance(viewer_preferences, dict)
+        or viewer_preferences.get("/DisplayDocTitle") is not True
+    ):
+        raise RuntimeError("catalog ViewerPreferences must enable DisplayDocTitle")
+
+    page_labels = resolve_reference(
+        catalog.get("/PageLabels"),
+        objects,
+        description="catalog PageLabels",
+    )
+    if not isinstance(page_labels, dict):
+        raise RuntimeError("catalog must contain a PageLabels number tree")
+    numbers = resolve_reference(
+        page_labels.get("/Nums"),
+        objects,
+        description="PageLabels Nums",
+    )
+    if not isinstance(numbers, list) or len(numbers) != 6:
+        raise RuntimeError(
+            "PageLabels must define exactly Cover, Roman contents, and Arabic body"
+        )
+    indices = numbers[0::2]
+    styles = numbers[1::2]
+    if (
+        any(not isinstance(index, int) for index in indices)
+        or indices[0] != 0
+        or indices[1] != 1
+        or not 1 < indices[2] < len(pages)
+        or indices != sorted(set(indices))
+        or any(not isinstance(style, dict) for style in styles)
+    ):
+        raise RuntimeError(
+            "PageLabels must progress from physical cover to contents to body"
+        )
+    cover = qpdf_text(styles[0].get("/P"), description="cover page label")
+    if cover != "Cover" or set(styles[0]) != {"/P"}:
+        raise RuntimeError("the first physical page must have the unique label Cover")
+    if (
+        set(styles[1]) not in ({"/S"}, {"/S", "/St"})
+        or styles[1].get("/S") != "/r"
+        or isinstance(styles[1].get("/St", 1), bool)
+        or styles[1].get("/St", 1) != 1
+    ):
+        raise RuntimeError("contents pages must start with lowercase Roman label i")
+    if (
+        set(styles[2]) not in ({"/S"}, {"/S", "/St"})
+        or styles[2].get("/S") != "/D"
+        or isinstance(styles[2].get("/St", 1), bool)
+        or styles[2].get("/St", 1) != 1
+    ):
+        raise RuntimeError("body pages must restart with Arabic label 1")
+    return indices[1] + 1, indices[2] + 1
+
+
+def validate_named_page_destinations(
+    text: str,
+    *,
+    contents_page: int,
+    body_page: int,
+) -> None:
+    destinations: dict[str, list[int]] = {}
+    for line in text.splitlines():
+        match = PDFINFO_DESTINATION.fullmatch(line)
+        if match is None:
+            continue
+        destinations.setdefault(match.group("name"), []).append(
+            int(match.group("page"))
+        )
+
+    for name, expected_page in (
+        ("page.i", contents_page),
+        ("page.1", body_page),
+    ):
+        pages = destinations.get(name, [])
+        if pages != [expected_page]:
+            raise RuntimeError(
+                f'named destination "{name}" must resolve exactly once to '
+                f"physical page {expected_page}; found {pages}"
+            )
+
+
 def iter_nodes(node: Any) -> Iterator[tuple[str | None, Any]]:
     if isinstance(node, dict):
         for key, value in node.items():
@@ -412,6 +527,7 @@ def validate_qpdf_document(
 
     objects = qpdf_objects(document)
     catalog = find_catalog(objects)
+    validate_page_contract(catalog, objects)
     language = qpdf_text(
         catalog.get("/Lang"),
         description="catalog Lang",
@@ -470,6 +586,26 @@ def validate_qpdf_document(
         raise RuntimeError(
             "Figure Alt text must exactly match the three manifest alternatives "
             "in source order"
+        )
+
+    expected_counts = manifest.get("expected_structure_counts")
+    if expected_counts is not None:
+        if not isinstance(expected_counts, dict):
+            raise ValueError("expected_structure_counts must be an object")
+        mismatches = {
+            role: (summary.tags.get(role, 0), expected)
+            for role, expected in expected_counts.items()
+            if summary.tags.get(role, 0) != expected
+        }
+        if mismatches:
+            details = ", ".join(
+                f"{role}={actual} (expected {expected})"
+                for role, (actual, expected) in sorted(mismatches.items())
+            )
+            raise RuntimeError(f"logical structure role counts changed: {details}")
+    if summary.tags.get("Artifact", 0):
+        raise RuntimeError(
+            "decorative content must use marked-content artifacts, not Artifact roles"
         )
 
     validate_pdfua_xmp(xmp)
@@ -713,6 +849,16 @@ def validate_pdf_accessibility(
     info = parse_info(run_text([pdfinfo, str(pdf)]).stdout)
     validate_pdfinfo(info, manifest)
     document = load_qpdf_document(qpdf, pdf)
+    objects = qpdf_objects(document)
+    contents_page, body_page = validate_page_contract(
+        find_catalog(objects),
+        objects,
+    )
+    validate_named_page_destinations(
+        run_text([pdfinfo, "-dests", str(pdf)]).stdout,
+        contents_page=contents_page,
+        body_page=body_page,
+    )
     reference = metadata_reference(document)
     xmp = extract_metadata_stream(qpdf, pdf, reference)
     structure = validate_qpdf_document(document, manifest, xmp)

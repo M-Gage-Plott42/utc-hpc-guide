@@ -36,6 +36,7 @@ def validate_ocr_pages(
     page_texts: list[str],
     required_text: list[str],
     min_page_alnum: int,
+    required_page_text: dict[int, list[str]] | None = None,
 ) -> None:
     if not page_texts:
         raise RuntimeError("OCR produced no pages")
@@ -56,6 +57,25 @@ def validate_ocr_pages(
         if normalized_required not in combined:
             raise RuntimeError(f"required OCR text is missing: {required}")
 
+    for page_number, phrases in (required_page_text or {}).items():
+        if not 1 <= page_number <= len(page_texts):
+            raise RuntimeError(
+                "page-specific OCR requirement references missing "
+                f"page {page_number}"
+            )
+        normalized_page = normalize_ocr_text(page_texts[page_number - 1])
+        for phrase in phrases:
+            normalized_phrase = normalize_ocr_text(phrase)
+            if not normalized_phrase:
+                raise ValueError(
+                    "required_page_ocr_text entries must contain letters or digits"
+                )
+            if normalized_phrase not in normalized_page:
+                raise RuntimeError(
+                    "required OCR text is missing from "
+                    f"page {page_number}: {phrase}"
+                )
+
 
 def rendered_page_number(path: Path) -> int:
     match = re.search(r"-(\d+)\.png$", path.name)
@@ -70,6 +90,7 @@ def validate_pdf_ocr(pdf: Path, manifest: dict[str, Any]) -> None:
     dpi = manifest.get("ocr_dpi")
     min_page_alnum = manifest.get("ocr_min_alnum_per_page")
     required_text = manifest.get("required_ocr_text")
+    raw_required_page_text = manifest.get("required_page_ocr_text")
 
     if not isinstance(dpi, int) or not 72 <= dpi <= 600:
         raise ValueError("ocr_dpi must be an integer from 72 through 600")
@@ -81,6 +102,25 @@ def validate_pdf_ocr(pdf: Path, manifest: dict[str, Any]) -> None:
         or not all(isinstance(item, str) for item in required_text)
     ):
         raise ValueError("required_ocr_text must be a nonempty list of strings")
+    if (
+        not isinstance(raw_required_page_text, dict)
+        or not raw_required_page_text
+    ):
+        raise ValueError("required_page_ocr_text must be a nonempty object")
+    required_page_text: dict[int, list[str]] = {}
+    for raw_page, phrases in raw_required_page_text.items():
+        if (
+            not isinstance(raw_page, str)
+            or re.fullmatch(r"[1-9][0-9]*", raw_page) is None
+            or not isinstance(phrases, list)
+            or not phrases
+            or not all(isinstance(phrase, str) for phrase in phrases)
+        ):
+            raise ValueError(
+                "required_page_ocr_text must map positive page-number "
+                "strings to nonempty string lists"
+            )
+        required_page_text[int(raw_page)] = phrases
 
     with tempfile.TemporaryDirectory(prefix="utc-hpc-pdf-ocr-") as temp:
         render_prefix = Path(temp) / "page"
@@ -123,7 +163,12 @@ def validate_pdf_ocr(pdf: Path, manifest: dict[str, Any]) -> None:
             )
             page_texts.append(result.stdout)
 
-    validate_ocr_pages(page_texts, required_text, min_page_alnum)
+    validate_ocr_pages(
+        page_texts,
+        required_text,
+        min_page_alnum,
+        required_page_text,
+    )
     print(
         "pdf_ocr_passed "
         f"pages={len(page_texts)} dpi={dpi} "

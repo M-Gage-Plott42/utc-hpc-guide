@@ -29,6 +29,10 @@ Keep network-dependent dependency audits separate from this local gate.
 - Confirm the manifest status, document version, output filename, workflow
   artifact label, and distribution-status record all describe the same
   candidate or final build.
+- For any PDF-changing work after a published version, first create a new
+  review-only candidate. Do not rebuild materially different bytes under an
+  existing final version, stable filename, or tag. Promote candidate metadata
+  to final only after the exact candidate content and presentation pass review.
 
 ## 2. Sensitive Data Scrub
 
@@ -96,8 +100,22 @@ repository is free of private data.
   and the expected PDF/UA-2 identification.
 - Confirm representative headings, lists, table headers/cells, links, figures,
   and code are present in the logical structure.
+- Confirm the physical cover is labelled `Cover`, contents pages use lowercase
+  Roman labels starting at `i`, and body pages restart with Arabic `1`; reject
+  duplicate logical labels or a body `page.1` destination that resolves to the
+  cover.
+- Confirm every page uses structure tab order `/Tabs /S`, page
+  `/StructParents` values are unique and contiguous, and exact manifest-owned
+  logical-structure counts pass.
 - Confirm all three Open OnDemand figures carry the expected meaningful
-  alternative descriptions.
+  alternatives derived from their normal Markdown image labels.
+- Confirm meaningful cover text meets the reviewed contrast threshold and
+  gold is decorative only. Require page-1 OCR to find both the document title
+  and the candidate or final release label; combined-document OCR is not a
+  substitute for cover legibility.
+- Confirm cover graphics, repeated headers, footers, rules, page numbers, and
+  code rails are layout artifacts and do not interrupt logical reading order
+  or appear as `Artifact` structure roles.
 - Confirm the PDF has no encryption, forms, JavaScript, attachments, embedded
   files, or other active content rejected by the accessibility checker.
 - Run the locked veraPDF `ua2` profile with no allowlist and confirm
@@ -133,7 +151,8 @@ repository is free of private data.
   artifact is transient.
 - For final promotion, review the successful artifact built from the exact
   final `main` commit and confirm its SHA-256 before tagging. Bind every manual
-  result to that same hash.
+  result to that same hash. A successful candidate build is necessary review
+  evidence but is not itself the final stable artifact.
 - Attach the reviewed PDF to the matching GitHub release under the stable
   asset name `UTC_HPC_Guide.pdf`.
 - After publication, confirm the stable latest-release asset URL resolves:

@@ -58,10 +58,6 @@ EXACT_CODE_EXTRACTION_SPANS = (
         "sha256sum --check -",
     ),
 )
-OUTLINE_ENTRY = re.compile(
-    r'^(?P<prefix>[+|])\s+(?P<title>"(?:\\.|[^"])*")\s+'
-    r'#nameddest=(?P<destination>\S+)$'
-)
 HEADING_FONT = "NotoSans-Bold"
 TOC_FONTS = frozenset({"NotoSans-Bold", "NotoSans-Regular"})
 BODY_FIRST_PHYSICAL_PAGE = 3
@@ -600,14 +596,34 @@ def validate_outline(output: str, headings: tuple[HeadingInfo, ...]) -> None:
     observed: list[tuple[int, str]] = []
     destinations: list[str] = []
     for line in output.splitlines():
-        match = OUTLINE_ENTRY.fullmatch(line)
-        if match is None:
-            if line.strip():
-                raise RuntimeError(f"could not parse MuPDF outline entry: {line}")
+        if not line.strip():
             continue
-        level = 1 if match.group("prefix") == "+" else 2
-        observed.append((level, json.loads(match.group("title"))))
-        destinations.append(match.group("destination"))
+        prefix = line[0]
+        if prefix not in {"+", "|"}:
+            raise RuntimeError(f"could not parse MuPDF outline entry: {line}")
+        remainder = line[1:].lstrip()
+        try:
+            title, end = json.JSONDecoder().raw_decode(remainder)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(
+                f"could not parse MuPDF outline entry: {line}"
+            ) from exc
+        tail = remainder[end:]
+        if not tail or not tail[0].isspace() or tail != tail.rstrip():
+            raise RuntimeError(f"could not parse MuPDF outline entry: {line}")
+        suffix = tail.lstrip()
+        destination_prefix = "#nameddest="
+        if (
+            not isinstance(title, str)
+            or not suffix.startswith(destination_prefix)
+        ):
+            raise RuntimeError(f"could not parse MuPDF outline entry: {line}")
+        destination = suffix[len(destination_prefix) :]
+        if not destination or any(char.isspace() for char in destination):
+            raise RuntimeError(f"could not parse MuPDF outline entry: {line}")
+        level = 1 if prefix == "+" else 2
+        observed.append((level, title))
+        destinations.append(destination)
     expected = [(heading.level, heading.text) for heading in headings]
     if observed != expected:
         raise RuntimeError("PDF outline text or heading hierarchy changed")

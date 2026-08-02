@@ -1004,6 +1004,13 @@ Phase 7 evidence finalized August 2, 2026:
   for complete cmap/glyph checks. Two new malformed-table regressions raise
   complete discovery to 188 tests, and the workflow retains its early
   failure-path ordering.
+- The first final-head CodeQL aggregate then identified a high-severity
+  inefficient-regex alert in the new MuPDF outline parser even though both
+  language analyses completed. The outline parser now uses Python's bounded
+  JSON decoder for the quoted title and explicit checks for hierarchy prefix
+  and whitespace-free named destination. Escaped-title and long malformed
+  input regressions pass, the focused 32-test PDF-build suite passes, and the
+  revised parser validates all 81 headings in the reviewed canonical PDF.
 - Every hosted quality, ShellCheck, dependency-review, CodeQL, and PDF check is
   required on the exact final PR head. The commit-bound workflow artifact is
   downloaded after that run and must contain exactly the canonical PDF,

@@ -470,6 +470,20 @@ Second subsection body.
             validate_outline(outline.replace("|\t\t", "+\t", 1), headings)
         with self.assertRaisesRegex(RuntimeError, "unique"):
             validate_outline(outline.replace("subsection*.2", "section*.1"), headings)
+        validate_outline(
+            '+\t"1. \\"Quoted\\" heading"\t#nameddest=section*.5\n',
+            (HeadingInfo(1, '1. "Quoted" heading', "quoted"),),
+        )
+        for malformed in (
+            '+\t"unterminated' + "\\" * 2000,
+            '+\t"1. Chapter"\t#nameddest=section*.1 extra',
+            '+\t"1. Chapter"#nameddest=section*.1',
+            '+\t"1. Chapter"\t#nameddest=section*.1 ',
+            'x\t"1. Chapter"\t#nameddest=section*.1',
+        ):
+            with self.subTest(malformed=malformed[:40]):
+                with self.assertRaisesRegex(RuntimeError, "could not parse"):
+                    validate_outline(malformed, (chapter,))
 
         noto_bold = frozenset({"NotoSans-Bold"})
         noto_regular = frozenset({"NotoSans-Regular"})

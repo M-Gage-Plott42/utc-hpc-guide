@@ -75,8 +75,8 @@ def candidate_manifest(
             (
                 "Release candidate for v1.2.2"
                 if value == "Version 1.2.2"
-                else "1.2.2-rc.1"
-                if value == "1.2.2"
+                else "Candidate identifier: v1.2.2-rc.1"
+                if value == "Document identifier: v1.2.2"
                 else value
             )
             for value in manifest[key]
@@ -85,8 +85,8 @@ def candidate_manifest(
         (
             "Release candidate for v1.2.2"
             if value == "Version 1.2.2"
-            else "1.2.2-rc.1"
-            if value == "1.2.2"
+            else "Candidate identifier: v1.2.2-rc.1"
+            if value == "Document identifier: v1.2.2"
             else value
         )
         for value in manifest["required_page_ocr_text"]["1"]
@@ -134,6 +134,21 @@ class PdfManifestTests(unittest.TestCase):
                 root / "dist/UTC_HPC_Guide.pdf",
             )
         self.assertEqual(manifest["release_status"], "final")
+
+    def test_checked_in_manifest_requires_exact_final_cover_identifier(self) -> None:
+        identifier = "Document identifier: v1.2.2"
+        self.assertIn(identifier, CURRENT_MANIFEST["required_pdf_text"])
+        self.assertIn(identifier, CURRENT_MANIFEST["required_ocr_text"])
+        self.assertIn(
+            identifier,
+            CURRENT_MANIFEST["required_page_ocr_text"]["1"],
+        )
+        self.assertNotIn("1.2.2", CURRENT_MANIFEST["required_pdf_text"])
+        self.assertNotIn("1.2.2", CURRENT_MANIFEST["required_ocr_text"])
+        self.assertNotIn(
+            "1.2.2",
+            CURRENT_MANIFEST["required_page_ocr_text"]["1"],
+        )
 
     def test_accepts_explicit_candidate_fixture(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

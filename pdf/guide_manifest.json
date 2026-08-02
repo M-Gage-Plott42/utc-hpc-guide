@@ -41,7 +41,7 @@
   "required_pdf_text": [
     "Practical HPC Onboarding Guide",
     "Version 1.2.2",
-    "1.2.2",
+    "Document identifier: v1.2.2",
     "Slurm Basics",
     "ReqMem",
     "MaxRSS",
@@ -80,7 +80,7 @@
   "required_ocr_text": [
     "Practical HPC Onboarding Guide",
     "Version 1.2.2",
-    "1.2.2",
+    "Document identifier: v1.2.2",
     "Access and SSH",
     "Open OnDemand",
     "Slurm Basics",
@@ -96,7 +96,7 @@
     "1": [
       "Practical HPC Onboarding Guide",
       "Version 1.2.2",
-      "1.2.2"
+      "Document identifier: v1.2.2"
     ]
   }
 }

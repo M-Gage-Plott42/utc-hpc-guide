@@ -392,7 +392,8 @@ Reopen live validation only under the existing live-site rule above.
 
 ## v1.2.2-rc.2 Fira Canonicalization and Publication Plan
 
-Status: Phase 1 complete — selected Fira profile promoted; Phase 2 has not started
+Status: Phase 2 complete — Appendix assembly and source-owned code rails
+corrected; Phase 3 has not started
 
 Plan date: August 1, 2026
 
@@ -590,23 +591,58 @@ Phase 1 evidence recorded August 1, 2026:
 
 ### Phase 2: Correct Appendix Assembly and Code Rails
 
-- [ ] Assemble each generated Appendix B fenced block without a blank line
+- [x] Assemble each generated Appendix B fenced block without a blank line
   between the opening fence and the tracked script's first source line.
-- [ ] Add an assembly regression requiring every Appendix B block to begin
+- [x] Add an assembly regression requiring every Appendix B block to begin
   immediately with its tracked `#!/bin/bash -l` line.
-- [ ] Remove `\everypar{\GuideCodeRail}` from the `GuideCode` environment.
-- [ ] Have the Lua code-line transformation attach `\GuideCodeRail` directly
+- [x] Remove `\everypar{\GuideCodeRail}` from the `GuideCode` environment.
+- [x] Have the Lua code-line transformation attach `\GuideCodeRail` directly
   to each actual generated source-line paragraph.
-- [ ] Preserve a rail for a deliberate blank line that exists in tracked
+- [x] Preserve a rail for a deliberate blank line that exists in tracked
   source, but reject invented leading or trailing blank lines.
-- [ ] Keep every rail inside a layout-artifact marked-content boundary and
+- [x] Keep every rail inside a layout-artifact marked-content boundary and
   outside logical reading order while retaining the encompassing semantic
   `Code` structure.
-- [ ] Add regressions proving one rail per real source line, no synthetic
+- [x] Add regressions proving one rail per real source line, no synthetic
   leading rail, unchanged first-line alignment, and exact extraction of
   indentation and meaningful interior spaces.
-- [ ] Rebuild RC.2 after this root fix before adding pagination controls; record
+- [x] Rebuild RC.2 after this root fix before adding pagination controls; record
   whether the B.4 orphan resolves naturally.
+
+Phase 2 evidence recorded August 1, 2026:
+
+- Appendix B now assembles each heading, opening fence, tracked source, and
+  closing fence as one source-exact block. All four blocks begin immediately
+  with the tracked `#!/bin/bash -l`; empty sources, incorrect shebangs, and
+  leading or trailing blank source lines fail closed.
+- `GuideCode` no longer uses `\everypar`. The Lua filter enters horizontal
+  mode and attaches exactly one `\GuideCodeRail` to each real source-line
+  paragraph, including an explicit `\strut` for a deliberate interior blank
+  line. The existing rail macro remains a zero-width `\llap` inside a layout
+  artifact, while the enclosing code remains in the semantic `Code`
+  structure.
+- Dynamic Pandoc-filter tests require one direct rail for each of five fixture
+  lines and reject invented edge blanks. Locked Poppler extraction preserves
+  representative four- and eight-space indentation and meaningful two-space
+  separators. MuPDF traces place all four Appendix shebangs at `59.438 pt` in
+  both the Phase 1 reference and the corrected build, proving unchanged
+  first-line alignment.
+- `npm ci` reported no vulnerabilities, the locked PDF toolchain verified,
+  the focused PDF assembly suite passed 28 tests, complete discovery passed
+  all 176 tests, and `make release-check` passed 169 routine/unit tests plus
+  scrub, asset, link, placeholder, Bash, ShellCheck, reproducibility, qpdf,
+  exact extraction, every-page 150-DPI OCR, structural, and veraPDF 1.30.2
+  `ua2` gates.
+- The corrected canonical PDF remains 27 pages and is byte-identical across
+  repeated builds at SHA-256
+  `e90ea8587fe703a9ba9eef00e07fa112e7907f2828ec190448d736ecc4a1ea21`.
+  It embeds the expected five Unicode-mapped font faces, passes OCR on every
+  page, retains 2,577 validated structure roles, and produces one compliant
+  veraPDF job.
+- B.4 and its first `#!/bin/bash -l` now share physical page 25, so the
+  selected-Fira orphan resolved naturally after the assembly correction. No
+  Phase 3 pagination control was introduced. No VPN/HPC activity, PR change,
+  merge, tag, release, Windows copy, or later-phase implementation occurred.
 
 ### Phase 3: Heading Pagination and PDF-Only Heading Typography
 

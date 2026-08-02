@@ -68,6 +68,30 @@ def rewrite_example_links(text: str, examples: list[str]) -> str:
     return text
 
 
+def appendix_example_block(root: Path, path: str, index: int) -> str:
+    """Return one source-exact Appendix B fenced block."""
+    source = (root / path).read_text(encoding="utf-8")
+    if source.endswith("\n"):
+        source = source[:-1]
+    if not source:
+        raise ValueError(f"Appendix B example is empty: {path}")
+    source_lines = source.split("\n")
+    if not source_lines[0].strip() or not source_lines[-1].strip():
+        raise ValueError(
+            f"Appendix B example has a leading or trailing blank line: {path}"
+        )
+    if source_lines[0] != "#!/bin/bash -l":
+        raise ValueError(
+            "Appendix B example must begin with tracked '#!/bin/bash -l': "
+            f"{path}"
+        )
+    anchor = example_anchor(path)
+    return (
+        f"## B.{index} `{Path(path).name}` {{#{anchor}}}\n\n"
+        f"```bash\n{source}\n```"
+    )
+
+
 def assemble_markdown(root: Path, manifest: dict[str, Any]) -> str:
     examples = list(manifest["examples"])
     core_sections: list[str] = []
@@ -96,17 +120,8 @@ def assemble_markdown(root: Path, manifest: dict[str, Any]) -> str:
         "These tracked templates intentionally use `REPLACE_WITH_*` markers. "
         "Replace every marker with site-approved values before submission."
     )
-    for index, path in enumerate(examples):
-        source = (root / path).read_text(encoding="utf-8").rstrip()
-        anchor = example_anchor(path)
-        example_sections.extend(
-            (
-                f"## B.{index + 1} `{Path(path).name}` {{#{anchor}}}",
-                "```bash",
-                source,
-                "```",
-            )
-        )
+    for index, path in enumerate(examples, start=1):
+        example_sections.append(appendix_example_block(root, path, index))
     document = "\n\n".join(section.strip() for section in core_sections)
     for appendix in appendix_sections:
         document += "\n\n\\newpage\n\n" + appendix.strip()

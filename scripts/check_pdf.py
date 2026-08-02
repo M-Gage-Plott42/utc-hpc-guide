@@ -30,6 +30,30 @@ EXPECTED_EMBEDDED_FONTS = {
     "DejaVuSansMono-Bold",
     "FiraCode-Regular",
 }
+# The guide inherits Pandoc's MatchLowercase default font feature, so its
+# rendered Fira cell pitch differs from the unscaled standalone font fixture.
+# This locked Poppler pitch reconstructs one source space per rendered cell.
+GUIDE_CODE_EXTRACTION_PITCH = 4.5
+CODE_FILTER_PROOF_LINES = (
+    "RAIL-PROOF-START",
+    "    indented child",
+    "",
+    "column-a  column-b",
+    "RAIL-PROOF-END",
+)
+EXACT_CODE_EXTRACTION_SPANS = (
+    (
+        "for gpu in physical_gpus:",
+        "    try:",
+        "        tf.config.experimental.set_memory_growth(gpu, True)",
+        "    except Exception as exc:",
+        '        print("memory_growth_warning", gpu, type(exc).__name__, exc)',
+    ),
+    (
+        "printf '%s  %s\\n' \"$INSTALLER_SHA256\" \"$INSTALLER\" | "
+        "sha256sum --check -",
+    ),
+)
 
 
 def run_text(command: list[str]) -> str:
@@ -93,12 +117,126 @@ def validate_fonts(
     return len(rows)
 
 
-def validate_pdf(pdf: Path, manifest: dict[str, Any]) -> None:
+def extract_unique_fixed_span(text: str, expected: tuple[str, ...]) -> tuple[str, ...]:
+    """Return one marker-bounded code span with its common margin removed."""
+    lines = [line.rstrip() for line in text.splitlines()]
+    starts = [
+        index
+        for index, line in enumerate(lines)
+        if line.lstrip() == expected[0].lstrip()
+    ]
+    if len(starts) != 1:
+        raise RuntimeError(
+            "code extraction start marker must occur exactly once: "
+            f"{expected[0]!r}; found {len(starts)}"
+        )
+    start = starts[0]
+    end_markers = [
+        index
+        for index in range(start, len(lines))
+        if lines[index].lstrip() == expected[-1].lstrip()
+    ]
+    if len(end_markers) != 1:
+        raise RuntimeError(
+            "code extraction end marker must occur exactly once after its start: "
+            f"{expected[-1]!r}; found {len(end_markers)}"
+        )
+    margin = len(lines[start]) - len(lines[start].lstrip(" "))
+    normalized: list[str] = []
+    for line in lines[start : end_markers[0] + 1]:
+        if not line.strip():
+            continue
+        if margin and not line.startswith(" " * margin):
+            raise RuntimeError("code extraction changed the common left margin")
+        normalized.append(line[margin:])
+    return tuple(normalized)
+
+
+def validate_exact_code_extraction(text: str) -> None:
+    """Require representative indentation and interior spaces to survive."""
+    for expected in EXACT_CODE_EXTRACTION_SPANS:
+        observed = extract_unique_fixed_span(text, expected)
+        if observed != expected:
+            raise RuntimeError(
+                f"code space extraction changed: {observed!r} != {expected!r}"
+            )
+
+
+def validate_code_filter_output(output: str) -> None:
+    """Require one direct artifact rail for every real fixture source line."""
+    expected_fragments = (
+        "\\begin{GuideCode}\n\n"
+        "\\leavevmode\\GuideCodeRail{}RAIL-PROOF-START",
+        "\\leavevmode\\GuideCodeRail{}"
+        "\\hspace*{\\dimexpr4\\fontcharwd\\font`0\\relax}"
+        "indented child",
+        "\\leavevmode\\GuideCodeRail{}\\strut",
+        "\\leavevmode\\GuideCodeRail{}column-a "
+        "\\hspace*{\\dimexpr1\\fontcharwd\\font`0\\relax}column-b",
+        "\\leavevmode\\GuideCodeRail{}RAIL-PROOF-END",
+    )
+    if output.count("\\leavevmode\\GuideCodeRail{}") != len(
+        CODE_FILTER_PROOF_LINES
+    ):
+        raise RuntimeError("code filter did not emit one rail per real source line")
+    cursor = 0
+    for fragment in expected_fragments:
+        position = output.find(fragment, cursor)
+        if position < 0:
+            raise RuntimeError(f"code filter output is missing: {fragment}")
+        cursor = position + len(fragment)
+    if "\\everypar" in output:
+        raise RuntimeError("code filter output unexpectedly uses everypar")
+
+
+def validate_code_filter_contract(pandoc: str, filter_path: Path) -> None:
+    """Exercise valid and invalid line boundaries with the locked Pandoc."""
+    body = "\n".join(CODE_FILTER_PROOF_LINES)
+    fixture = f"```text\n{body}\n```\n"
+    command = [
+        pandoc,
+        "--from=markdown",
+        "--to=latex",
+        "--wrap=none",
+        f"--lua-filter={filter_path}",
+    ]
+    result = subprocess.run(
+        command,
+        input=fixture,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"valid code-filter fixture failed: {result.stderr.strip()}")
+    validate_code_filter_output(result.stdout)
+    invalid_fixtures = (
+        f"```text\n\n{body}\n```\n",
+        f"```text\n{body}\n\n```\n",
+    )
+    for invalid in invalid_fixtures:
+        rejected = subprocess.run(
+            command,
+            input=invalid,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if rejected.returncode == 0:
+            raise RuntimeError(
+                "code filter accepted an invented leading or trailing blank line"
+            )
+
+
+def validate_pdf(pdf: Path, manifest: dict[str, Any], root: Path) -> None:
     qpdf = tool("qpdf")
     pdfinfo = tool("pdfinfo")
     pdftotext = tool("pdftotext")
     pdffonts = tool("pdffonts")
     pdftoppm = tool("pdftoppm")
+    pandoc = tool("pandoc")
+
+    validate_code_filter_contract(pandoc, root / manifest["code_filter_source"])
 
     subprocess.run([qpdf, "--check", str(pdf)], check=True)
     info = parse_info(run_text([pdfinfo, str(pdf)]))
@@ -129,6 +267,22 @@ def validate_pdf(pdf: Path, manifest: dict[str, Any]) -> None:
                 raise RuntimeError(f"required PDF text is missing: {required}")
         if re.search(r"/scratch/\$USER|/home/[A-Za-z0-9._-]+", extracted):
             raise RuntimeError("PDF contains a prohibited concrete user storage path")
+
+        fixed_text_path = temp_path / "guide-fixed.txt"
+        subprocess.run(
+            [
+                pdftotext,
+                "-fixed",
+                f"{GUIDE_CODE_EXTRACTION_PITCH:.2f}",
+                "-nopgbrk",
+                str(pdf),
+                str(fixed_text_path),
+            ],
+            check=True,
+        )
+        validate_exact_code_extraction(
+            fixed_text_path.read_text(encoding="utf-8")
+        )
 
         render_prefix = temp_path / "page"
         subprocess.run(
@@ -185,7 +339,7 @@ def main() -> int:
         pdf = args.pdf or output_path(root, manifest)
         if not pdf.is_absolute():
             pdf = root / pdf
-        validate_pdf(pdf, manifest)
+        validate_pdf(pdf, manifest, root)
         return 0
     except (
         OSError,

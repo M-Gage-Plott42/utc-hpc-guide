@@ -10,13 +10,21 @@ from pathlib import Path
 from unittest import mock
 
 from scripts.build_pdf import (
+    appendix_example_block,
     assemble_markdown,
     build_once,
     code_font_replacements,
     cover_variables,
     locked_font_variables,
 )
-from scripts.check_pdf import validate_fonts
+from scripts.check_pdf import (
+    CODE_FILTER_PROOF_LINES,
+    EXACT_CODE_EXTRACTION_SPANS,
+    extract_unique_fixed_span,
+    validate_code_filter_output,
+    validate_exact_code_extraction,
+    validate_fonts,
+)
 from scripts.pdf_manifest import (
     derive_pdf_trailer_id,
     distribution_status,
@@ -228,7 +236,7 @@ class PdfAssemblyTests(unittest.TestCase):
             encoding="utf-8",
         )
         (root / "example.sbatch").write_text(
-            "#!/usr/bin/env bash\nsqueue --me\n",
+            "#!/bin/bash -l\n\n    indented child\ncolumn-a  column-b\n",
             encoding="utf-8",
         )
         (root / "header.tex").write_text(
@@ -253,6 +261,88 @@ class PdfAssemblyTests(unittest.TestCase):
         ]
         manifest["examples"] = ["example.sbatch"]
         return manifest
+
+    def test_appendix_blocks_preserve_exact_tracked_source_boundaries(self) -> None:
+        assembled = assemble_markdown(ROOT, CURRENT_MANIFEST)
+        self.assertNotIn("```bash\n\n", assembled)
+        for index, path in enumerate(CURRENT_MANIFEST["examples"], start=1):
+            source = (ROOT / path).read_text(encoding="utf-8")
+            expected = (
+                f"## B.{index} `{Path(path).name}` "
+                f"{{#example-{Path(path).stem.replace('_', '-')}}}\n\n"
+                f"```bash\n{source}```"
+            )
+            self.assertIn(expected, assembled)
+            self.assertTrue(source.startswith("#!/bin/bash -l\n"))
+
+    def test_appendix_block_rejects_invalid_source_edges(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            example = root / "example.sbatch"
+            invalid_sources = (
+                "",
+                "\n#!/bin/bash -l\necho ready\n",
+                "#!/bin/bash -l\necho ready\n\n",
+                "#!/bin/bash -l\necho ready\n   \n",
+                "#!/usr/bin/env bash\necho ready\n",
+            )
+            for source in invalid_sources:
+                with self.subTest(source=source):
+                    example.write_text(source, encoding="utf-8")
+                    with self.assertRaises(ValueError):
+                        appendix_example_block(root, example.name, 1)
+
+    def test_code_filter_contract_is_source_line_owned(self) -> None:
+        header = (ROOT / "pdf/header.tex").read_text(encoding="utf-8")
+        code_filter = (ROOT / "pdf/code-blocks.lua").read_text(encoding="utf-8")
+        self.assertNotIn("\\everypar", header)
+        self.assertIn("\\tagstructbegin{tag=Code}", header)
+        self.assertIn("\\tagmcbegin{artifact=layout}", header)
+        self.assertIn("\\llap{", header)
+        self.assertIn("local inlines = {code_rail()}", code_filter)
+        self.assertIn("ipairs(code_lines(block.text))", code_filter)
+        self.assertIn('text:sub(1, 1) == "\\n"', code_filter)
+        self.assertIn('text:sub(-1) == "\\n"', code_filter)
+
+    def test_code_filter_output_has_one_direct_rail_per_real_line(self) -> None:
+        output = """\\begin{GuideCode}
+
+\\leavevmode\\GuideCodeRail{}RAIL-PROOF-START
+
+\\leavevmode\\GuideCodeRail{}\\hspace*{\\dimexpr4\\fontcharwd\\font`0\\relax}indented child
+
+\\leavevmode\\GuideCodeRail{}\\strut
+
+\\leavevmode\\GuideCodeRail{}column-a \\hspace*{\\dimexpr1\\fontcharwd\\font`0\\relax}column-b
+
+\\leavevmode\\GuideCodeRail{}RAIL-PROOF-END
+
+\\end{GuideCode}
+"""
+        self.assertEqual(
+            output.count("\\leavevmode\\GuideCodeRail{}"),
+            len(CODE_FILTER_PROOF_LINES),
+        )
+        validate_code_filter_output(output)
+        with self.assertRaisesRegex(RuntimeError, "one rail per real source line"):
+            validate_code_filter_output(
+                output.replace("\\leavevmode\\GuideCodeRail{}", "", 1)
+            )
+
+    def test_exact_code_extraction_preserves_source_spaces(self) -> None:
+        text = "\n\n".join(
+            "      " + line if line else ""
+            for span in EXACT_CODE_EXTRACTION_SPANS
+            for line in span
+        )
+        validate_exact_code_extraction(text)
+        self.assertEqual(
+            extract_unique_fixed_span(text, EXACT_CODE_EXTRACTION_SPANS[0]),
+            EXACT_CODE_EXTRACTION_SPANS[0],
+        )
+        changed = text.replace("    try:", "   try:", 1)
+        with self.assertRaisesRegex(RuntimeError, "code space extraction changed"):
+            validate_exact_code_extraction(changed)
 
     def test_candidate_and_final_labels_are_manifest_controlled(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

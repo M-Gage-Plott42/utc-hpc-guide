@@ -70,6 +70,27 @@ def candidate_manifest(
     manifest["release_target"] = "1.2.2"
     manifest["document_version"] = "1.2.2-rc.1"
     manifest["output_filename"] = "UTC_HPC_Guide_v1.2.2-rc.1.pdf"
+    for key in ("required_pdf_text", "required_ocr_text"):
+        manifest[key] = [
+            (
+                "Release candidate for v1.2.2"
+                if value == "Version 1.2.2"
+                else "Candidate identifier: v1.2.2-rc.1"
+                if value == "Document identifier: v1.2.2"
+                else value
+            )
+            for value in manifest[key]
+        ]
+    manifest["required_page_ocr_text"]["1"] = [
+        (
+            "Release candidate for v1.2.2"
+            if value == "Version 1.2.2"
+            else "Candidate identifier: v1.2.2-rc.1"
+            if value == "Document identifier: v1.2.2"
+            else value
+        )
+        for value in manifest["required_page_ocr_text"]["1"]
+    ]
     manifest["pdf_trailer_id"] = derive_pdf_trailer_id(
         str(manifest["document_version"]),
         int(manifest["source_date_epoch"]),
@@ -102,7 +123,7 @@ class PdfManifestTests(unittest.TestCase):
         path.write_text(json.dumps(manifest), encoding="utf-8")
         return path
 
-    def test_checked_in_manifest_is_candidate_and_derives_output(self) -> None:
+    def test_checked_in_manifest_is_final_and_derives_output(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             manifest = load_manifest(
@@ -110,20 +131,35 @@ class PdfManifestTests(unittest.TestCase):
             )
             self.assertEqual(
                 output_path(root, manifest),
-                root / "dist/UTC_HPC_Guide_v1.2.2-rc.2.pdf",
+                root / "dist/UTC_HPC_Guide.pdf",
             )
-        self.assertEqual(manifest["release_status"], "candidate")
+        self.assertEqual(manifest["release_status"], "final")
 
-    def test_accepts_explicit_final_fixture(self) -> None:
+    def test_checked_in_manifest_requires_exact_final_cover_identifier(self) -> None:
+        identifier = "Document identifier: v1.2.2"
+        self.assertIn(identifier, CURRENT_MANIFEST["required_pdf_text"])
+        self.assertIn(identifier, CURRENT_MANIFEST["required_ocr_text"])
+        self.assertIn(
+            identifier,
+            CURRENT_MANIFEST["required_page_ocr_text"]["1"],
+        )
+        self.assertNotIn("1.2.2", CURRENT_MANIFEST["required_pdf_text"])
+        self.assertNotIn("1.2.2", CURRENT_MANIFEST["required_ocr_text"])
+        self.assertNotIn(
+            "1.2.2",
+            CURRENT_MANIFEST["required_page_ocr_text"]["1"],
+        )
+
+    def test_accepts_explicit_candidate_fixture(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             manifest = load_manifest(
-                self.write_manifest(root, final_manifest())
+                self.write_manifest(root, candidate_manifest())
             )
-        self.assertEqual(manifest["release_status"], "final")
+        self.assertEqual(manifest["release_status"], "candidate")
         self.assertEqual(
             output_path(root, manifest),
-            root / "dist/UTC_HPC_Guide.pdf",
+            root / "dist/UTC_HPC_Guide_v1.2.2-rc.1.pdf",
         )
 
     def test_rejects_candidate_version_mismatch(self) -> None:
@@ -152,8 +188,8 @@ class PdfManifestTests(unittest.TestCase):
 
     def test_final_trailer_id_has_documented_deterministic_derivation(self) -> None:
         self.assertEqual(
-            derive_pdf_trailer_id("1.2.2-rc.2", 1785628800),
-            "f4ea8ec5e9282eabbe16cc4597130260",
+            derive_pdf_trailer_id("1.2.2", 1785628800),
+            "d51985076b733cf62b86c85ab82a5506",
         )
         self.assertEqual(
             CURRENT_MANIFEST["pdf_trailer_id"],
@@ -183,26 +219,26 @@ class PdfManifestTests(unittest.TestCase):
         self.assertEqual(
             metadata,
             {
-                "path": "dist/UTC_HPC_Guide_v1.2.2-rc.2.pdf",
-                "document_version": "1.2.2-rc.2",
-                "release_status": "candidate",
-                "artifact_label": "utc-hpc-guide-v1.2.2-rc.2-candidate",
-            },
-        )
-
-    def test_final_workflow_metadata_is_manifest_derived(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            metadata = workflow_metadata(
-                Path(temporary),
-                final_manifest(),
-            )
-        self.assertEqual(
-            metadata,
-            {
                 "path": "dist/UTC_HPC_Guide.pdf",
                 "document_version": "1.2.2",
                 "release_status": "final",
                 "artifact_label": "utc-hpc-guide-v1.2.2-final",
+            },
+        )
+
+    def test_candidate_workflow_metadata_is_manifest_derived(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            metadata = workflow_metadata(
+                Path(temporary),
+                candidate_manifest(),
+            )
+        self.assertEqual(
+            metadata,
+            {
+                "path": "dist/UTC_HPC_Guide_v1.2.2-rc.1.pdf",
+                "document_version": "1.2.2-rc.1",
+                "release_status": "candidate",
+                "artifact_label": "utc-hpc-guide-v1.2.2-rc.1-candidate",
             },
         )
 
@@ -227,11 +263,11 @@ class PdfManifestTests(unittest.TestCase):
     def test_distribution_status_does_not_claim_publication(self) -> None:
         self.assertEqual(
             distribution_status(CURRENT_MANIFEST),
-            "review-only release candidate for v1.2.2; not stable",
+            "final document build for v1.2.2; publication is separate",
         )
         self.assertEqual(
-            distribution_status(final_manifest()),
-            "final document build for v1.2.2; publication is separate",
+            distribution_status(candidate_manifest()),
+            "review-only release candidate for v1.2.2; not stable",
         )
 
 
@@ -642,7 +678,7 @@ Second subsection body.
             self.assertIn("pdfstandard=ua-2", command)
             self.assertIn("classoption=titlepage", command)
             self.assertIn(
-                "cover-release-label=Release candidate for v1.2.2",
+                "cover-release-label=Version 1.2.2",
                 command,
             )
             self.assertIn(

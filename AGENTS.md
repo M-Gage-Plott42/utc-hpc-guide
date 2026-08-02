@@ -69,6 +69,17 @@ accessibility review. Automated tagging and veraPDF success do not establish
 WCAG 2.1 AA, assistive-technology usability, or UTC accessibility approval.
 Keep network-dependent dependency audits separate.
 
+The default publication path completes the exact-hash manual accessibility
+review. For an independent GitHub release only, a tracked policy decision may
+explicitly defer real-assistive-technology, keyboard, or reflow items when all
+machine, reproducibility, OCR, and visual gates pass. The same rule applies to
+a separate 200-percent viewer-zoom or magnification session. Record each
+deferred item as not tested in pull-request and release evidence; deferral is
+not a pass and cannot override a performed failure. Do not claim WCAG,
+universal assistive-technology, institutional endorsement, or UTC approval.
+Institution-hosted or officially endorsed publication remains subject to that
+institution's process.
+
 The repository scrub accepts only ordinary stage-zero regular or executable
 Git index entries. Tracked symbolic links, gitlinks, unmerged entries,
 unsupported modes, a symbolic link in any worktree path component, and a

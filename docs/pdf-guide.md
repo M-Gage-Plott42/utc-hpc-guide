@@ -100,14 +100,14 @@ Build the manifest-selected document:
 make pdf
 ```
 
-The review-only `v1.2.2-rc.2` manifest produces:
+The final `v1.2.2` manifest produces:
 
 ```text
-dist/UTC_HPC_Guide_v1.2.2-rc.2.pdf
+dist/UTC_HPC_Guide.pdf
 ```
 
-The published `v1.2.1` stable asset remains unchanged while this candidate is
-under review.
+The workflow output remains prepublication evidence until the exact PDF and
+its two records are attached to the matching non-prerelease tag.
 
 Run the accessibility gate against an existing build:
 
@@ -182,8 +182,8 @@ The PDF gate:
 - rasterizes every page and requires the complete document to render; and
 - runs Tesseract against every rendered page, enforces the per-page text
   threshold, checks representative headings in the combined OCR output, and
-  separately requires `Practical HPC Onboarding Guide` and
-  `Release candidate for v1.2.2` to be legible on physical page 1; and
+  separately requires `Practical HPC Onboarding Guide` and `Version 1.2.2` to
+  be legible on physical page 1; and
 - builds a one-page, test-only tagged fixture using Fira Code Regular and Bold,
   checks the complete ambiguous-glyph row against each face's default Unicode
   cmap with one visible glyph per literal character, verifies four-space
@@ -229,6 +229,16 @@ relevant settings, tasks, itemized results, defects, remediations, retest
 results, PDF hash before and after review, and every untested limitation.
 Do not infer a result for a tool or assistive-technology pairing that was not
 run.
+
+The default publication path completes every applicable item below. For an
+independent GitHub release only, a tracked release decision may explicitly
+defer the real-assistive-technology, keyboard, or reflow session when all
+machine, reproducibility, OCR, and visual gates pass. Record each deferred item
+as `not tested`, disclose the exact final hash and limitation in the pull
+request and release notes, and make no WCAG, universal-interoperability, or
+institutional-approval claim. Deferral is not a passing result. Any failure
+found by a performed review remains blocking. Institution-hosted or officially
+endorsed publication remains subject to that institution's process.
 
 Current desktop Adobe Acrobat Reader plus current stable NVDA on Windows 11 is
 the recommended reference environment because it exercises screen-reader
@@ -316,10 +326,8 @@ content found by a performed review is a release blocker even when veraPDF
 passes. If machine validation, visual quality, reproducibility, OCR, or a
 performed manual accessibility check conflicts, stop and remediate. Do not
 weaken or allowlist a failed gate. An independent GitHub release must disclose
-the exact evidence and untested limitations and must not imply institutional
-endorsement. Institution-hosted or officially endorsed publication remains
-subject to that institution's documented accessibility review and publishing
-process.
+the exact evidence, explicitly deferred items, and untested limitations and
+must not imply institutional endorsement.
 
 ## Reproducibility and Artifacts
 
@@ -333,7 +341,7 @@ signed or hermetic provenance.
 After PDF QA passes, the hosted workflow uploads these files together:
 
 - the manifest-selected PDF, currently
-  `UTC_HPC_Guide_v1.2.2-rc.2.pdf`;
+  `UTC_HPC_Guide.pdf`;
 - `build-toolchain.txt`; and
 - `verapdf-report.xml`.
 
@@ -362,8 +370,7 @@ system dependencies are not digest-pinned, so this remains a reference build
 rather than hermetic or signed provenance. The workflow artifact has a short
 retention period.
 
-The existing `v1.2.1` GitHub release remains the stable publication. A
-candidate artifact is review-only: complete the exact-hash automated, visual,
-OCR, and manual review before changing the manifest to final. Only a reviewed
-final build belongs on a matching GitHub release under the stable asset name
-`UTC_HPC_Guide.pdf`; a candidate must not overwrite the existing release.
+A candidate artifact is review-only and must not overwrite an existing
+release. Only the exact reviewed final PDF and its matching records belong on
+the `v1.2.2` GitHub release under the stable asset name
+`UTC_HPC_Guide.pdf`.

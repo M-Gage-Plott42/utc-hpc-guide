@@ -4,12 +4,12 @@
   "subtitle": "Slurm, Open OnDemand, SSH, Python, and GPU Workflows",
   "author": "Gage Plott",
   "date": "August 2026",
-  "release_status": "candidate",
+  "release_status": "final",
   "release_target": "1.2.2",
-  "document_version": "1.2.2-rc.2",
+  "document_version": "1.2.2",
   "source_date_epoch": 1785628800,
-  "pdf_trailer_id": "f4ea8ec5e9282eabbe16cc4597130260",
-  "output_filename": "UTC_HPC_Guide_v1.2.2-rc.2.pdf",
+  "pdf_trailer_id": "d51985076b733cf62b86c85ab82a5506",
+  "output_filename": "UTC_HPC_Guide.pdf",
   "pdf_standard": "ua-2",
   "language": "en-US",
   "header_source": "pdf/header.tex",
@@ -40,8 +40,8 @@
   ],
   "required_pdf_text": [
     "Practical HPC Onboarding Guide",
-    "Release candidate for v1.2.2",
-    "1.2.2-rc.2",
+    "Version 1.2.2",
+    "1.2.2",
     "Slurm Basics",
     "ReqMem",
     "MaxRSS",
@@ -79,8 +79,8 @@
   "ocr_min_alnum_per_page": 200,
   "required_ocr_text": [
     "Practical HPC Onboarding Guide",
-    "Release candidate for v1.2.2",
-    "1.2.2-rc.2",
+    "Version 1.2.2",
+    "1.2.2",
     "Access and SSH",
     "Open OnDemand",
     "Slurm Basics",
@@ -95,8 +95,8 @@
   "required_page_ocr_text": {
     "1": [
       "Practical HPC Onboarding Guide",
-      "Release candidate for v1.2.2",
-      "1.2.2-rc.2"
+      "Version 1.2.2",
+      "1.2.2"
     ]
   }
 }

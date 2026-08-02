@@ -13,9 +13,9 @@ Last updated: August 2026
 
 [Download the latest printable PDF](https://github.com/M-Gage-Plott42/utc-hpc-guide/releases/latest/download/UTC_HPC_Guide.pdf)
 or review the [PDF build and validation instructions](docs/pdf-guide.md).
-The latest-release link continues to serve the published stable `v1.2.1`
-artifact. This source revision defines `v1.2.2-rc.2` as a review-only PDF
-candidate; its workflow artifact is not a stable or supported release artifact.
+The latest-release link resolves to the release GitHub designates as latest.
+This source revision defines the final `v1.2.2` PDF; a workflow artifact remains
+prepublication evidence until attached to the matching non-prerelease tag.
 
 ## How to Use This Repo in 15 Minutes
 
@@ -51,8 +51,9 @@ rendering and every-page OCR QA, an isolated Fira Code Regular/Bold semantic
 fixture, and staged/unstaged whitespace checks to the routine gate. Canonical
 fenced code is checked against the 80-character print contract with one exact
 83-character digest exception. Automated PDF/UA validation is not a WCAG 2.1
-AA certification; manual accessibility review remains required. Dependency
-audits and other network-dependent checks remain separate.
+AA certification; exact-hash manual evidence or an explicitly documented
+independent-release deferral remains required. Dependency audits and other
+network-dependent checks remain separate.
 
 ## Purpose
 
@@ -115,6 +116,7 @@ Do not commit credentials, usernames, internal hostnames, or allocation IDs.
 
 - [Changelog](CHANGELOG.md)
 - [Public release checklist](RELEASE_CHECKLIST.md)
+- [v1.2.2 release audit](docs/audits/v1.2.2.md)
 - [Agent guidance](AGENTS.md)
 - [Contributing guide](CONTRIBUTING.md)
 

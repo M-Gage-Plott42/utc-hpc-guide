@@ -261,10 +261,14 @@ class RecordPreambleTests(unittest.TestCase):
         )
 
     def test_candidate_record_remains_review_only(self) -> None:
+        candidate = dict(CURRENT_MANIFEST)
+        candidate["release_status"] = "candidate"
+        candidate["document_version"] = "1.2.2-rc.1"
+        candidate["output_filename"] = "UTC_HPC_Guide_v1.2.2-rc.1.pdf"
         self.assertIn(
             "distribution_status=review-only release candidate for v1.2.2; "
             "not stable",
-            record_preamble(CURRENT_MANIFEST),
+            record_preamble(candidate),
         )
 
 

@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-08-02
+
 ### Added
 
 - Locked the exact TeX Live 2025 Noto archive by repository revision and
@@ -23,10 +25,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   glyphs and meaningful source spacing without entering release artifacts.
 - Added fail-closed chapter-opener, Appendix-template, heading-font, code-rail,
   and canonical 80-character source-width contracts.
+- Added strict Windows user-home detection, including slash, backslash, and
+  doubled-Markdown-backslash forms, with exact placeholder allowances and
+  focused regressions.
 
 ### Changed
 
-- Redesigned the `v1.2.2-rc.2` printable candidate through the locked,
+- Redesigned the `v1.2.2` printable guide through the locked,
   reproducible Pandoc/LuaLaTeX PDF/UA-2 path while retaining tagging-aware
   standard title, section, contents, list, table, figure, link, and code
   structures.
@@ -45,10 +50,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   headings with their opening content, normalized PDF-only heading typography,
   wrapped long canonical commands, added concise terminology and placeholder
   guidance, and added one-file `scp` examples ahead of incremental `rsync`.
-- Reduced the permanent pipeline to the canonical RC.2 and temporary selected-
-  Fira fixture. The completed three-font comparison remains historical
+- Reduced the permanent pipeline to the canonical final PDF and temporary
+  selected-Fira fixture. The completed three-font comparison remains historical
   review-only evidence on closed, unmerged PR #28 and is not a release
   artifact.
+- Defined a narrow independent-GitHub-release path that records exact-hash
+  assistive-technology, keyboard, and reflow items as not tested when they are
+  explicitly deferred. Performed failures remain blocking, and no WCAG or
+  institutional-approval claim is permitted.
 
 ## [1.2.1] - 2026-07-30
 

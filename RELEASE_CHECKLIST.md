@@ -145,23 +145,31 @@ repository is free of private data.
 - Treat OCR as a legibility regression check, not proof that screenshots or
   pages are safely redacted.
 - Complete the [manual accessibility review](docs/pdf-guide.md#manual-accessibility-review)
-  on the exact PDF hash. Verify reading order with a screen reader or through
-  an accessibility API; verify focus order with keyboard traversal or a tool
-  that exposes the PDF tab-order setting. Record the reviewer profile, exact
-  tools and versions, settings, date, tasks, itemized results, remediations,
-  retest results, and untested limitations. Desktop Acrobat Reader plus NVDA
-  on Windows is a recommended reference environment, not an exclusive
-  requirement. A read-aloud-only run is supplemental and leaves the full
-  manual reading-order result not tested. Adobe states that Acrobat Read Out
-  Loud is not a screen reader, and it must not be reported as screen-reader
+  on the exact PDF hash unless an independent GitHub release explicitly uses
+  the documented tracked deferral. Verify reading order with a screen reader
+  or through an accessibility API; verify focus order with keyboard traversal
+  or a tool that exposes the PDF tab-order setting. Record the reviewer
+  profile, exact tools and versions, settings, date, tasks, itemized results,
+  remediations, retest results, and untested limitations. Desktop Acrobat
+  Reader plus NVDA on Windows is a recommended reference environment, not an
+  exclusive requirement. A read-aloud-only run is supplemental and leaves the
+  full manual reading-order result not tested. Adobe states that Acrobat Read
+  Out Loud is not a screen reader, and it must not be reported as screen-reader
   evidence.
+- A tracked independent-release deferral must mark each unperformed real-
+  assistive-technology, keyboard, or reflow item as `not tested` in the pull
+  request and release notes. It is not a pass and cannot override a failure
+  found by any performed review. Require all machine, reproducibility, OCR, and
+  visual gates to pass, and make no WCAG, universal-interoperability, UTC-
+  approval, or institutional-endorsement claim.
 - Do not describe automated tagging or veraPDF success as WCAG 2.1 AA
   certification, assistive-technology usability, or UTC accessibility
   approval.
-- For an independent GitHub release, state the exact evidence and untested
-  limitations without implying official endorsement. Institution-hosted or
-  officially endorsed publication remains subject to the institution's
-  documented accessibility review and publishing process.
+- For an independent GitHub release, state the exact evidence, explicitly
+  deferred items, and untested limitations without implying official
+  endorsement. Institution-hosted or officially endorsed publication remains
+  subject to the institution's documented accessibility review and publishing
+  process.
 - For a GitHub Actions build, download the PDF, `build-toolchain.txt`, and
   `verapdf-report.xml` from the same workflow artifact and confirm the recorded
   PDF SHA-256 matches. `pdf/toolchain.lock.json` is the declared toolchain lock;

@@ -116,6 +116,26 @@ def load_manifest(
     ):
         _require_string_list(manifest, key)
 
+    page_ocr = manifest.get("required_page_ocr_text")
+    if not isinstance(page_ocr, dict) or not page_ocr:
+        raise ValueError(
+            "PDF manifest required_page_ocr_text must be a nonempty object"
+        )
+    for page, phrases in page_ocr.items():
+        if not isinstance(page, str) or re.fullmatch(r"[1-9][0-9]*", page) is None:
+            raise ValueError(
+                "PDF manifest required_page_ocr_text keys must be positive page numbers"
+            )
+        if (
+            not isinstance(phrases, list)
+            or not phrases
+            or any(not isinstance(phrase, str) or not phrase.strip() for phrase in phrases)
+        ):
+            raise ValueError(
+                "PDF manifest required_page_ocr_text values must be "
+                "nonempty lists of strings"
+            )
+
     if not isinstance(manifest.get("source_date_epoch"), int):
         raise ValueError("PDF manifest source_date_epoch must be an integer")
     if manifest["source_date_epoch"] < 1:
@@ -136,6 +156,24 @@ def load_manifest(
         raise ValueError("PDF figure alternative text entries must be unique")
     if any(len(item.split()) < 5 for item in manifest["expected_figure_alt_text"]):
         raise ValueError("PDF figure alternative text must be context-meaningful")
+
+    structure_counts = manifest.get("expected_structure_counts")
+    if not isinstance(structure_counts, dict) or not structure_counts:
+        raise ValueError(
+            "PDF manifest expected_structure_counts must be a nonempty object"
+        )
+    for role, count in structure_counts.items():
+        if (
+            not isinstance(role, str)
+            or re.fullmatch(r"[A-Za-z][A-Za-z0-9]*", role) is None
+            or not isinstance(count, int)
+            or isinstance(count, bool)
+            or count < 1
+        ):
+            raise ValueError(
+                "PDF manifest expected_structure_counts must map safe role "
+                "names to positive integers"
+            )
 
     appendices = manifest.get("site_appendices")
     if not isinstance(appendices, list) or not appendices:

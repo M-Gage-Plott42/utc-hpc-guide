@@ -13,9 +13,10 @@ import stat
 import subprocess
 import sys
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 try:
+    from .code_font import LockedCodeFont, load_code_font
     from .check_pdf_accessibility import (
         extract_metadata_stream,
         find_catalog,
@@ -31,6 +32,7 @@ try:
     )
     from .pdf_manifest import distribution_status, load_manifest, output_path
 except ImportError:
+    from code_font import LockedCodeFont, load_code_font
     from check_pdf_accessibility import (
         extract_metadata_stream,
         find_catalog,
@@ -49,15 +51,12 @@ except ImportError:
 
 HEX_SHA256 = r"[0-9a-f]{64}"
 LOCK_STAMP_NAME = "lock-attestation.txt"
+UNVERSIONED_TEXLIVE_PACKAGE = "none"
 FONT_FILES = (
-    "DejaVuSerif.ttf",
-    "DejaVuSerif-Bold.ttf",
-    "DejaVuSerif-Italic.ttf",
-    "DejaVuSerif-BoldItalic.ttf",
-    "DejaVuSans.ttf",
-    "DejaVuSans-Bold.ttf",
-    "DejaVuSans-Oblique.ttf",
-    "DejaVuSans-BoldOblique.ttf",
+    "NotoSans-Regular.ttf",
+    "NotoSans-Bold.ttf",
+    "NotoSans-Italic.ttf",
+    "NotoSans-BoldItalic.ttf",
     "DejaVuSansMono.ttf",
     "DejaVuSansMono-Bold.ttf",
     "DejaVuSansMono-Oblique.ttf",
@@ -176,7 +175,10 @@ def parse_check_log(
         "pdf_qa_passed ",
         re.compile(
             rf"pdf_qa_passed pages=([1-9][0-9]*) "
-            rf"fonts=([1-9][0-9]*) sha256=({HEX_SHA256})"
+            rf"fonts=([1-9][0-9]*) headings=([1-9][0-9]*) "
+            rf"chapter_openers=([1-9][0-9]*) "
+            rf"heading_code_literals=([1-9][0-9]*) "
+            rf"sha256=({HEX_SHA256})"
         ),
     )
     ocr = one_marker(
@@ -196,8 +198,17 @@ def parse_check_log(
             r"verapdf_profile=ua2 verapdf_jobs=1"
         ),
     )
+    fixture = one_marker(
+        lines,
+        "code_font_fixture_passed ",
+        re.compile(
+            r"code_font_fixture_passed "
+            r"regular=FiraCode-Regular bold=FiraCode-Bold "
+            r"glyphs_per_row=([1-9][0-9]*) verapdf_profile=ua2"
+        ),
+    )
 
-    hashes = (reproducible.group(1), built.group(2), qa.group(3))
+    hashes = (reproducible.group(1), built.group(2), qa.group(6))
     if any(value != pdf_sha256 for value in hashes):
         raise RuntimeError(
             "PDF check markers do not match the final PDF SHA-256"
@@ -218,8 +229,13 @@ def parse_check_log(
         "verapdf": "passed",
         "pages": qa.group(1),
         "fonts": qa.group(2),
+        "headings": qa.group(3),
+        "chapter_openers": qa.group(4),
+        "heading_code_literals": qa.group(5),
         "ocr_dpi": ocr.group(2),
         "structure_roles": accessibility.group(1),
+        "code_font_fixture": "passed",
+        "fixture_glyphs_per_row": fixture.group(1),
     }
 
 
@@ -230,6 +246,57 @@ def parse_tlmgr_details(output: str) -> dict[str, str]:
             key, value = line.split(":", 1)
             details[key.strip()] = value.strip()
     return details
+
+
+def texlive_package_version(details: dict[str, str]) -> str:
+    """Return a stable record token even when tlmgr has no catalogue version."""
+    return details.get("cat-version", UNVERSIONED_TEXLIVE_PACKAGE)
+
+
+def validate_tlmgr_package(
+    package: str,
+    details: dict[str, str],
+    expected: dict[str, object],
+) -> None:
+    expected_version = expected["version"]
+    version_matches = (
+        "cat-version" not in details
+        if expected_version is None
+        else details.get("cat-version") == expected_version
+    )
+    if (
+        details.get("installed") != "Yes"
+        or details.get("revision") != expected["revision"]
+        or not version_matches
+    ):
+        raise RuntimeError(
+            f"installed TeX Live package does not match lock: {package}"
+        )
+
+
+def require_locked_font_source(
+    path: Path,
+    *,
+    filename: str,
+    texmf_dist: Path,
+) -> Path:
+    """Require a regular font resolved from the locked TeX distribution."""
+    if not texmf_dist.is_dir():
+        raise RuntimeError(f"locked TeX font root is missing: {texmf_dist}")
+    require_regular_file(path, f"locked font {filename}")
+    locked_root = texmf_dist.resolve(strict=True)
+    resolved = path.resolve(strict=True)
+    try:
+        resolved.relative_to(locked_root)
+    except ValueError as exc:
+        raise RuntimeError(
+            f"locked font resolved outside the locked TeX tree: {path}"
+        ) from exc
+    if resolved.name != filename:
+        raise RuntimeError(
+            f"locked font resolved to an unexpected file: {resolved}"
+        )
+    return resolved
 
 
 def package_version(name: str) -> str:
@@ -276,6 +343,48 @@ def record_preamble(manifest: dict[str, object]) -> list[str]:
     ]
 
 
+def code_font_record_lines(font: LockedCodeFont) -> list[str]:
+    """Return the complete selected-font configuration and provenance record."""
+    source = font.source
+    license_entry = source["license_file"]
+    return [
+        "[code-font]",
+        f"source={font.source_id}",
+        f"project={record_value(source['project'])}",
+        f"project_url={source['project_url']}",
+        f"release={source['release']}",
+        f"release_tag={source['release_tag']}",
+        f"release_commit={source['release_commit']}",
+        f"release_url={source['release_url']}",
+        f"archive_url={source['archive_url']}",
+        f"archive_size={source['archive_size']}",
+        f"archive_sha256={source['archive_sha256']}",
+        f"font_size_pt={font.font_size_pt:g}",
+        f"leading_pt={font.leading_pt:g}",
+        f"extraction_pitch={font.extraction_pitch:g}",
+        f"prose_family={font.prose_family}",
+        f"inline_code_family={font.inline_code_family}",
+        f"fontspec_ligatures={','.join(font.ligatures)}",
+        f"raw_features={','.join(font.raw_features)}",
+        f"license.path={license_entry['path']}",
+        f"license.upstream_url={license_entry['upstream_url']}",
+        f"license.upstream_size={license_entry['upstream_size']}",
+        f"license.upstream_sha256={license_entry['upstream_sha256']}",
+        f"license.size={license_entry['size']}",
+        f"license.sha256={license_entry['sha256']}",
+        f"regular.path={font.regular.relative_path}",
+        f"regular.archive_member={font.regular.archive_member}",
+        f"regular.size={font.regular.size}",
+        f"regular.sha256={font.regular.sha256}",
+        f"regular.postscript_name={font.regular.postscript_name}",
+        f"bold.path={font.bold.relative_path}",
+        f"bold.archive_member={font.bold.archive_member}",
+        f"bold.size={font.bold.size}",
+        f"bold.sha256={font.bold.sha256}",
+        f"bold.postscript_name={font.bold.postscript_name}",
+    ]
+
+
 def write_record(
     *,
     root: Path,
@@ -312,6 +421,11 @@ def write_record(
         or host_lock.get("version_id") != "24.04"
     ):
         raise ValueError("PDF toolchain lock host must be Ubuntu 24.04")
+    try:
+        lock_relative = PurePosixPath(lock_path.relative_to(root).as_posix())
+    except ValueError as exc:
+        raise ValueError("PDF toolchain lock must stay inside the repository") from exc
+    code_font = load_code_font(root, lock_relative)
     lock_digest = sha256(lock_path)
     stamp = toolchain_root / LOCK_STAMP_NAME
     require_regular_file(stamp, "PDF toolchain lock attestation")
@@ -440,16 +554,13 @@ def write_record(
                 env=tool_env,
             )
         )
-        if (
-            details.get("installed") != "Yes"
-            or details.get("revision") != expected["revision"]
-            or details.get("cat-version") != expected["version"]
-        ):
-            raise RuntimeError(
-                f"installed TeX Live package does not match lock: {package}"
-            )
+        validate_tlmgr_package(package, details, expected)
         texlive_packages[package] = details
-    font_package = texlive_packages["dejavu"]
+    font_packages = {
+        name: texlive_packages[name]
+        for name in ("noto", "dejavu")
+    }
+    texmf_dist = toolchain_root / "texlive2025" / "texmf-dist"
     font_hashes: dict[str, str] = {}
     for filename in FONT_FILES:
         resolved = run(
@@ -458,10 +569,11 @@ def write_record(
         )
         if "\n" in resolved or not resolved:
             raise RuntimeError(f"unexpected font resolution for {filename}")
-        path = Path(resolved)
-        require_regular_file(path, f"locked font {filename}")
-        if path.name != filename:
-            raise RuntimeError(f"locked font resolved to an unexpected file: {path}")
+        path = require_locked_font_source(
+            Path(resolved),
+            filename=filename,
+            texmf_dist=texmf_dist,
+        )
         font_hashes[filename] = sha256(path)
 
     qa_versions: dict[str, str] = {}
@@ -616,7 +728,7 @@ def write_record(
     ]
     lines.extend(
         (
-            f"{package}={details['cat-version']} "
+            f"{package}={texlive_package_version(details)} "
             f"revision={details['revision']}"
         )
         for package, details in sorted(texlive_packages.items())
@@ -625,14 +737,21 @@ def write_record(
         (
             "",
             "[fonts]",
-            f"tex_live_package=dejavu {font_package['cat-version']}",
-            f"tex_live_package_revision={font_package['revision']}",
         )
     )
+    for package, details in font_packages.items():
+        lines.extend(
+            (
+                f"{package}.tex_live_package_version="
+                f"{texlive_package_version(details)}",
+                f"{package}.tex_live_package_revision={details['revision']}",
+            )
+        )
     lines.extend(
         f"{filename}.sha256={font_hashes[filename]}"
         for filename in FONT_FILES
     )
+    lines.extend(("", *code_font_record_lines(code_font)))
     lines.extend(("", "[host-qa-packages]"))
     lines.extend(
         f"{name}={host_packages[name]}"
@@ -651,6 +770,9 @@ def write_record(
             f"sha256={pdf_digest}",
             f"pages={checks['pages']}",
             f"fonts={checks['fonts']}",
+            f"headings={checks['headings']}",
+            f"chapter_openers={checks['chapter_openers']}",
+            f"heading_code_literals={checks['heading_code_literals']}",
             f"pdf_version={info['PDF version']}",
             f"Tagged={info['Tagged']}",
             "StructTreeRoot=present",
@@ -669,6 +791,8 @@ def write_record(
             f"ocr={checks['ocr']}",
             f"ocr_dpi={checks['ocr_dpi']}",
             f"accessibility={checks['accessibility']}",
+            f"code_font_fixture={checks['code_font_fixture']}",
+            f"fixture_glyphs_per_row={checks['fixture_glyphs_per_row']}",
             f"verapdf={checks['verapdf']}",
             f"verapdf_jobs={vera.total_jobs}",
             f"verapdf_compliant_jobs={vera.compliant_jobs}",

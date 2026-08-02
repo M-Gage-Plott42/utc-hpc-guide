@@ -74,10 +74,21 @@ make release-check
 The release gate runs the routine checks, applies `bash -n` and ShellCheck to
 each tracked `examples/*.sbatch` file, requires a byte-identical PDF rebuild
 that passes structural, PDF/UA-2 machine, rendering, text-extraction, and
-every-page OCR QA, and checks staged and unstaged changes for whitespace
-errors. The pinned veraPDF result covers machine-verifiable conformance only;
-it does not certify WCAG 2.1 AA or replace the manual accessibility checklist.
-Network-dependent dependency audits remain separate.
+every-page OCR QA, validates the exact selected-Fira provenance and source
+width contract, and checks staged and unstaged changes for whitespace errors.
+It also builds a small tagged Fira Regular/Bold fixture in temporary storage,
+requires one default glyph per literal character with ligatures and contextual
+alternates disabled, and verifies exact indentation and meaningful interior
+spaces in locked Poppler extraction. That extraction test does not establish
+clipboard behavior in every PDF viewer. The fixture is neither appended to
+the guide nor uploaded as an artifact. The pinned veraPDF result covers
+machine-verifiable conformance only; it does not certify WCAG 2.1 AA or
+replace the manual accessibility checklist. Network-dependent dependency
+audits remain separate.
+
+Keep printable fenced-code lines at or below 80 characters. The canonical
+guide has one exact 83-character exception for the immutable Miniconda
+SHA-256 assignment; do not add or alter an exception without explicit review.
 
 If you change image assets, manually confirm screenshots do not expose usernames, hostnames, account/allocation IDs, or private paths.
 The automated asset gate checks paths, structure, decoding, and metadata; it
@@ -106,5 +117,5 @@ does not inspect pixels or prove that an image is safely redacted.
 ## Style
 
 - Keep sections short and command-oriented.
-- Treat institutional docs and live SLURM commands as source of truth.
+- Treat institutional docs and live Slurm commands as source of truth.
 - Avoid institution-specific values in generic docs and examples unless clearly marked as placeholders.

@@ -11,6 +11,7 @@ from scripts.bootstrap_pdf_toolchain import (
     require_exact_output_line,
     validate_lock_stamp,
     validate_signed_sha512,
+    validate_texlive_package_details,
     validate_texlive_installer_output,
     write_lock_stamp,
 )
@@ -139,6 +140,67 @@ class InstallerVerificationTests(unittest.TestCase):
                 repository_url=REPOSITORY,
                 scheme="scheme-small",
             )
+
+
+class TexLivePackageVerificationTests(unittest.TestCase):
+    def test_accepts_exact_string_catalogue_version(self) -> None:
+        validate_texlive_package_details(
+            "dejavu",
+            {
+                "installed": "Yes",
+                "revision": "77677",
+                "cat-version": "2.34",
+            },
+            {"revision": "77677", "version": "2.34"},
+        )
+
+    def test_accepts_absent_catalogue_version_when_lock_is_null(self) -> None:
+        validate_texlive_package_details(
+            "noto",
+            {"installed": "Yes", "revision": "77677"},
+            {"revision": "77677", "version": None},
+        )
+
+    def test_rejects_catalogue_version_when_lock_is_null(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "unexpected catalogue version"):
+            validate_texlive_package_details(
+                "noto",
+                {
+                    "installed": "Yes",
+                    "revision": "77677",
+                    "cat-version": "2025.01.01",
+                },
+                {"revision": "77677", "version": None},
+            )
+
+    def test_rejects_missing_catalogue_version_for_string_lock(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "version mismatch"):
+            validate_texlive_package_details(
+                "dejavu",
+                {"installed": "Yes", "revision": "77677"},
+                {"revision": "77677", "version": "2.34"},
+            )
+
+    def test_rejects_missing_explicit_version_lock(self) -> None:
+        with self.assertRaisesRegex(ValueError, "must declare version"):
+            validate_texlive_package_details(
+                "noto",
+                {"installed": "Yes", "revision": "77677"},
+                {"revision": "77677"},
+            )
+
+    def test_lock_records_noto_without_catalogue_version(self) -> None:
+        lock = json.loads(
+            (ROOT / "pdf/toolchain.lock.json").read_text(encoding="utf-8")
+        )
+        noto = lock["texlive"]["packages"]["noto"]
+        self.assertEqual(noto["revision"], "77677")
+        self.assertIsNone(noto["version"])
+        self.assertEqual(
+            noto["container_sha512"],
+            "2e94b1490e1682391f66fe03ca46a70d2fa697eb71ae02b6d675a7b71b42c94e"
+            "449f846fe459f3fd873450b1de5fd022bde96d8a96bb82e14db545800ccee5a6",
+        )
 
 
 class LockStampTests(unittest.TestCase):

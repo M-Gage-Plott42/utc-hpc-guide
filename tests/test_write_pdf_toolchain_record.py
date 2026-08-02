@@ -9,15 +9,20 @@ from unittest import mock
 
 from scripts.write_pdf_toolchain_record import (
     ci_context,
+    code_font_record_lines,
     parse_check_log,
     record_preamble,
     require_exact_line,
+    require_locked_font_source,
+    texlive_package_version,
+    validate_tlmgr_package,
 )
+from scripts.code_font import load_code_font
 
 
 PDF_SHA256 = "1" * 64
 ROOT = Path(__file__).resolve().parents[1]
-FINAL_MANIFEST = json.loads(
+CURRENT_MANIFEST = json.loads(
     (ROOT / "pdf/guide_manifest.json").read_text(encoding="utf-8")
 )
 
@@ -28,7 +33,8 @@ def passing_log(pdf: Path) -> str:
             f"pdf_reproducible sha256={PDF_SHA256}",
             f"pdf_built path={pdf} sha256={PDF_SHA256}",
             (
-                "pdf_qa_passed pages=24 fonts=7 "
+                "pdf_qa_passed pages=24 fonts=7 headings=81 "
+                "chapter_openers=11 heading_code_literals=11 "
                 f"sha256={PDF_SHA256}"
             ),
             "pdf_ocr_passed pages=24 dpi=150 min_page_alnum=200",
@@ -36,6 +42,10 @@ def passing_log(pdf: Path) -> str:
                 "pdf_accessibility_qa_passed "
                 "structure_roles=900 figures=3 "
                 "verapdf_profile=ua2 verapdf_jobs=1"
+            ),
+            (
+                "code_font_fixture_passed regular=FiraCode-Regular "
+                "bold=FiraCode-Bold glyphs_per_row=59 verapdf_profile=ua2"
             ),
         )
     )
@@ -57,6 +67,11 @@ class CheckLogTests(unittest.TestCase):
         self.assertEqual(checks["accessibility"], "passed")
         self.assertEqual(checks["verapdf"], "passed")
         self.assertEqual(checks["pages"], "24")
+        self.assertEqual(checks["headings"], "81")
+        self.assertEqual(checks["chapter_openers"], "11")
+        self.assertEqual(checks["heading_code_literals"], "11")
+        self.assertEqual(checks["code_font_fixture"], "passed")
+        self.assertEqual(checks["fixture_glyphs_per_row"], "59")
 
     def test_rejects_missing_gate_marker(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -144,14 +159,101 @@ class ExactToolVersionTests(unittest.TestCase):
             )
 
 
+class TexLivePackageTests(unittest.TestCase):
+    def test_formats_omitted_null_version_as_none(self) -> None:
+        details = {"installed": "Yes", "revision": "77677"}
+        validate_tlmgr_package(
+            "noto",
+            details,
+            {"revision": "77677", "version": None},
+        )
+        self.assertEqual(texlive_package_version(details), "none")
+
+    def test_rejects_catalogue_version_for_unversioned_lock(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "does not match lock"):
+            validate_tlmgr_package(
+                "noto",
+                {
+                    "installed": "Yes",
+                    "revision": "77677",
+                    "cat-version": "2025.01.01",
+                },
+                {"revision": "77677", "version": None},
+            )
+
+
+class LockedFontSourceTests(unittest.TestCase):
+    def test_accepts_regular_font_within_locked_texmf_dist(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            texmf_dist = Path(temporary) / "texlive2025/texmf-dist"
+            font = texmf_dist / "fonts/NotoSans-Regular.ttf"
+            font.parent.mkdir(parents=True)
+            font.write_bytes(b"font")
+            self.assertEqual(
+                require_locked_font_source(
+                    font,
+                    filename=font.name,
+                    texmf_dist=texmf_dist,
+                ),
+                font.resolve(),
+            )
+
+    def test_rejects_external_font_and_parent_escape(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            texmf_dist = root / "texlive2025/texmf-dist"
+            texmf_dist.mkdir(parents=True)
+            external = root / "NotoSans-Regular.ttf"
+            external.write_bytes(b"shadow")
+            candidates = (external, texmf_dist / "../.." / external.name)
+            for candidate in candidates:
+                with self.subTest(candidate=candidate):
+                    with self.assertRaisesRegex(
+                        RuntimeError,
+                        "outside the locked TeX tree",
+                    ):
+                        require_locked_font_source(
+                            candidate,
+                            filename=external.name,
+                            texmf_dist=texmf_dist,
+                        )
+
+
+class CodeFontRecordTests(unittest.TestCase):
+    def test_records_complete_selected_font_provenance_and_roles(self) -> None:
+        lines = code_font_record_lines(load_code_font(ROOT))
+        self.assertIn("source=fira-code-6.2", lines)
+        self.assertIn("release_tag=6.2", lines)
+        self.assertIn(
+            "release_commit=eee6db993696aba61ff4eef03698e2987d79910c",
+            lines,
+        )
+        self.assertIn("font_size_pt=9.1", lines)
+        self.assertIn("leading_pt=11.5", lines)
+        self.assertIn("prose_family=NotoSans", lines)
+        self.assertIn("inline_code_family=DejaVuSansMono", lines)
+        self.assertIn("regular.postscript_name=FiraCode-Regular", lines)
+        self.assertIn("bold.postscript_name=FiraCode-Bold", lines)
+        self.assertTrue(
+            any(
+                line.startswith("archive_sha256=0949915b")
+                for line in lines
+            )
+        )
+
+
 class RecordPreambleTests(unittest.TestCase):
     def test_final_record_does_not_claim_publication(self) -> None:
+        final = dict(CURRENT_MANIFEST)
+        final["release_status"] = "final"
+        final["document_version"] = "1.2.2"
+        final["output_filename"] = "UTC_HPC_Guide.pdf"
         self.assertEqual(
-            record_preamble(FINAL_MANIFEST),
+            record_preamble(final),
             [
                 "UTC HPC Guide PDF build traceability record",
                 (
-                    "distribution_status=final document build for v1.2.1; "
+                    "distribution_status=final document build for v1.2.2; "
                     "publication is separate"
                 ),
                 "",
@@ -159,14 +261,10 @@ class RecordPreambleTests(unittest.TestCase):
         )
 
     def test_candidate_record_remains_review_only(self) -> None:
-        candidate = dict(FINAL_MANIFEST)
-        candidate["release_status"] = "candidate"
-        candidate["document_version"] = "1.2.1-rc.2"
-        candidate["output_filename"] = "UTC_HPC_Guide_v1.2.1-rc.2.pdf"
         self.assertIn(
-            "distribution_status=review-only release candidate for v1.2.1; "
+            "distribution_status=review-only release candidate for v1.2.2; "
             "not stable",
-            record_preamble(candidate),
+            record_preamble(CURRENT_MANIFEST),
         )
 
 

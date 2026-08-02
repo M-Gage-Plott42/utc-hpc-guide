@@ -29,6 +29,10 @@ Keep network-dependent dependency audits separate from this local gate.
 - Confirm the manifest status, document version, output filename, workflow
   artifact label, and distribution-status record all describe the same
   candidate or final build.
+- For any PDF-changing work after a published version, first create a new
+  review-only candidate. Do not rebuild materially different bytes under an
+  existing final version, stable filename, or tag. Promote candidate metadata
+  to final only after the exact candidate content and presentation pass review.
 
 ## 2. Sensitive Data Scrub
 
@@ -66,6 +70,8 @@ repository is free of private data.
 - Check that README links to all docs and examples; `make check-links` must
   resolve inline Markdown, reference-style, raw HTML, and heading-anchor links.
 - Confirm commands render correctly in Markdown and copy/paste cleanly.
+- Confirm printable fenced-code lines are at most 80 characters except for the
+  one exact reviewed 83-character Miniconda SHA-256 assignment.
 - Confirm placeholders are consistent across docs.
 - Run `make check-placeholders` and confirm shell snippets and sbatch templates
   contain no angle-bracket placeholders that a shell could parse as redirects.
@@ -91,13 +97,43 @@ repository is free of private data.
   byte-identical rebuilds plus passing structure, metadata, font,
   text-extraction, rendering, every-page OCR, and
   `make check-pdf-accessibility` checks.
+- Confirm the permanent gate builds only the manifest-selected guide and the
+  small test-only selected-Fira fixture. Reject proof matrices, unselected
+  fonts, proof transforms, comparison PDFs, or proof uploads in the canonical
+  pipeline.
+- Confirm the exact selected Fira Regular/Bold bytes, OFL license, provenance,
+  PostScript names, ligature/contextual denylist, and build-record fields pass.
+  In the temporary fixture, require one default glyph per literal ambiguous
+  character in both faces, exact four-space indentation and meaningful
+  two-space separators in locked Poppler extraction, qpdf success, and one
+  clean veraPDF `ua2` job. Do not describe extraction as universal clipboard
+  fidelity.
 - Confirm `pdfinfo` reports `Tagged: yes` and PDF 2.0.
 - Confirm the catalog has a structure tree, marked-content metadata, `en-US`,
   and the expected PDF/UA-2 identification.
 - Confirm representative headings, lists, table headers/cells, links, figures,
   and code are present in the logical structure.
+- Confirm the physical cover is labelled `Cover`, contents pages use lowercase
+  Roman labels starting at `i`, and body pages restart with Arabic `1`; reject
+  duplicate logical labels or a body `page.1` destination that resolves to the
+  cover.
+- Confirm every page uses structure tab order `/Tabs /S`, page
+  `/StructParents` values are unique and contiguous, and exact manifest-owned
+  logical-structure counts pass.
 - Confirm all three Open OnDemand figures carry the expected meaningful
-  alternative descriptions.
+  alternatives derived from their normal Markdown image labels.
+- Confirm meaningful cover text meets the reviewed contrast threshold and
+  gold is decorative only. Require page-1 OCR to find both the document title
+  and the candidate or final release label; combined-document OCR is not a
+  substitute for cover legibility.
+- Confirm cover graphics, repeated headers, footers, rules, page numbers, and
+  code rails are layout artifacts and do not interrupt logical reading order
+  or appear as `Artifact` structure roles.
+- Confirm every real source line has one code rail, deliberate interior blank
+  lines retain one rail, and no synthetic leading or trailing rail exists.
+- Confirm each chapter opener stays with its introduction and first subsection,
+  each Appendix B heading stays with its first shebang, body headings use the
+  Noto heading face, and no heading ends a page without semantic content below.
 - Confirm the PDF has no encryption, forms, JavaScript, attachments, embedded
   files, or other active content rejected by the accessibility checker.
 - Run the locked veraPDF `ua2` profile with no allowlist and confirm
@@ -130,10 +166,12 @@ repository is free of private data.
   `verapdf-report.xml` from the same workflow artifact and confirm the recorded
   PDF SHA-256 matches. `pdf/toolchain.lock.json` is the declared toolchain lock;
   the artifact record is run traceability, not signed provenance, and the
-  artifact is transient.
+  artifact is transient. Confirm that those are the only three uploaded files;
+  the test-only font fixture and historical proof PDFs must be absent.
 - For final promotion, review the successful artifact built from the exact
   final `main` commit and confirm its SHA-256 before tagging. Bind every manual
-  result to that same hash.
+  result to that same hash. A successful candidate build is necessary review
+  evidence but is not itself the final stable artifact.
 - Attach the reviewed PDF to the matching GitHub release under the stable
   asset name `UTC_HPC_Guide.pdf`.
 - After publication, confirm the stable latest-release asset URL resolves:

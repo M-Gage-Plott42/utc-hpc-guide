@@ -15,20 +15,52 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from .check_code_width import (
+        CANONICAL_WIDTH_EXCEPTIONS,
+        validate_fenced_code_width,
+    )
+    from .code_font import fontspec_definition, load_code_font
     from .pdf_manifest import load_manifest, output_path, workflow_metadata
 except ImportError:
+    from check_code_width import (
+        CANONICAL_WIDTH_EXCEPTIONS,
+        validate_fenced_code_width,
+    )
+    from code_font import fontspec_definition, load_code_font
     from pdf_manifest import load_manifest, output_path, workflow_metadata
 
 
 TOP_HEADING = re.compile(r"^# (?:[0-9]{2} )?(.+)$", re.MULTILINE)
+SECOND_LEVEL_HEADING = re.compile(
+    r"^## (?:[0-9]+(?:\.[0-9]+)?[.)]? )?(.+)$",
+    re.MULTILINE,
+)
+LOCK_STAMP_NAME = "lock-attestation.txt"
 
 
-def normalize_chapter(text: str, title: str | None = None) -> str:
+def normalize_chapter(
+    text: str,
+    title: str | None = None,
+    chapter_label: str | None = None,
+) -> str:
     match = TOP_HEADING.search(text)
     if not match:
         raise ValueError("PDF Markdown source is missing a level-one heading")
-    replacement = f"# {title or match.group(1)}"
-    return text[:match.start()] + replacement + text[match.end():]
+    normalized_title = title or match.group(1)
+    if chapter_label and not normalized_title.startswith("Appendix "):
+        normalized_title = f"{chapter_label}. {normalized_title}"
+    normalized = text[:match.start()] + f"# {normalized_title}" + text[match.end():]
+    if not chapter_label:
+        return normalized
+
+    subsection_number = 0
+
+    def replace_subheading(subheading: re.Match[str]) -> str:
+        nonlocal subsection_number
+        subsection_number += 1
+        return f"## {chapter_label}.{subsection_number} {subheading.group(1)}"
+
+    return SECOND_LEVEL_HEADING.sub(replace_subheading, normalized)
 
 
 def example_anchor(path: str) -> str:
@@ -44,29 +76,41 @@ def rewrite_example_links(text: str, examples: list[str]) -> str:
     return text
 
 
+def appendix_example_block(root: Path, path: str, index: int) -> str:
+    """Return one source-exact Appendix B fenced block."""
+    source = (root / path).read_text(encoding="utf-8")
+    if source.endswith("\n"):
+        source = source[:-1]
+    if not source:
+        raise ValueError(f"Appendix B example is empty: {path}")
+    source_lines = source.split("\n")
+    if not source_lines[0].strip() or not source_lines[-1].strip():
+        raise ValueError(
+            f"Appendix B example has a leading or trailing blank line: {path}"
+        )
+    if source_lines[0] != "#!/bin/bash -l":
+        raise ValueError(
+            "Appendix B example must begin with tracked '#!/bin/bash -l': "
+            f"{path}"
+        )
+    anchor = example_anchor(path)
+    return (
+        f"## B.{index} `{Path(path).name}` {{#{anchor}}}\n\n"
+        f"```bash\n{source}\n```"
+    )
+
+
 def assemble_markdown(root: Path, manifest: dict[str, Any]) -> str:
     examples = list(manifest["examples"])
-    if manifest["release_status"] == "candidate":
-        release_line = f"**Release candidate for v{manifest['release_target']}**"
-        identifier_label = "Candidate identifier"
-    else:
-        release_line = f"**Version {manifest['document_version']}**"
-        identifier_label = "Document identifier"
-    core_sections = [
-        (
-            f"{release_line}  \n"
-            f"{identifier_label}: `v{manifest['document_version']}`  \n"
-            "Canonical source: tracked repository chapters, site appendix, "
-            "examples, and `pdf/guide_manifest.json`  \n"
-            "Repository: <https://github.com/M-Gage-Plott42/utc-hpc-guide>\n\n"
-            "This guide is a practical baseline, not official cluster policy. "
-            "Verify site-specific limits, software, storage, and access rules "
-            "against current institutional documentation and live scheduler commands."
-        )
-    ]
-    for path in manifest["core_sources"]:
+    core_sections: list[str] = []
+    for chapter_number, path in enumerate(manifest["core_sources"], start=1):
         text = (root / path).read_text(encoding="utf-8")
-        core_sections.append(normalize_chapter(rewrite_example_links(text, examples)))
+        core_sections.append(
+            normalize_chapter(
+                rewrite_example_links(text, examples),
+                chapter_label=str(chapter_number),
+            )
+        )
 
     appendix_sections: list[str] = []
     for appendix in manifest["site_appendices"]:
@@ -75,6 +119,7 @@ def assemble_markdown(root: Path, manifest: dict[str, Any]) -> str:
             normalize_chapter(
                 rewrite_example_links(text, examples),
                 appendix["title"],
+                "A",
             )
         )
 
@@ -83,24 +128,33 @@ def assemble_markdown(root: Path, manifest: dict[str, Any]) -> str:
         "These tracked templates intentionally use `REPLACE_WITH_*` markers. "
         "Replace every marker with site-approved values before submission."
     )
-    for index, path in enumerate(examples):
-        if index:
-            example_sections.append("\\newpage")
-        source = (root / path).read_text(encoding="utf-8").rstrip()
-        anchor = example_anchor(path)
-        example_sections.extend(
-            (
-                f"## `{Path(path).name}` {{#{anchor}}}",
-                "```bash",
-                source,
-                "```",
-            )
-        )
+    for index, path in enumerate(examples, start=1):
+        example_sections.append(appendix_example_block(root, path, index))
     document = "\n\n".join(section.strip() for section in core_sections)
     for appendix in appendix_sections:
         document += "\n\n\\newpage\n\n" + appendix.strip()
     document += "\n\n\\newpage\n\n" + "\n\n".join(example_sections)
+    allowed_widths = (
+        CANONICAL_WIDTH_EXCEPTIONS
+        if "docs/05-python-envs.md" in manifest["core_sources"]
+        else ()
+    )
+    validate_fenced_code_width(document, allowed=allowed_widths)
     return document + "\n"
+
+
+def cover_variables(manifest: dict[str, Any]) -> dict[str, str]:
+    if manifest["release_status"] == "candidate":
+        release_label = f"Release candidate for v{manifest['release_target']}"
+        identifier_label = "Candidate identifier"
+    else:
+        release_label = f"Version {manifest['document_version']}"
+        identifier_label = "Document identifier"
+    return {
+        "cover-release-label": release_label,
+        "cover-identifier-label": identifier_label,
+        "document-version": manifest["document_version"],
+    }
 
 
 def command_path(name: str) -> str:
@@ -110,61 +164,146 @@ def command_path(name: str) -> str:
     return resolved
 
 
-def locked_font_variables() -> list[str]:
-    kpsewhich = command_path("kpsewhich")
-    required_files = (
-        "DejaVuSerif.ttf",
-        "DejaVuSerif-Bold.ttf",
-        "DejaVuSerif-Italic.ttf",
-        "DejaVuSerif-BoldItalic.ttf",
-        "DejaVuSans.ttf",
-        "DejaVuSans-Bold.ttf",
-        "DejaVuSans-Oblique.ttf",
-        "DejaVuSans-BoldOblique.ttf",
-        "DejaVuSansMono.ttf",
-        "DejaVuSansMono-Bold.ttf",
-        "DejaVuSansMono-Oblique.ttf",
-        "DejaVuSansMono-BoldOblique.ttf",
+def attested_texmf_dist(root: Path, kpsewhich: str) -> Path:
+    result = subprocess.run(
+        [kpsewhich, "--var-value=TEXMFDIST"],
+        check=True,
+        capture_output=True,
+        text=True,
     )
-    resolved: list[Path] = []
-    for filename in required_files:
-        result = subprocess.run(
-            [kpsewhich, filename],
-            check=True,
-            capture_output=True,
-            text=True,
+    value = result.stdout.strip()
+    if not value or "\n" in value:
+        raise RuntimeError("kpsewhich returned an invalid TEXMFDIST path")
+    texmf_dist = Path(value).resolve()
+    if not texmf_dist.is_dir():
+        raise RuntimeError(f"locked TEXMFDIST is unavailable: {texmf_dist}")
+
+    texlive_root = texmf_dist.parent
+    executable = Path(kpsewhich).resolve()
+    if not executable.is_relative_to(texlive_root / "bin"):
+        raise RuntimeError(
+            "kpsewhich is not contained in the locked TeX Live tree: "
+            f"{executable}"
         )
-        path = Path(result.stdout.strip())
-        if not path.is_file():
-            raise RuntimeError(f"locked PDF font is unavailable: {filename}")
-        resolved.append(path)
-    font_directories = {path.parent.resolve() for path in resolved}
-    if len(font_directories) != 1:
-        raise RuntimeError("locked PDF fonts did not resolve from one directory")
-    font_directory = font_directories.pop().as_posix() + "/"
+
+    lock_path = root / "pdf/toolchain.lock.json"
+    stamp = texlive_root.parent / LOCK_STAMP_NAME
+    if (
+        not lock_path.is_file()
+        or lock_path.is_symlink()
+        or not stamp.is_file()
+        or stamp.is_symlink()
+        or stamp.read_text(encoding="utf-8")
+        != f"lock_sha256={sha256(lock_path)}\n"
+    ):
+        raise RuntimeError(
+            "font-resolving TeX Live tree is not attested to the current lock"
+        )
+    return texmf_dist
+
+
+def locked_font_variables(root: Path) -> list[str]:
+    kpsewhich = command_path("kpsewhich")
+    texmf_dist = attested_texmf_dist(root, kpsewhich)
     variables: list[str] = []
 
     def add_family(
         variable: str,
         family: str,
+        upright_suffix: str | None,
         italic_suffix: str,
         bold_italic_suffix: str,
+        scale: str,
     ) -> None:
+        upright_filename = (
+            f"{family}-{upright_suffix}.ttf"
+            if upright_suffix
+            else f"{family}.ttf"
+        )
+        required_files = (
+            upright_filename,
+            f"{family}-Bold.ttf",
+            f"{family}-{italic_suffix}.ttf",
+            f"{family}-{bold_italic_suffix}.ttf",
+        )
+        resolved: list[Path] = []
+        for filename in required_files:
+            result = subprocess.run(
+                [kpsewhich, filename],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            value = result.stdout.strip()
+            if not value or "\n" in value:
+                raise RuntimeError(
+                    f"kpsewhich returned an invalid path for locked font: {filename}"
+                )
+            path = Path(value)
+            if not path.is_file() or path.is_symlink():
+                raise RuntimeError(f"locked PDF font is unavailable: {filename}")
+            resolved_path = path.resolve()
+            if not resolved_path.is_relative_to(texmf_dist):
+                raise RuntimeError(
+                    "locked PDF font resolved outside the attested TEXMFDIST: "
+                    f"{filename} -> {resolved_path}"
+                )
+            resolved.append(resolved_path)
+        font_directories = {path.parent.resolve() for path in resolved}
+        if len(font_directories) != 1:
+            raise RuntimeError(
+                f"locked PDF font family resolved from multiple directories: {family}"
+            )
+        font_directory = font_directories.pop().as_posix() + "/"
+        upright_option = f"*-{upright_suffix}" if upright_suffix else "*"
         for value in (
             f"{variable}={family}",
             f"{variable}options=Path={font_directory}",
             f"{variable}options=Extension=.ttf",
-            f"{variable}options=UprightFont=*",
+            f"{variable}options=Scale={scale}",
+            f"{variable}options=UprightFont={upright_option}",
             f"{variable}options=BoldFont=*-Bold",
             f"{variable}options=ItalicFont=*-{italic_suffix}",
             f"{variable}options=BoldItalicFont=*-{bold_italic_suffix}",
         ):
             variables.extend(("--variable", value))
 
-    add_family("mainfont", "DejaVuSerif", "Italic", "BoldItalic")
-    add_family("sansfont", "DejaVuSans", "Oblique", "BoldOblique")
-    add_family("monofont", "DejaVuSansMono", "Oblique", "BoldOblique")
+    add_family(
+        "mainfont",
+        "NotoSans",
+        "Regular",
+        "Italic",
+        "BoldItalic",
+        "MatchLowercase",
+    )
+    add_family(
+        "sansfont",
+        "NotoSans",
+        "Regular",
+        "Italic",
+        "BoldItalic",
+        "MatchLowercase",
+    )
+    add_family(
+        "monofont",
+        "DejaVuSansMono",
+        None,
+        "Oblique",
+        "BoldOblique",
+        "0.88",
+    )
     return variables
+
+
+def code_font_replacements(root: Path) -> dict[str, str]:
+    """Return the one canonical fenced-code font definition and dimensions."""
+    font = load_code_font(root)
+    return {
+        "@CODE_FONT_DEFINITION@": fontspec_definition(font),
+        "@CODE_FONT_COMMAND@": r"\GuideCodeFont",
+        "@CODE_FONT_SIZE@": f"{font.font_size_pt:g}",
+        "@CODE_FONT_LEADING@": f"{font.leading_pt:g}",
+    }
 
 
 def build_once(
@@ -179,10 +318,12 @@ def build_once(
     assembled.write_text(assemble_markdown(root, manifest), encoding="utf-8")
     header = work_dir / "header.tex"
     header_text = (root / manifest["header_source"]).read_text(encoding="utf-8")
-    header_text = header_text.replace(
-        "@DOCUMENT_VERSION@",
-        manifest["document_version"],
-    )
+    header_replacements = {
+        "@DOCUMENT_VERSION@": manifest["document_version"],
+        **code_font_replacements(root),
+    }
+    for token, value in header_replacements.items():
+        header_text = header_text.replace(token, value)
     if re.search(r"@[A-Z][A-Z0-9_]+@", header_text):
         raise ValueError("PDF header contains an unresolved manifest token")
     header.write_text(header_text, encoding="utf-8")
@@ -191,6 +332,7 @@ def build_once(
     env = os.environ.copy()
     env["SOURCE_DATE_EPOCH"] = str(manifest["source_date_epoch"])
     env["TZ"] = "UTC"
+    cover = cover_variables(manifest)
     command = [
         pandoc,
         str(assembled),
@@ -215,9 +357,11 @@ def build_once(
         "--metadata",
         f"lang={manifest['language']}",
         "--metadata",
-        "subject=Practical SLURM, Open OnDemand, SSH, Python, and GPU onboarding",
+        "subject=Practical Slurm, Open OnDemand, SSH, Python, and GPU onboarding",
         "--variable",
         "papersize=letter",
+        "--variable",
+        "classoption=titlepage",
         "--variable",
         f"pdfstandard={manifest['pdf_standard']}",
         "--variable",
@@ -230,8 +374,19 @@ def build_once(
         "--variable",
         "geometry:margin=0.72in",
         "--variable",
+        "geometry:headheight=20pt",
+        "--variable",
+        "geometry:headsep=14pt",
+        "--variable",
+        "geometry:footskip=28pt",
+        "--variable",
         "fontsize=10pt",
-        *locked_font_variables(),
+        *(
+            item
+            for key, value in cover.items()
+            for item in ("--variable", f"{key}={value}")
+        ),
+        *locked_font_variables(root),
         "--output",
         str(output),
     ]

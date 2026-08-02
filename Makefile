@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help setup setup-pdf-tools lint scrub test-scrub check-assets test-assets check-links test-links test-external-links check-external-links check-placeholders test-placeholders test-build-pdf test-pdf-ocr test-pdf-accessibility test-pdf-toolchain-bootstrap test-pdf-toolchain-record check-shell-syntax check-shell-lint check-whitespace pdf check-pdf-ocr check-pdf-accessibility check-pdf check release-check
+.PHONY: help setup setup-pdf-tools lint scrub test-scrub check-assets test-assets check-links test-links test-external-links check-external-links check-placeholders test-placeholders test-code-width test-code-font test-build-pdf test-pdf-ocr test-pdf-accessibility test-pdf-toolchain-bootstrap test-pdf-toolchain-record check-shell-syntax check-shell-lint check-whitespace pdf check-code-font-fixture check-pdf-ocr check-pdf-accessibility check-pdf check release-check
 
 ASSET_CHECK_SCRIPT := scripts/check_assets.py
 MARKDOWNLINT := ./node_modules/.bin/markdownlint
@@ -10,6 +10,7 @@ LINK_CHECK_SCRIPT := scripts/check_links.py
 EXTERNAL_LINK_CHECK_SCRIPT := scripts/check_external_links.py
 EXTERNAL_LINK_POLICY := scripts/external_link_policy.json
 PLACEHOLDER_CHECK_SCRIPT := scripts/check_shell_placeholders.py
+CODE_FONT_FIXTURE_SCRIPT := scripts/check_code_font_fixture.py
 PDF_BUILD_SCRIPT := scripts/build_pdf.py
 PDF_CHECK_SCRIPT := scripts/check_pdf.py
 PDF_OCR_CHECK_SCRIPT := scripts/check_pdf_ocr.py
@@ -35,6 +36,8 @@ help:
 	@echo "  make check-external-links - Run the separate network link monitor"
 	@echo "  make check-placeholders - Reject unsafe angle placeholders in shell examples"
 	@echo "  make test-placeholders - Run shell-placeholder failure-path tests"
+	@echo "  make test-code-width - Run canonical fenced-code width tests"
+	@echo "  make test-code-font - Run selected-Fira contract tests"
 	@echo "  make test-build-pdf - Run PDF manifest/build failure-path tests"
 	@echo "  make test-pdf-ocr - Run PDF OCR checker failure-path tests"
 	@echo "  make test-pdf-accessibility - Run PDF accessibility failure-path tests"
@@ -44,6 +47,7 @@ help:
 	@echo "  make check-shell-lint - Run ShellCheck on tracked sbatch examples"
 	@echo "  make check-whitespace - Check staged/unstaged lines for whitespace errors"
 	@echo "  make pdf         - Build the manifest-selected printable PDF"
+	@echo "  make check-code-font-fixture - Validate the temporary Fira Regular/Bold fixture"
 	@echo "  make check-pdf-ocr - OCR every page of the manifest-selected PDF"
 	@echo "  make check-pdf-accessibility - Run structural and veraPDF PDF/UA-2 QA"
 	@echo "  make check-pdf   - Rebuild twice and run structural/PDF-UA/OCR QA"
@@ -89,6 +93,12 @@ check-placeholders:
 
 test-placeholders:
 	@python3 -m unittest tests.test_check_shell_placeholders
+
+test-code-width:
+	@python3 -m unittest tests.test_check_code_width
+
+test-code-font:
+	@python3 -m unittest tests.test_code_font
 
 test-build-pdf:
 	@python3 -m unittest tests.test_build_pdf
@@ -138,6 +148,9 @@ check-whitespace:
 pdf: setup-pdf-tools
 	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_BUILD_SCRIPT) --manifest $(PDF_MANIFEST)
 
+check-code-font-fixture: setup-pdf-tools
+	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(CODE_FONT_FIXTURE_SCRIPT)
+
 check-pdf-ocr: setup-pdf-tools
 	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_OCR_CHECK_SCRIPT) --manifest $(PDF_MANIFEST)
 
@@ -149,7 +162,8 @@ check-pdf: setup-pdf-tools
 	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_CHECK_SCRIPT) --manifest $(PDF_MANIFEST)
 	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_OCR_CHECK_SCRIPT) --manifest $(PDF_MANIFEST)
 	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_ACCESSIBILITY_CHECK_SCRIPT) --manifest $(PDF_MANIFEST) --verapdf "$(PDF_TOOLCHAIN_BIN)/verapdf" --report dist/verapdf-report.xml
+	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(CODE_FONT_FIXTURE_SCRIPT)
 
-check: lint scrub test-scrub check-assets test-assets check-links test-links test-external-links check-placeholders test-placeholders test-build-pdf test-pdf-ocr test-pdf-accessibility test-pdf-toolchain-bootstrap test-pdf-toolchain-record
+check: lint scrub test-scrub check-assets test-assets check-links test-links test-external-links check-placeholders test-placeholders test-code-width test-code-font test-build-pdf test-pdf-ocr test-pdf-accessibility test-pdf-toolchain-bootstrap test-pdf-toolchain-record
 
 release-check: check check-shell-syntax check-shell-lint check-pdf check-whitespace

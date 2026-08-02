@@ -12,6 +12,7 @@ from scripts.check_pdf_accessibility import (
     parse_verapdf_report,
     run_verapdf,
     validate_manifest,
+    validate_named_page_destinations,
     validate_pdfinfo,
     validate_qpdf_document,
 )
@@ -30,6 +31,17 @@ MANIFEST = {
     "language": "en-US",
     "pdf_standard": "ua-2",
     "expected_figure_alt_text": ALTERNATIVES,
+    "expected_structure_counts": {
+        "H1": 1,
+        "H2": 1,
+        "L": 1,
+        "Table": 1,
+        "TH": 1,
+        "TD": 1,
+        "Link": 1,
+        "Code": 1,
+        "Figure": 3,
+    },
 }
 
 PDFINFO = """\
@@ -41,6 +53,13 @@ Form:            none
 JavaScript:      no
 Encrypted:       no
 PDF version:     2.0
+"""
+
+DESTINATIONS = """\
+Page  Destination                 Name
+   1 [ XYZ   52  740 null      ] "Doc-Start"
+   2 [ XYZ   51  775 null      ] "page.i"
+   3 [ XYZ   69  705 null      ] "page.1"
 """
 
 XMP = b"""\
@@ -114,6 +133,17 @@ def passing_qpdf_document() -> dict[str, object]:
                 "/MarkInfo": {"/Marked": True},
                 "/StructTreeRoot": "2 0 R",
                 "/Metadata": "14 0 R",
+                "/ViewerPreferences": {"/DisplayDocTitle": True},
+                "/PageLabels": {
+                    "/Nums": [
+                        0,
+                        {"/P": "u:Cover"},
+                        1,
+                        {"/S": "/r"},
+                        2,
+                        {"/S": "/D"},
+                    ]
+                },
             }
         },
         "obj:2 0 R": {
@@ -128,6 +158,27 @@ def passing_qpdf_document() -> dict[str, object]:
                     "/Type": "/Metadata",
                     "/Subtype": "/XML",
                 }
+            }
+        },
+        "obj:15 0 R": {
+            "value": {
+                "/Type": "/Page",
+                "/Tabs": "/S",
+                "/StructParents": 0,
+            }
+        },
+        "obj:16 0 R": {
+            "value": {
+                "/Type": "/Page",
+                "/Tabs": "/S",
+                "/StructParents": 1,
+            }
+        },
+        "obj:17 0 R": {
+            "value": {
+                "/Type": "/Page",
+                "/Tabs": "/S",
+                "/StructParents": 2,
             }
         },
     }
@@ -146,7 +197,7 @@ def passing_qpdf_document() -> dict[str, object]:
                 "jsonversion": 2,
                 "pdfversion": "2.0",
                 "calledgetallpages": True,
-                "maxobjectid": 14,
+                "maxobjectid": 17,
             },
             objects,
         ],
@@ -184,6 +235,97 @@ class PdfAccessibilityStructureTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "catalog Lang"):
             validate_qpdf_document(document, MANIFEST, XMP)
 
+    def test_rejects_page_without_structure_tab_order(self) -> None:
+        document = passing_qpdf_document()
+        del document["qpdf"][1]["obj:16 0 R"]["value"]["/Tabs"]
+        with self.assertRaisesRegex(RuntimeError, r"Tabs /S"):
+            validate_qpdf_document(document, MANIFEST, XMP)
+
+    def test_rejects_duplicate_page_structure_parent(self) -> None:
+        document = passing_qpdf_document()
+        document["qpdf"][1]["obj:16 0 R"]["value"]["/StructParents"] = 0
+        with self.assertRaisesRegex(RuntimeError, "unique and contiguous"):
+            validate_qpdf_document(document, MANIFEST, XMP)
+
+    def test_rejects_missing_display_document_title_preference(self) -> None:
+        document = passing_qpdf_document()
+        del document["qpdf"][1]["obj:1 0 R"]["value"][
+            "/ViewerPreferences"
+        ]
+        with self.assertRaisesRegex(RuntimeError, "DisplayDocTitle"):
+            validate_qpdf_document(document, MANIFEST, XMP)
+
+    def test_rejects_duplicate_cover_and_body_page_style(self) -> None:
+        document = passing_qpdf_document()
+        document["qpdf"][1]["obj:1 0 R"]["value"]["/PageLabels"][
+            "/Nums"
+        ] = [0, {"/S": "/D"}]
+        with self.assertRaisesRegex(RuntimeError, "Cover, Roman contents"):
+            validate_qpdf_document(document, MANIFEST, XMP)
+
+    def test_rejects_contents_page_label_prefix(self) -> None:
+        document = passing_qpdf_document()
+        document["qpdf"][1]["obj:1 0 R"]["value"]["/PageLabels"][
+            "/Nums"
+        ][3]["/P"] = "u:x"
+        with self.assertRaisesRegex(RuntimeError, "lowercase Roman label i"):
+            validate_qpdf_document(document, MANIFEST, XMP)
+
+    def test_rejects_body_page_label_prefix(self) -> None:
+        document = passing_qpdf_document()
+        document["qpdf"][1]["obj:1 0 R"]["value"]["/PageLabels"][
+            "/Nums"
+        ][5]["/P"] = "u:x"
+        with self.assertRaisesRegex(RuntimeError, "Arabic label 1"):
+            validate_qpdf_document(document, MANIFEST, XMP)
+
+    def test_accepts_distinct_contents_and_body_destinations(self) -> None:
+        validate_named_page_destinations(
+            DESTINATIONS,
+            contents_page=2,
+            body_page=3,
+        )
+
+    def test_rejects_body_destination_on_cover(self) -> None:
+        destinations = DESTINATIONS.replace(
+            '   3 [ XYZ   69  705 null      ] "page.1"',
+            '   1 [ XYZ   69  705 null      ] "page.1"',
+        )
+        with self.assertRaisesRegex(RuntimeError, '"page.1".*page 3'):
+            validate_named_page_destinations(
+                destinations,
+                contents_page=2,
+                body_page=3,
+            )
+
+    def test_rejects_duplicate_contents_destination(self) -> None:
+        destinations = DESTINATIONS + (
+            '   2 [ XYZ   52  600 null      ] "page.i"\n'
+        )
+        with self.assertRaisesRegex(RuntimeError, '"page.i".*exactly once'):
+            validate_named_page_destinations(
+                destinations,
+                contents_page=2,
+                body_page=3,
+            )
+
+    def test_rejects_expected_structure_count_drift(self) -> None:
+        manifest = copy.deepcopy(MANIFEST)
+        manifest["expected_structure_counts"]["H1"] = 2
+        with self.assertRaisesRegex(RuntimeError, r"H1=1 \(expected 2\)"):
+            validate_qpdf_document(
+                passing_qpdf_document(),
+                manifest,
+                XMP,
+            )
+
+    def test_rejects_artifact_structure_role(self) -> None:
+        document = passing_qpdf_document()
+        document["qpdf"][1]["obj:18 0 R"] = structure_element("Artifact")
+        document["qpdf"][1]["obj:2 0 R"]["value"]["/K"].append("18 0 R")
+        with self.assertRaisesRegex(RuntimeError, "marked-content artifacts"):
+            validate_qpdf_document(document, MANIFEST, XMP)
+
     def test_rejects_missing_figure_alt_text(self) -> None:
         document = passing_qpdf_document()
         del document["qpdf"][1]["obj:11 0 R"]["value"]["/Alt"]
@@ -207,8 +349,8 @@ class PdfAccessibilityStructureTests(unittest.TestCase):
 
     def test_rejects_detached_caption_structure(self) -> None:
         document = passing_qpdf_document()
-        document["qpdf"][1]["obj:15 0 R"] = structure_element("Caption")
-        document["qpdf"][1]["obj:2 0 R"]["value"]["/K"].insert(0, "15 0 R")
+        document["qpdf"][1]["obj:18 0 R"] = structure_element("Caption")
+        document["qpdf"][1]["obj:2 0 R"]["value"]["/K"].insert(0, "18 0 R")
         with self.assertRaisesRegex(RuntimeError, "detached Caption"):
             validate_qpdf_document(document, MANIFEST, XMP)
 
@@ -220,7 +362,7 @@ class PdfAccessibilityStructureTests(unittest.TestCase):
 
     def test_rejects_javascript_active_content(self) -> None:
         document = passing_qpdf_document()
-        document["qpdf"][1]["obj:15 0 R"] = {
+        document["qpdf"][1]["obj:18 0 R"] = {
             "value": {"/S": "/JavaScript", "/JS": "u:app.alert('no')"}
         }
         with self.assertRaisesRegex(RuntimeError, "JavaScript"):
@@ -228,8 +370,8 @@ class PdfAccessibilityStructureTests(unittest.TestCase):
 
     def test_rejects_associated_file_attachment(self) -> None:
         document = passing_qpdf_document()
-        document["qpdf"][1]["obj:15 0 R"] = {
-            "value": {"/Type": "/Filespec", "/AF": ["16 0 R"]}
+        document["qpdf"][1]["obj:18 0 R"] = {
+            "value": {"/Type": "/Filespec", "/AF": ["19 0 R"]}
         }
         with self.assertRaisesRegex(RuntimeError, "file"):
             validate_qpdf_document(document, MANIFEST, XMP)

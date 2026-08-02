@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
   "title": "Practical HPC Onboarding Guide",
-  "subtitle": "SLURM, Open OnDemand, SSH, Python, and GPU Workflows",
+  "subtitle": "Slurm, Open OnDemand, SSH, Python, and GPU Workflows",
   "author": "Gage Plott",
-  "date": "July 2026",
-  "release_status": "final",
-  "release_target": "1.2.1",
-  "document_version": "1.2.1",
-  "source_date_epoch": 1785412800,
-  "pdf_trailer_id": "8ea9f52d5afad85d958495b620dbf86a",
-  "output_filename": "UTC_HPC_Guide.pdf",
+  "date": "August 2026",
+  "release_status": "candidate",
+  "release_target": "1.2.2",
+  "document_version": "1.2.2-rc.2",
+  "source_date_epoch": 1785628800,
+  "pdf_trailer_id": "f4ea8ec5e9282eabbe16cc4597130260",
+  "output_filename": "UTC_HPC_Guide_v1.2.2-rc.2.pdf",
   "pdf_standard": "ua-2",
   "language": "en-US",
   "header_source": "pdf/header.tex",
@@ -40,8 +40,9 @@
   ],
   "required_pdf_text": [
     "Practical HPC Onboarding Guide",
-    "Version 1.2.1",
-    "SLURM Basics",
+    "Release candidate for v1.2.2",
+    "1.2.2-rc.2",
+    "Slurm Basics",
     "ReqMem",
     "MaxRSS",
     "tensorflow[and-cuda]",
@@ -57,14 +58,32 @@
     "Running Open OnDemand desktop session card showing allocation and launch controls",
     "Open OnDemand file shortcuts for home, scratch, public, and group storage"
   ],
+  "expected_structure_counts": {
+    "H1": 12,
+    "H2": 70,
+    "L": 45,
+    "LI": 179,
+    "Lbl": 179,
+    "LBody": 179,
+    "Table": 1,
+    "TR": 4,
+    "TH": 2,
+    "TD": 6,
+    "Link": 100,
+    "Figure": 3,
+    "Code": 50,
+    "TOCI": 81,
+    "Reference": 81
+  },
   "ocr_dpi": 150,
   "ocr_min_alnum_per_page": 200,
   "required_ocr_text": [
     "Practical HPC Onboarding Guide",
-    "Version 1.2.1",
+    "Release candidate for v1.2.2",
+    "1.2.2-rc.2",
     "Access and SSH",
     "Open OnDemand",
-    "SLURM Basics",
+    "Slurm Basics",
     "GPU Jobs",
     "Python Environments",
     "Data Transfer and Storage",
@@ -72,5 +91,12 @@
     "Best Practices",
     "UTC MocsHPC Site Notes",
     "Runnable Slurm Templates"
-  ]
+  ],
+  "required_page_ocr_text": {
+    "1": [
+      "Practical HPC Onboarding Guide",
+      "Release candidate for v1.2.2",
+      "1.2.2-rc.2"
+    ]
+  }
 }

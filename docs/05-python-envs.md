@@ -88,7 +88,8 @@ python -m pip install -r requirements.txt
 On older system libraries, prefer conda for compiled packages.
 
 ```bash
-python -m pip download --only-binary=:all: --no-deps "numpy==2.2.6" -d /tmp/wheels_test
+python -m pip download --only-binary=:all: --no-deps \
+  "numpy==2.2.6" -d /tmp/wheels_test
 python -m pip install --only-binary=:all: "numpy==2.2.6"
 ```
 

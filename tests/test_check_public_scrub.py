@@ -89,6 +89,55 @@ class PublicScrubTests(unittest.TestCase):
         self.assertGreaterEqual(file_count, 2)
         self.assertEqual(findings[0].rule, "internal_marker")
 
+    def test_rejects_private_windows_home_path_source_forms(self) -> None:
+        for separator in ("/", "\\", "\\\\"):
+            with self.subTest(separator=repr(separator)):
+                private_path = separator.join(
+                    ("C:", "Users", "ExampleUser", "Desktop", "guide.pdf")
+                )
+                temp_dir, root, policy = self.make_repo(
+                    {"README.md": private_path}
+                )
+                try:
+                    findings, _, _ = check_repository(root, policy)
+                finally:
+                    temp_dir.cleanup()
+
+                self.assertEqual(len(findings), 1)
+                self.assertEqual(
+                    findings[0].rule,
+                    "private_windows_home_path",
+                )
+                self.assertEqual(
+                    findings[0].value,
+                    separator.join(("C:", "Users", "ExampleUser")),
+                )
+
+    def test_allows_placeholder_windows_home_paths(self) -> None:
+        placeholders = (
+            "<username>",
+            "REPLACE_WITH_USERNAME",
+            "%USERNAME%",
+        )
+        for separator in ("/", "\\", "\\\\"):
+            for placeholder in placeholders:
+                with self.subTest(
+                    separator=repr(separator),
+                    placeholder=placeholder,
+                ):
+                    placeholder_path = separator.join(
+                        ("C:", "Users", placeholder, "Desktop", "guide.pdf")
+                    )
+                    temp_dir, root, policy = self.make_repo(
+                        {"README.md": placeholder_path}
+                    )
+                    try:
+                        findings, _, _ = check_repository(root, policy)
+                    finally:
+                        temp_dir.cleanup()
+
+                    self.assertEqual(findings, [])
+
     def test_scans_both_staged_content_and_unstaged_edits(self) -> None:
         marker = "sim" + "center"
         temp_dir, root, policy = self.make_repo({"README.md": marker})

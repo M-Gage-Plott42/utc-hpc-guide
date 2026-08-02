@@ -18,8 +18,13 @@ import tempfile
 import urllib.error
 import urllib.request
 import zipfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
+
+try:
+    from .code_font import load_code_font
+except ImportError:
+    from code_font import load_code_font
 
 
 USER_AGENT = "utc-hpc-guide-pdf-toolchain-bootstrap/1"
@@ -387,6 +392,41 @@ def texlive_package_details(tlmgr: Path, package: str) -> dict[str, str]:
     return details
 
 
+def validate_texlive_package_details(
+    package: str,
+    details: dict[str, str],
+    expected: dict[str, Any],
+) -> None:
+    if details.get("installed") != "Yes":
+        raise RuntimeError(f"required TeX Live package is absent: {package}")
+    if details.get("revision") != expected["revision"]:
+        raise RuntimeError(
+            f"TeX Live package revision mismatch for {package}: "
+            f"{details.get('revision')} != {expected['revision']}"
+        )
+    if "version" not in expected:
+        raise ValueError(
+            f"TeX Live package lock must declare version for {package}"
+        )
+    expected_version = expected["version"]
+    if expected_version is None:
+        if "cat-version" in details:
+            raise RuntimeError(
+                f"TeX Live package version mismatch for {package}: "
+                f"unexpected catalogue version {details['cat-version']}"
+            )
+    elif isinstance(expected_version, str):
+        if details.get("cat-version") != expected_version:
+            raise RuntimeError(
+                f"TeX Live package version mismatch for {package}: "
+                f"{details.get('cat-version')} != {expected_version}"
+            )
+    else:
+        raise ValueError(
+            f"TeX Live package lock version must be a string or null: {package}"
+        )
+
+
 def verify_texlive(lock: dict[str, Any], destination: Path) -> tuple[Path, Path]:
     binary_dir = destination / "bin" / "x86_64-linux"
     lualatex = binary_dir / "lualatex"
@@ -424,18 +464,7 @@ def verify_texlive(lock: dict[str, Any], destination: Path) -> tuple[Path, Path]
         )
     for package, expected in lock["packages"].items():
         details = texlive_package_details(tlmgr, package)
-        if details.get("installed") != "Yes":
-            raise RuntimeError(f"required TeX Live package is absent: {package}")
-        if details.get("revision") != expected["revision"]:
-            raise RuntimeError(
-                f"TeX Live package revision mismatch for {package}: "
-                f"{details.get('revision')} != {expected['revision']}"
-            )
-        if details.get("cat-version") != expected["version"]:
-            raise RuntimeError(
-                f"TeX Live package version mismatch for {package}: "
-                f"{details.get('cat-version')} != {expected['version']}"
-            )
+        validate_texlive_package_details(package, details, expected)
     print(
         "texlive_verified "
         f"release={lock['release']} kernel={lock['latex_kernel']} "
@@ -831,6 +860,13 @@ def install_toolchain(
         raise ValueError("PDF toolchain lock must declare its host OS")
     if sys.platform != "linux" or platform.machine() != "x86_64":
         raise RuntimeError("the locked PDF toolchain requires Linux x86_64")
+
+    repository_root = lock_path.parent.parent
+    try:
+        lock_relative = PurePosixPath(lock_path.relative_to(repository_root).as_posix())
+    except ValueError as exc:
+        raise ValueError("PDF toolchain lock must stay inside its repository") from exc
+    load_code_font(repository_root, lock_relative)
 
     lock_digest = sha256(lock_path)
     validate_lock_stamp(tool_root, lock_digest)

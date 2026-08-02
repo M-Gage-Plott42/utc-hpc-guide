@@ -46,23 +46,37 @@ If quota commands fail, use your support channel for authoritative limits.
 - `git` for code and lightweight text artifacts
 - OOD upload/download for small files
 
-## 4. rsync Example
+For a one-file transfer, `scp` takes the source first and destination second:
 
 ```bash
 HPC_USER="REPLACE_WITH_USERNAME"
 LOGIN_HOST="REPLACE_WITH_LOGIN_HOST"
 SCRATCH_PATH="REPLACE_WITH_SCRATCH_PATH"
 
-# local -> cluster
+# Upload one file from the local machine
+scp ./data/input.csv \
+  "${HPC_USER}@${LOGIN_HOST}:${SCRATCH_PATH}/project/data/"
+
+# Download one file to the current local directory
+scp \
+  "${HPC_USER}@${LOGIN_HOST}:${SCRATCH_PATH}/project/results/output.csv" \
+  .
+```
+
+For large or incremental directory transfers, use `rsync` with the same
+variables:
+
+```bash
+# Upload a directory incrementally
 rsync -avhP ./data/ \
   "${HPC_USER}@${LOGIN_HOST}:${SCRATCH_PATH}/project/data/"
 
-# cluster -> local
+# Download a directory incrementally
 rsync -avhP \
   "${HPC_USER}@${LOGIN_HOST}:${SCRATCH_PATH}/project/results/" ./results/
 ```
 
-## 5. Data Hygiene Checklist
+## 4. Data Hygiene Checklist
 
 - Keep raw, intermediate, and final artifacts separated
 - Compress/archive old runs

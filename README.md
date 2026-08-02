@@ -6,20 +6,20 @@
 [![PDF Guide](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/pdf.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/pdf.yml)
 [![Dependency Review](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/M-Gage-Plott42/utc-hpc-guide/actions/workflows/dependency-review.yml)
 
-Practical HPC onboarding and workflows guide (SLURM + Open OnDemand + SSH + Python-first tooling).  
+Practical HPC onboarding and workflows guide (Slurm + Open OnDemand + SSH + Python-first tooling).
 Originally developed for a university research environment and sanitized for public release.
 
-Last updated: July 2026
+Last updated: August 2026
 
 [Download the latest printable PDF](https://github.com/M-Gage-Plott42/utc-hpc-guide/releases/latest/download/UTC_HPC_Guide.pdf)
 or review the [PDF build and validation instructions](docs/pdf-guide.md).
-This source revision defines final `v1.2.1` and the stable
-`UTC_HPC_Guide.pdf` release asset. The latest-release link serves it after the
-matching GitHub release is published.
+The latest-release link continues to serve the published stable `v1.2.1`
+artifact. This source revision defines `v1.2.2-rc.2` as a review-only PDF
+candidate; its workflow artifact is not a stable or supported release artifact.
 
 ## How to Use This Repo in 15 Minutes
 
-1. Read [Overview](docs/00-overview.md), [Access and SSH](docs/01-access-ssh.md), and [SLURM Basics](docs/03-slurm-basics.md).
+1. Read [Overview](docs/00-overview.md), [Access and SSH](docs/01-access-ssh.md), and [Slurm Basics](docs/03-slurm-basics.md).
 2. Review runnable templates in `examples/` and adapt the documented placeholders.
 3. Install the locked local quality toolchain and run checks from repo root:
 
@@ -47,10 +47,12 @@ make release-check
 
 `make release-check` adds per-file Bash syntax checks, ShellCheck, a
 byte-identical tagged-PDF build, structural and PDF/UA-2 machine validation,
-rendering and every-page OCR QA, and staged/unstaged whitespace checks to the
-routine gate. Automated PDF/UA validation is not a WCAG 2.1 AA certification;
-manual accessibility review remains required. Dependency audits and other
-network-dependent checks remain separate.
+rendering and every-page OCR QA, an isolated Fira Code Regular/Bold semantic
+fixture, and staged/unstaged whitespace checks to the routine gate. Canonical
+fenced code is checked against the 80-character print contract with one exact
+83-character digest exception. Automated PDF/UA validation is not a WCAG 2.1
+AA certification; manual accessibility review remains required. Dependency
+audits and other network-dependent checks remain separate.
 
 ## Purpose
 
@@ -58,12 +60,12 @@ This repository is a documentation-first guide for new and intermediate HPC user
 
 - Accessing a cluster with SSH (and optional IDE remote workflows)
 - Launching interactive sessions with Open OnDemand (OOD)
-- Running reproducible CPU/GPU jobs with SLURM
+- Running reproducible CPU/GPU jobs with Slurm
 - Building stable Python environments on shared systems
 
 ## Who This Is For
 
-- Students and researchers starting on a SLURM-managed cluster
+- Students and researchers starting on a Slurm-managed cluster
 - Engineers who want simple, reusable sbatch templates
 - Reviewers who need clear, reproducible onboarding documentation
 
@@ -78,7 +80,7 @@ This repository is a documentation-first guide for new and intermediate HPC user
 - [Overview](docs/00-overview.md)
 - [Access and SSH](docs/01-access-ssh.md)
 - [Open OnDemand](docs/02-open-ondemand.md)
-- [SLURM Basics](docs/03-slurm-basics.md)
+- [Slurm Basics](docs/03-slurm-basics.md)
 - [GPU Jobs](docs/04-gpu-jobs.md)
 - [Python Environments](docs/05-python-envs.md)
 - [Data Transfer and Storage](docs/06-data-transfer.md)
@@ -99,7 +101,7 @@ Site-specific notes:
 
 ## No Assumptions
 
-This guide is intentionally general and works as a baseline SLURM/OOD/SSH guide. Replace placeholders such as
+This guide is intentionally general and works as a baseline Slurm/OOD/SSH guide. Replace placeholders such as
 `<username>`, `<login-host>`, `<cpu-partition>`, `<gpu-partition>`, `<account>`, `<home-path>`,
 `<scratch-path>`, and `<project-path>` with your institution values.
 Site-specific notes, when present, are isolated under `docs/sites/` and should be verified against official institutional documentation.
@@ -126,7 +128,12 @@ Do not commit credentials, usernames, internal hostnames, or allocation IDs.
   `build-toolchain.txt`, and `verapdf-report.xml` together for short-lived
   review traceability. `pdf/toolchain.lock.json` pins the declared PDF
   toolchain inputs; the run record describes the observed build and is not
-  signed provenance or a permanent archive.
+  signed provenance or a permanent archive. The test-only Fira fixture is
+  generated in temporary storage and is never uploaded.
+- The completed three-font comparison remains review-only experiment evidence
+  on closed, unmerged PR
+  [#28](https://github.com/M-Gage-Plott42/utc-hpc-guide/pull/28). Its proof
+  PDFs and unselected profiles are not canonical build or release artifacts.
 - External HTTP(S) links are monitored only on a schedule or manual dispatch,
   with retries, timeouts, and an exact reasoned allowlist; network availability
   does not gate ordinary pull requests.

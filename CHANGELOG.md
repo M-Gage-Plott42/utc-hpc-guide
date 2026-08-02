@@ -55,9 +55,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   review-only evidence on closed, unmerged PR #28 and is not a release
   artifact.
 - Defined a narrow independent-GitHub-release path that records exact-hash
-  assistive-technology, keyboard, and reflow items as not tested when they are
-  explicitly deferred. Performed failures remain blocking, and no WCAG or
-  institutional-approval claim is permitted.
+  assistive-technology, keyboard, reflow, and 200-percent viewer-zoom items as
+  not tested when they are explicitly deferred. Performed failures remain
+  blocking, and no WCAG or institutional-approval claim is permitted.
 
 ## [1.2.1] - 2026-07-30
 

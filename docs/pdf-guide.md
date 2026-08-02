@@ -233,12 +233,14 @@ run.
 The default publication path completes every applicable item below. For an
 independent GitHub release only, a tracked release decision may explicitly
 defer the real-assistive-technology, keyboard, or reflow session when all
-machine, reproducibility, OCR, and visual gates pass. Record each deferred item
-as `not tested`, disclose the exact final hash and limitation in the pull
-request and release notes, and make no WCAG, universal-interoperability, or
-institutional-approval claim. Deferral is not a passing result. Any failure
-found by a performed review remains blocking. Institution-hosted or officially
-endorsed publication remains subject to that institution's process.
+machine, reproducibility, OCR, and visual gates pass. A separate 200-percent
+viewer-zoom or magnification session may be deferred only under the same rule.
+Record each deferred item as `not tested`, disclose the exact final hash and
+limitation in the pull request and release notes, and make no WCAG, universal-
+interoperability, or institutional-approval claim. Deferral is not a passing
+result. Any failure found by a performed review remains blocking. Institution-
+hosted or officially endorsed publication remains subject to that
+institution's process.
 
 Current desktop Adobe Acrobat Reader plus current stable NVDA on Windows 11 is
 the recommended reference environment because it exercises screen-reader

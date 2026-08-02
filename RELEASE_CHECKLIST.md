@@ -157,11 +157,11 @@ repository is free of private data.
   Out Loud is not a screen reader, and it must not be reported as screen-reader
   evidence.
 - A tracked independent-release deferral must mark each unperformed real-
-  assistive-technology, keyboard, or reflow item as `not tested` in the pull
-  request and release notes. It is not a pass and cannot override a failure
-  found by any performed review. Require all machine, reproducibility, OCR, and
-  visual gates to pass, and make no WCAG, universal-interoperability, UTC-
-  approval, or institutional-endorsement claim.
+  assistive-technology, keyboard, reflow, or separate 200-percent viewer-zoom
+  item as `not tested` in the pull request and release notes. It is not a pass
+  and cannot override a failure found by any performed review. Require all
+  machine, reproducibility, OCR, and visual gates to pass, and make no WCAG,
+  universal-interoperability, UTC-approval, or institutional-endorsement claim.
 - Do not describe automated tagging or veraPDF success as WCAG 2.1 AA
   certification, assistive-technology usability, or UTC accessibility
   approval.

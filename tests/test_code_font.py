@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import struct
 import tempfile
 import unittest
 import xml.etree.ElementTree as ET
@@ -17,6 +18,7 @@ from scripts.check_code_font_fixture import (
 from scripts.code_font import (
     REQUIRED_LIGATURES,
     REQUIRED_RAW_FEATURES,
+    _postscript_names,
     fontspec_definition,
     load_code_font,
 )
@@ -25,7 +27,54 @@ from scripts.code_font import (
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def minimal_name_font(
+    name: str,
+    *,
+    platform: int = 3,
+    version: int = 0,
+) -> bytes:
+    """Build the smallest bounded sfnt needed for a name-ID-6 unit test."""
+    encoded = name.encode("mac_roman" if platform == 1 else "utf-16-be")
+    name_table = (
+        struct.pack(">HHH", version, 1, 18)
+        + struct.pack(">HHHHHH", platform, 1, 0x0409, 6, len(encoded), 0)
+        + encoded
+    )
+    table_offset = 28
+    return (
+        b"\x00\x01\x00\x00"
+        + struct.pack(">HHHH", 1, 0, 0, 0)
+        + struct.pack(">4sIII", b"name", 0, table_offset, len(name_table))
+        + name_table
+    )
+
+
 class CheckedInCodeFontTests(unittest.TestCase):
+    def test_reads_postscript_name_without_release_only_dependencies(self) -> None:
+        self.assertEqual(
+            _postscript_names(
+                minimal_name_font("FiraCode-Regular"),
+                label="fixture",
+            ),
+            {"FiraCode-Regular"},
+        )
+        self.assertEqual(
+            _postscript_names(
+                minimal_name_font("FiraCode-Bold", platform=1),
+                label="fixture",
+            ),
+            {"FiraCode-Bold"},
+        )
+
+    def test_rejects_malformed_or_unsupported_name_tables(self) -> None:
+        with self.assertRaisesRegex(ValueError, "not a readable OpenType font"):
+            _postscript_names(b"not-a-font", label="fixture")
+        with self.assertRaisesRegex(ValueError, "not a readable OpenType font"):
+            _postscript_names(
+                minimal_name_font("FiraCode-Regular", version=2),
+                label="fixture",
+            )
+
     def test_loads_only_the_selected_fira_source_and_exact_provenance(self) -> None:
         font = load_code_font(ROOT)
         self.assertEqual(font.source_id, "fira-code-6.2")

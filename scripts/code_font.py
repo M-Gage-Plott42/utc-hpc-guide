@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import hashlib
-import io
 import json
 import math
 import os
 import re
 import stat
+import struct
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -189,20 +189,57 @@ def _https(value: str, *, label: str) -> str:
 
 
 def _postscript_names(raw: bytes, *, label: str) -> set[str]:
+    """Read name ID 6 through the bounded OpenType `name` table."""
     try:
-        from fontTools.ttLib import TTFont
-    except ImportError as exc:
-        raise RuntimeError(
-            "python3-fonttools is required to validate the canonical code font"
-        ) from exc
-    try:
-        with TTFont(io.BytesIO(raw), lazy=True) as font:
-            names = {
-                record.toUnicode()
-                for record in font["name"].names
-                if record.nameID == 6
-            }
-    except (KeyError, OSError) as exc:
+        if len(raw) < 12:
+            raise ValueError
+        table_count = struct.unpack_from(">H", raw, 4)[0]
+        directory_end = 12 + table_count * 16
+        if table_count < 1 or directory_end > len(raw):
+            raise ValueError
+        name_entries: list[tuple[int, int]] = []
+        for index in range(table_count):
+            record_offset = 12 + index * 16
+            tag, _checksum, offset, length = struct.unpack_from(
+                ">4sIII", raw, record_offset
+            )
+            if offset > len(raw) or length > len(raw) - offset:
+                raise ValueError
+            if tag == b"name":
+                name_entries.append((offset, length))
+        if len(name_entries) != 1:
+            raise ValueError
+        table_offset, table_length = name_entries[0]
+        if table_length < 6:
+            raise ValueError
+        version, name_count, storage_offset = struct.unpack_from(
+            ">HHH", raw, table_offset
+        )
+        records_end = 6 + name_count * 12
+        if version not in {0, 1} or records_end > table_length:
+            raise ValueError
+        if storage_offset < records_end or storage_offset > table_length:
+            raise ValueError
+
+        names: set[str] = set()
+        for index in range(name_count):
+            record_offset = table_offset + 6 + index * 12
+            platform, _encoding, _language, name_id, length, offset = (
+                struct.unpack_from(">HHHHHH", raw, record_offset)
+            )
+            if name_id != 6 or platform not in {0, 1, 3}:
+                continue
+            relative_start = storage_offset + offset
+            if relative_start > table_length or length > table_length - relative_start:
+                raise ValueError
+            start = table_offset + relative_start
+            encoded = raw[start : start + length]
+            codec = "mac_roman" if platform == 1 else "utf-16-be"
+            value = encoded.decode(codec)
+            if not value or "\x00" in value:
+                raise ValueError
+            names.add(value)
+    except (struct.error, UnicodeDecodeError, ValueError) as exc:
         raise ValueError(f"{label} is not a readable OpenType font") from exc
     if not names:
         raise ValueError(f"{label} has no PostScript name")

@@ -854,9 +854,9 @@ Phase 5 evidence recorded August 2, 2026:
 - The toolchain-record parser now requires the expanded canonical heading,
   chapter-opener, heading-code-literal, and Fira-fixture success markers; this
   also repairs the stale parser contract exposed by the Phase 3 PDF-QA marker.
-  Focused affected suites passed 62 tests, the fixture passed with 59 glyphs
+  Focused affected suites passed 64 tests, the fixture passed with 59 glyphs
   per Regular/Bold row and one clean veraPDF `ua2` job, and full discovery
-  passed all 186 tests.
+  passed all 188 tests.
 - README, CONTRIBUTING, `docs/pdf-guide.md`, CHANGELOG,
   RELEASE_CHECKLIST, Make help, workflow comments, and this TODO now describe
   the selected-Fira permanent pipeline and retain all earlier PDF 2.0,
@@ -907,7 +907,7 @@ Phase 6 evidence recorded August 2, 2026:
   `e6821c9177e7160333a273c8b466fbb87be4b35ef9a9dc9525dfab2412bfce31`.
 - `make check`, four-file Bash syntax and ShellCheck, `make release-check`,
   `git diff --check`, and the index/worktree no-follow public scrub all passed.
-  Complete unittest discovery passed exactly 186 tests. The scrub covered 76
+  Complete unittest discovery passed exactly 188 tests. The scrub covered 76
   tracked files and reviewed the expected placeholder/site-note findings.
 - The separate external-link monitor reached every ordinary public dependency.
   Its only failure was the authenticated UTC Open OnDemand host after three

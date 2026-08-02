@@ -47,7 +47,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   guidance, and added one-file `scp` examples ahead of incremental `rsync`.
 - Reduced the permanent pipeline to the canonical RC.2 and temporary selected-
   Fira fixture. The completed three-font comparison remains historical
-  review-only evidence on draft PR #28 and is not a release artifact.
+  review-only evidence on closed, unmerged PR #28 and is not a release
+  artifact.
 
 ## [1.2.1] - 2026-07-30
 

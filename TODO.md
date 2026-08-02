@@ -151,7 +151,7 @@ Validation evidence recorded before the publication workflow:
   [stable PDF download](https://github.com/M-Gage-Plott42/utc-hpc-guide/releases/latest/download/UTC_HPC_Guide.pdf)
   was downloaded independently and matched the published PDF hash.
 - This post-publication checklist closure intentionally advances `main`
-  beyond the immutable `v1.2.1` tag; it does not alter the tagged source or
+  beyond the historical `v1.2.1` tag; it does not alter the tagged source or
   published assets.
 
 ## Live-Site Rule
@@ -408,8 +408,8 @@ content, pipeline, and release-boundary findings as reconciled below.
   `d5815af6c6574f4ddf2d0020422b91d82bd7ec95` before the focused work starts.
 - The immutable typeface-evidence implementation commit is
   `e1c6f68822522dbf8e3d4c31e02dc4bde47bcf00`. It must remain an ancestor of
-  the draft PR #28 branch; commits after it and before focused RC.2 work may
-  change only this durable plan in `TODO.md`.
+  the then-draft, now closed and unmerged PR #28 branch; commits after it and
+  before focused RC.2 work may change only this durable plan in `TODO.md`.
 - The focused RC.2 branch must start from the clean polished-candidate commit
   `aefc676200acc09df044be9a5f7039b9e093d878`, not from the proof-matrix tip.
 - The new branch name is `agent/v1.2.2-rc.2-fira`.
@@ -950,9 +950,9 @@ Phase 6 evidence recorded August 2, 2026:
   No screen reader or PDF-viewer assistive-technology pairing, keyboard-only
   navigation, or reflow session was performed. The evidence therefore makes
   no WCAG 2.1 AA, universal clipboard/accessibility, or UTC-approval claim.
-- The passing PDF alone was copied to
-  `C:\\Users\\Gage\\Desktop\\UTC_HPC_Guide_v1.2.2-rc.2.pdf`; no inspection
-  TeX was deliberately retained. Its Windows copy has the same reviewed
+- The passing PDF alone was copied to the Windows Desktop with the unambiguous
+  filename `UTC_HPC_Guide_v1.2.2-rc.2.pdf`; no inspection TeX was deliberately
+  retained. Its Windows copy has the same reviewed
   SHA-256 `3aba1172a34e3ae28a2290143fc3e132c2e383e11b1276aa8643017eac58b4e3`.
 
 ### Phase 7: Focused Draft PR and Proof-Branch Transition
@@ -1031,29 +1031,118 @@ Phase 7 evidence finalized August 2, 2026:
 
 ### Phase 8: Approved Final Promotion and Publication
 
-- [ ] Resume only after the user approves the exact RC.2 Windows copy and
-  explicitly authorizes the next merge/promotion action.
-- [ ] Merge only the focused RC.2 pull request; never merge PR #28.
-- [ ] Require all push-to-main checks to pass on the exact RC.2 merge commit and
-  independently verify its hosted PDF, build record, and veraPDF report.
-- [ ] Create a separate final-promotion branch from that exact approved commit.
-- [ ] Promote the manifest to final `1.2.2`, output `UTC_HPC_Guide.pdf`, select
-  the actual publication date and deterministic epoch, generate a new trailer
-  identifier, move the completed changelog entry out of `[Unreleased]`, and
-  remove candidate-only wording without changing approved guide content.
-- [ ] Complete the full routine, release, reproducibility, extraction, glyph,
-  OCR, structural, PDF/UA-2, all-page visual, and manual accessibility review
-  on the exact final hash. Record performed tools, versions, reviewer profile,
-  tasks, results, remediations, retests, and untested limitations.
-- [ ] Copy the exact passing final PDF to the Windows Desktop and obtain final
-  user approval before publication.
-- [ ] Open and validate a focused final-promotion PR. Merge only with explicit
-  user authorization after all hosted checks and downloaded hashes pass.
-- [ ] Tag the exact reviewed main commit as `v1.2.2`, publish a non-prerelease
-  GitHub release with the verified final PDF, build record, and veraPDF report,
-  and confirm the stable latest-download URL serves the recorded PDF hash.
-- [ ] Confirm the tag, release assets, `main`, local branch, remote tracking
-  refs, index, and worktree are clean and synchronized.
+The user approved the complete Phase 8 plan and authorized its guarded merge,
+promotion, publication, and parking actions on August 2, 2026.
+
+#### Phase 8.0: Hygiene and Guardrails
+
+- [ ] Reconfirm the clean worktree, branch and base hashes, PR #29 state, and
+  absence of a `v1.2.2` tag or release.
+- [ ] Replace the concrete Windows Desktop path in this file with generic
+  wording.
+- [ ] Correct all current references to PR #28 to say that it is closed and
+  unmerged.
+- [ ] Add a narrow, case-insensitive Windows user-home scrub rule supporting
+  slash, backslash, and doubled-Markdown-backslash forms.
+- [ ] Add reject and placeholder-allow regressions that construct sensitive
+  examples from fragments so the test source does not trigger the scanner.
+- [ ] Stage the complete hygiene change before running scrub checks because
+  the scrub examines both index and worktree snapshots.
+- [ ] Commit and push the hygiene implementation.
+- [ ] Update PR #29's body and evidence comment with the new head, exact file
+  count, generic Desktop wording, and closed/unmerged PR #28 status.
+
+#### Phase 8.1: Revalidate PR #29
+
+- [ ] Run `npm ci`, bootstrap the PDF tools, and run the complete release gate.
+- [ ] Require the RC.2 PDF to remain byte-identical to SHA-256
+  `3aba1172a34e3ae28a2290143fc3e132c2e383e11b1276aa8643017eac58b4e3`.
+- [ ] Wait for every hosted check on the exact new head.
+- [ ] Download exactly the PDF, build record, and veraPDF report from the same
+  commit-bound artifact.
+- [ ] Confirm artifact commit binding, PDF hash, and veraPDF result.
+- [ ] Mark PR #29 ready and request the available repository review, including
+  `@codex review` if that integration is enabled.
+- [ ] Restart this phase after any subsequent head-changing commit.
+
+#### Phase 8.2: Merge the Approved Candidate
+
+- [ ] Refresh `main`, the PR head, and GitHub's synthetic merge immediately
+  before merging; stop on unexpected movement.
+- [ ] Squash-merge only PR #29 so the transient path-bearing branch commit does
+  not enter `main`; never revive or merge PR #28.
+- [ ] Wait for the push-to-main workflow.
+- [ ] Require the main-built RC.2 PDF to remain byte-identical to SHA-256
+  `3aba1172a34e3ae28a2290143fc3e132c2e383e11b1276aa8643017eac58b4e3`.
+- [ ] Do not tag the candidate commit.
+
+#### Phase 8.3: Final Metadata Promotion
+
+- [ ] Create a focused branch from the exact verified `main` commit.
+- [ ] Promote `1.2.2-rc.2` to final `1.2.2` and rename the output to
+  `UTC_HPC_Guide.pdf`.
+- [ ] Set the actual publication date, corresponding UTC epoch, and derived
+  trailer identifier.
+- [ ] Update required PDF/OCR strings and final-state tests.
+- [ ] Correct candidate-only CI comments and release documentation.
+- [ ] Update the changelog and stable-download guidance.
+- [ ] Retire this oversized root file into a concise, sanitized `docs/audits/`
+  release record.
+- [ ] Do not alter guide prose, site facts, screenshots, fonts, pagination, or
+  layout.
+
+#### Phase 8.4: Exact-Final Validation and Accessibility Hold
+
+- [ ] Run every local validation, reproducibility, OCR, extraction, PDF/UA,
+  structural, font, and rendered-page test.
+- [ ] Compare RC.2 and final rendering; restrict differences to intentional
+  version and date metadata.
+- [ ] Copy the passing final PDF to the Windows Desktop for inspection.
+- [ ] Perform the repository-required accessibility review on the exact PDF
+  hash: end-to-end reading and structure, keyboard focus order, links, code,
+  table, figures, reflow, and 200-percent viewing.
+- [ ] Record the reviewer, tools, versions, scope, results, and exact SHA-256.
+- [ ] Prefer real assistive technology or an accessibility-API inspector plus
+  keyboard testing. If the review is intentionally deferred, first adopt a
+  tracked policy amendment that records the affected items as not tested; a
+  verbal waiver alone does not satisfy the current checklist.
+
+#### Phase 8.5: Final-Promotion Pull Request
+
+- [ ] Open a focused final-metadata pull request.
+- [ ] Attach exact local and hosted evidence, including any documented
+  accessibility limitations.
+- [ ] Verify its three generated artifacts and commit binding.
+- [ ] Obtain user inspection of the Windows copy and repository review.
+- [ ] Stop for explicit merge approval if the authorization for this full plan
+  has been superseded or any reviewed artifact changes.
+
+#### Phase 8.6: Publish v1.2.2
+
+- [ ] Merge the exact approved final pull request.
+- [ ] Verify the main-push artifact equals the reviewed final PDF.
+- [ ] Reconfirm that neither tag nor release `v1.2.2` exists.
+- [ ] Tag the explicit verified `main` SHA.
+- [ ] Publish a non-prerelease and explicitly mark it latest.
+- [ ] Upload exactly three custom assets: the PDF, build record, and veraPDF
+  report. GitHub's automatic source archives are separate.
+- [ ] Re-download and verify every uploaded asset hash.
+- [ ] Verify `releases/latest/download/UTC_HPC_Guide.pdf`. GitHub releases are
+  tag-based; its stable latest-asset URL is documented in GitHub's
+  [release overview](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)
+  and
+  [release-linking guidance](https://docs.github.com/en/repositories/releasing-projects-on-github/linking-to-releases).
+
+#### Phase 8.7: Park the Repository
+
+- [ ] Confirm local `main`, `origin/main`, the tag target, release target, and
+  release artifact hashes all agree.
+- [ ] Ensure the worktree is clean and synchronized.
+- [ ] Preserve the concise audit record and PR/release evidence.
+- [ ] Remove merged publication branches after release verification if
+  desired, while retaining closed PR records.
+- [ ] Avoid a post-tag documentation commit so `main` remains exactly aligned
+  with `v1.2.2`.
 
 ### Research and Policy Basis
 

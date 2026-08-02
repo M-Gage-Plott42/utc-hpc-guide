@@ -340,7 +340,8 @@ After PDF QA passes, the hosted workflow uploads these files together:
 No font proof, font matrix, comparison PDF, or semantic fixture is uploaded.
 The fixture is generated and destroyed inside the validation job. The
 three-profile typography experiment remains historical review evidence on
-draft PR [#28](https://github.com/M-Gage-Plott42/utc-hpc-guide/pull/28):
+closed, unmerged PR
+[#28](https://github.com/M-Gage-Plott42/utc-hpc-guide/pull/28):
 
 - DejaVu Sans Mono proof SHA-256:
   `fbb826b7514a09a816973220f7b87543088052cac601b09a382e67679590b719`;

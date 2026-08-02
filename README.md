@@ -131,7 +131,7 @@ Do not commit credentials, usernames, internal hostnames, or allocation IDs.
   signed provenance or a permanent archive. The test-only Fira fixture is
   generated in temporary storage and is never uploaded.
 - The completed three-font comparison remains review-only experiment evidence
-  on draft PR
+  on closed, unmerged PR
   [#28](https://github.com/M-Gage-Plott42/utc-hpc-guide/pull/28). Its proof
   PDFs and unselected profiles are not canonical build or release artifacts.
 - External HTTP(S) links are monitored only on a schedule or manual dispatch,

@@ -53,6 +53,17 @@ STRICT_PATTERNS = (
         "private_home_path",
         re.compile(r"/home/(?!<username>|\$USER(?:/|$))[A-Za-z0-9._-]+"),
     ),
+    (
+        "private_windows_home_path",
+        re.compile(
+            r"(?<![A-Za-z0-9])[A-Z]:[\\/]+Users[\\/]+"
+            r"(?!<username>(?:[\\/]|$))"
+            r"(?!REPLACE_WITH_USERNAME(?:[\\/]|$))"
+            r"(?!%USERNAME%(?:[\\/]|$))"
+            r"[A-Za-z0-9._-]+",
+            re.I,
+        ),
+    ),
 )
 
 SITE_FACT_PATTERN = re.compile(

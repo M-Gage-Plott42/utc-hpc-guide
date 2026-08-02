@@ -389,3 +389,340 @@ Local evidence recorded August 1, 2026:
 
 No VPN or new live-cluster validation is needed for this design migration.
 Reopen live validation only under the existing live-site rule above.
+
+## v1.2.2-rc.2 Fira Canonicalization and Publication Plan
+
+Status: planned — Fira Code selected; implementation has not started
+
+Plan date: August 1, 2026
+
+This is the complete resumption plan following the final independent audit and
+the user's selection of the Fira Code proof. It supersedes the audit's
+subjective Cascadia Mono preference but accepts the audit's actionable layout,
+content, pipeline, and release-boundary findings as reconciled below.
+
+### Guarded Inputs and Fixed Decisions
+
+- `origin/main` must be
+  `d5815af6c6574f4ddf2d0020422b91d82bd7ec95` before the focused work starts.
+- The typeface-evidence branch and draft pull request #28 must remain at
+  `e1c6f68822522dbf8e3d4c31e02dc4bde47bcf00` until the replacement pull
+  request is ready.
+- The focused RC.2 branch must start from the clean polished-candidate commit
+  `aefc676200acc09df044be9a5f7039b9e093d878`, not from the proof-matrix tip.
+- The new branch name is `agent/v1.2.2-rc.2-fira`.
+- Before any implementation edit on that branch, cherry-pick the plan-only
+  commit `PLAN_COMMIT_TO_BIND`. Verify that this transfer changes only
+  `TODO.md`; stop if it carries proof implementation files.
+- The selected proof is Fira Code with SHA-256
+  `263371523226872363b9f67c311e6eac6d6d187f0292f53d1761545cea440534`.
+- Canonical fenced code uses Fira Code 6.2 at `9.1/11.5 pt`. Compact inline
+  code remains DejaVu Sans Mono, and prose plus headings remain Noto Sans.
+- Retain both official static Fira Code Regular and Bold TTFs and their OFL
+  license/provenance. Validate both faces in a test-only fixture, but do not
+  force an otherwise unused Bold face into the release PDF.
+- Disable all ligature and contextual-substitution paths with exactly
+  `RequiredOff`, `CommonOff`, `ContextualOff`, `DiscretionaryOff`,
+  `HistoricOff`, and `TeXOff`, plus raw features `-calt`, `-liga`, `-clig`,
+  `-dlig`, `-hlig`, `-rlig`, and `-tlig`.
+- Fira Code's `ContextualOff` and `-calt` controls are essential; common
+  ligature controls alone are insufficient for its programming substitutions.
+- Do not use `needspace`, `listings`, `minted`, `tcolorbox`, or another new
+  code-layout package. Preserve the current tagging-aware Pandoc/LuaLaTeX
+  design.
+- Do not change UTC operational facts, access the UTC VPN or HPC, submit a
+  Slurm job, merge PR #28, replace the stable `v1.2.1` asset, tag a release,
+  or publish during RC.2 implementation.
+
+### Reconciled Audit Record
+
+- The empty Appendix B rail is real, but its direct root cause is synthetic
+  source assembly: the opening fence and script are separate sequence entries
+  joined with two newlines. The Lua filter then preserves that invented blank
+  line and `\everypar` decorates it. Fix the assembly boundary first; merely
+  moving the rail command does not remove the synthetic blank.
+- The Access/SSH chapter opener is separated from its first subsection. The
+  Fira proof also separates the B.4 heading from its shebang. Rebuild after the
+  assembly fix because B.4 may resolve when the invented blank disappears,
+  then enforce deterministic page contracts.
+- Inline-code styling in Markdown headings produces terminal-looking,
+  excessively wrapped contents entries. Change only the PDF heading rendering;
+  preserve source Markdown, literal text, anchors, outlines, and semantics.
+- The proof matrix is valid experiment evidence but is not an appropriate
+  permanent release pipeline. The three-profile orchestration and unselected
+  fonts must not enter the focused RC.2 branch.
+- The PR #28 body is stale, but its latest evidence comment already records
+  the current head, synthetic merge, 203 checks, artifact identifiers, proof
+  hashes, and seven successful hosted checks. A final transition comment is
+  needed only after the replacement PR exists.
+- The core guide still needs a near-first-use Slurm definition, preferred
+  `Slurm` capitalization in ordinary prose/headings, a prose-versus-shell
+  placeholder explanation, removal of unused `<group>`, and compact `scp`
+  examples.
+- Automated PDF/UA-2 and veraPDF success covers machine-verifiable checks
+  only. Preserve the existing disclosure of untested screen-reader/viewer,
+  keyboard-traversal, reflow, WCAG, universal-assistive-technology, and UTC
+  approval claims.
+
+### Phase 0: Guard, Evidence, and RC.2 Boundary
+
+- [ ] Confirm the worktree and index are clean before fetching or branching.
+- [ ] Fetch `origin` with pruning and verify the three guarded commits above.
+  Stop rather than rebasing, merging, or guessing if any ref differs.
+- [ ] Create `agent/v1.2.2-rc.2-fira` directly from
+  `aefc676200acc09df044be9a5f7039b9e093d878`.
+- [ ] Cherry-pick the bound plan-only commit named above and verify that it
+  changes only `TODO.md`; this keeps the complete plan on the clean-base branch.
+- [ ] Keep PR #28 open, draft, unmerged, and unchanged while RC.2 is built so
+  its proof artifacts and comments remain reachable as comparison evidence.
+- [ ] Before any other PDF-changing edit, promote the manifest boundary to:
+  - `release_status`: `candidate`
+  - `release_target`: `1.2.2`
+  - `document_version`: `1.2.2-rc.2`
+  - `output_filename`: `UTC_HPC_Guide_v1.2.2-rc.2.pdf`
+- [ ] Select a new deterministic source epoch and engine-compatible trailer
+  identifier, and update candidate-owned required PDF and OCR text from RC.1
+  to RC.2.
+- [ ] Keep the current `1.2.2` changelog material under `[Unreleased]`; do not
+  assign a stable release date during candidate work.
+
+### Phase 1: Promote Only the Selected Fira Profile
+
+- [ ] Bring over only `FiraCode-Regular.ttf`, `FiraCode-Bold.ttf`, the OFL
+  license, and the Fira 6.2 source entry from the proof lock.
+- [ ] Preserve the exact upstream release tag and commit, archive URL, archive
+  byte size and SHA-256, archive members, local file sizes and SHA-256 values,
+  PostScript names, license URL, license size, and license SHA-256.
+- [ ] Fold the selected-font provenance and permanent MuPDF/fontTools host
+  requirements into the canonical toolchain contract and build record; do not
+  retain a multi-profile proof lock.
+- [ ] Replace proof-parameterized font selection with one focused canonical
+  Fira code-font configuration at `9.1/11.5 pt`.
+- [ ] Apply the complete named and raw ligature denylist above to the canonical
+  Fira family and reject an unresolved or missing option.
+- [ ] Keep DejaVu Sans Mono as the inline-code family and Noto Sans as the
+  prose/heading family; document this as an intentional semantic distinction.
+- [ ] Add a small test-only semantic font fixture that exercises Regular and
+  Bold Fira, the ambiguous-glyph string, indentation, and interior spaces.
+  Never append that fixture to the canonical guide or upload it as a release
+  artifact.
+- [ ] Require the release PDF to embed exactly the Unicode-mapped faces its
+  canonical content actually uses. Validate unused Fira Bold in the fixture
+  rather than forcing it into the release artifact.
+
+### Phase 2: Correct Appendix Assembly and Code Rails
+
+- [ ] Assemble each generated Appendix B fenced block without a blank line
+  between the opening fence and the tracked script's first source line.
+- [ ] Add an assembly regression requiring every Appendix B block to begin
+  immediately with its tracked `#!/bin/bash -l` line.
+- [ ] Remove `\everypar{\GuideCodeRail}` from the `GuideCode` environment.
+- [ ] Have the Lua code-line transformation attach `\GuideCodeRail` directly
+  to each actual generated source-line paragraph.
+- [ ] Preserve a rail for a deliberate blank line that exists in tracked
+  source, but reject invented leading or trailing blank lines.
+- [ ] Keep every rail inside a layout-artifact marked-content boundary and
+  outside logical reading order while retaining the encompassing semantic
+  `Code` structure.
+- [ ] Add regressions proving one rail per real source line, no synthetic
+  leading rail, unchanged first-line alignment, and exact extraction of
+  indentation and meaningful interior spaces.
+- [ ] Rebuild RC.2 after this root fix before adding pagination controls; record
+  whether the B.4 orphan resolves naturally.
+
+### Phase 3: Heading Pagination and PDF-Only Heading Typography
+
+- [ ] Implement a tagging-safe chapter-opener keep rule with core LaTeX
+  penalties/no-break controls, not a new package or a boxed long code block.
+- [ ] Require each top-level chapter heading, its short introductory paragraph,
+  and its first subsection heading to share a physical page. If a source shape
+  cannot satisfy that bounded opener, fail the contract and resolve that case
+  explicitly rather than silently weakening the rule.
+- [ ] Require each B.1 through B.4 script heading to share a physical page with
+  its first nonblank source line.
+- [ ] Require that no heading end a page followed only by a code rail or other
+  decoration.
+- [ ] Add deterministic text-to-page mapping tests for every chapter opener,
+  every Appendix B heading/shebang pair, and specifically `2. Access and SSH`
+  with `2.1 Account and Network Prerequisites`.
+- [ ] For PDF output only, convert inline `Code` nodes contained in `Header`
+  nodes to ordinary literal heading text without interpreting punctuation or
+  changing spaces.
+- [ ] Assert unchanged heading text, identifiers, destinations, outline text,
+  hierarchy, and structure roles while requiring the normal Noto heading face.
+- [ ] Render the complete two-column contents page after the transformation.
+  Shorten only entries that still wrap excessively; do not shrink the whole
+  contents page to accommodate isolated long entries.
+- [ ] Reject heading-only bottoms, excessive new whitespace, three-line TOC
+  entries, terminal-style heading text, or new clipping and overlap.
+
+### Phase 4: Canonical Source Wrapping and Focused Usability Edits
+
+- [ ] Replace the long `sacct --format` argument in canonical Markdown with the
+  reviewed readable `SACCT_FIELDS` composition and quoted use.
+- [ ] Replace the long `pip download` line in canonical Markdown with the
+  reviewed shell continuation, ending every nonfinal command line with `\`.
+- [ ] Keep the 83-character immutable Miniconda SHA-256 assignment on one line.
+  Record it as the sole exact code-width exception because splitting an opaque
+  digest is less understandable and more error-prone for beginners.
+- [ ] Apply the approximately 80-character width audit to the formal candidate,
+  not through hidden proof-time replacements. Reject any new or unexplained
+  exception.
+- [ ] Add near first use: `Slurm is the cluster workload manager and job
+  scheduler that allocates compute resources and queues jobs.`
+- [ ] Use `Slurm` in current ordinary prose and headings. Preserve exact
+  `SLURM_*` environment variables, code, source output, historical quotations,
+  URLs, and immutable prior-release evidence.
+- [ ] Add one compact terms sentence defining HPC, SSH, OOD, CPU, and GPU; do
+  not add a long glossary.
+- [ ] Explain that angle-bracket placeholders are prose/path notation, while
+  runnable shell uses `REPLACE_WITH_*` because unquoted angle brackets are
+  shell redirection operators.
+- [ ] Remove `<group>` because it has no use in the current guide.
+- [ ] Under Transfer Methods, add one-file `scp` upload and download examples
+  using the existing placeholder variables, then place the incremental
+  `rsync` examples underneath and remove the thin standalone `rsync` section.
+- [ ] Keep every edit cluster-agnostic. Do not change the UTC table, field-note
+  boundaries, screenshots, site facts, or live-validation evidence.
+
+### Phase 5: Permanent QA, Pipeline, and Documentation Cleanup
+
+- [ ] Do not bring over Cascadia files, the larger DejaVu proof profile,
+  `font-proof-specimen.md`, the three-profile matrix/configuration, proof
+  source transforms, proof orchestrator, proof-only checksum bundle, proof
+  Make targets, or proof artifact upload.
+- [ ] Retain only focused reusable selected-font logic for exact source files
+  and license, provenance, PostScript names, embedded fonts, Unicode maps,
+  default-cmap glyphs, extraction, and width checks.
+- [ ] Require the fixture's Regular and Bold rows to map every literal character
+  in `0 O o 1 l I | < > <= >= == != -> -- _ ~ \ / ' " ( ) [ ] { }` to one
+  visible default glyph, with no multi-character ligature or contextual
+  alternate.
+- [ ] Require exact four-space indentation and meaningful two-space separators
+  in locked Poppler extraction, while documenting that this does not prove
+  clipboard behavior in every PDF viewer.
+- [ ] Retain PDF 2.0, PDF/UA-2, page-label, destination, `/Tabs /S`, contiguous
+  structure-parent, exact structure-role, alt-text, link, table, figure,
+  metadata, font, active-content, render, OCR, and reproducibility contracts.
+- [ ] Add the rail, chapter-opener, Appendix-heading, heading-font, canonical
+  width, and selected-Fira contracts to routine/unit and release gates.
+- [ ] Make `release-check` validate only the canonical RC.2 and the small
+  test-only selected-font fixture; it must not build three full guide proofs.
+- [ ] Make CI upload only the manifest-derived canonical candidate, canonical
+  build record, and canonical veraPDF report.
+- [ ] Update README, CONTRIBUTING, `docs/pdf-guide.md`, CHANGELOG,
+  RELEASE_CHECKLIST, Make help, workflow comments, toolchain records, and this
+  TODO so no active instruction treats the bake-off matrix as permanent.
+- [ ] Retain the historical proof hashes and PR #28 link as evidence, clearly
+  labelled as completed review-only inputs rather than release artifacts.
+
+### Phase 6: Complete RC.2 Validation and Windows Handoff
+
+- [ ] Run `npm ci`.
+- [ ] Run `make setup-pdf-tools` and verify all locked inputs before building.
+- [ ] Run `make check`.
+- [ ] Run the separate network-dependent `make check-external-links` monitor
+  and distinguish transient/restricted results from repository correctness.
+- [ ] Run `make check-shell-syntax` and `make check-shell-lint`.
+- [ ] Run `make release-check`.
+- [ ] Run `python3 -m unittest discover -s tests` and record the exact count.
+- [ ] Run `git diff --check` and the repository public scrub across index and
+  worktree boundaries.
+- [ ] Require two byte-identical canonical builds and record the RC.2 SHA-256,
+  page count, PDF properties, exact embedded-font set, toolchain-record hash,
+  and veraPDF-report hash.
+- [ ] Require qpdf success, exact metadata and required text, no prohibited
+  active content, exact extraction, default-glyph checks, every-page rendering,
+  complete 150-DPI OCR, cover OCR, and one compliant veraPDF 1.30.2 `ua2` job
+  with no failures or exceptions.
+- [ ] Render every RC.2 page at 200 DPI and inspect the cover, complete contents,
+  chapter 1-to-2 transition, every code-block opening and page transition,
+  B.1 through B.4, UTC table, all three screenshots, ambiguous glyphs, long
+  commands, wrapped continuations, links, figures, tables, labels, and contrast.
+- [ ] Compare RC.2 with the immutable formal RC.1 and selected Fira proof.
+  Explain every pagination difference and reject missing content, empty rails,
+  heading or decoration orphans, clipping, overlap, malformed commands, broken
+  glyphs, displaced figures/tables, or unintended low-contrast text.
+- [ ] Preserve the exact manual-accessibility evidence actually performed and
+  disclose every untested screen-reader/viewer, keyboard, reflow, or other
+  assistive-technology pairing without making WCAG or UTC-approval claims.
+- [ ] Copy only the passing canonical RC.2 PDF, plus any deliberately retained
+  inspection TeX, to the Windows Desktop with an unambiguous RC.2 filename.
+  Verify the copied bytes against the reviewed local SHA-256.
+
+### Phase 7: Focused Draft PR and Proof-Branch Transition
+
+- [ ] Commit and push the complete focused RC.2 implementation only after the
+  local gates and Windows-copy hash verification pass.
+- [ ] Open a new draft pull request against `main`, titled approximately
+  `Prepare v1.2.2-rc.2 with Fira code typography`.
+- [ ] In the PR body record main, clean-base, and new-head commits; the selected
+  proof and reason; retained/discarded bake-off files; exact commands and test
+  count; RC.2 filename, page count, and SHA-256; reproducibility; embedded
+  fonts; OCR; structural and page contracts; veraPDF counts; visual review;
+  Windows-copy hash; accessibility evidence and limitations; and confirmation
+  that no VPN/HPC action occurred.
+- [ ] Require every hosted quality, ShellCheck, dependency-review, CodeQL, and
+  PDF check to pass on the final PR head.
+- [ ] Download the commit-bound hosted candidate artifact and verify its PDF,
+  build record, and veraPDF report against the recorded local evidence.
+- [ ] After the replacement PR URL exists, add one final comment to PR #28 with
+  its head and synthetic merge, formal RC.1 hash, all three proof hashes, 203
+  proof-era checks, the Fira selection, accepted layout findings, replacement
+  PR link, and `experiment evidence — do not merge` disposition.
+- [ ] Close PR #28 unmerged only after that cross-link exists. Retain its remote
+  branch and comments through the `v1.2.2` release for auditability.
+- [ ] Stop for user inspection and approval. Do not merge the focused RC.2 PR,
+  tag, publish, or replace the stable `v1.2.1` release in this phase.
+
+### Phase 8: Approved Final Promotion and Publication
+
+- [ ] Resume only after the user approves the exact RC.2 Windows copy and
+  explicitly authorizes the next merge/promotion action.
+- [ ] Merge only the focused RC.2 pull request; never merge PR #28.
+- [ ] Require all push-to-main checks to pass on the exact RC.2 merge commit and
+  independently verify its hosted PDF, build record, and veraPDF report.
+- [ ] Create a separate final-promotion branch from that exact approved commit.
+- [ ] Promote the manifest to final `1.2.2`, output `UTC_HPC_Guide.pdf`, select
+  the actual publication date and deterministic epoch, generate a new trailer
+  identifier, move the completed changelog entry out of `[Unreleased]`, and
+  remove candidate-only wording without changing approved guide content.
+- [ ] Complete the full routine, release, reproducibility, extraction, glyph,
+  OCR, structural, PDF/UA-2, all-page visual, and manual accessibility review
+  on the exact final hash. Record performed tools, versions, reviewer profile,
+  tasks, results, remediations, retests, and untested limitations.
+- [ ] Copy the exact passing final PDF to the Windows Desktop and obtain final
+  user approval before publication.
+- [ ] Open and validate a focused final-promotion PR. Merge only with explicit
+  user authorization after all hosted checks and downloaded hashes pass.
+- [ ] Tag the exact reviewed main commit as `v1.2.2`, publish a non-prerelease
+  GitHub release with the verified final PDF, build record, and veraPDF report,
+  and confirm the stable latest-download URL serves the recorded PDF hash.
+- [ ] Confirm the tag, release assets, `main`, local branch, remote tracking
+  refs, index, and worktree are clean and synchronized.
+
+### Research and Policy Basis
+
+- Fira Code 6.2 documents that its design includes punctuation and frequent
+  character-pair work beyond ligatures:
+  <https://github.com/tonsky/FiraCode/blob/6.2/README.md#whats-in-the-box>.
+- The official fontspec manual maps the retained named controls to required,
+  common, contextual, discretionary, historic, and TeX ligature features:
+  <https://latex3.github.io/fontspec/fontspec.pdf>.
+- Current LaTeX tagging status supports avoiding the incompatible `needspace`,
+  `listings`, and `minted` packages and the only partially compatible
+  `tcolorbox` package:
+  <https://latex3.github.io/tagging-project/tagging-status/>.
+- Google's printable code and command guidance supports an approximately
+  80-character threshold with valid continuation characters:
+  <https://developers.google.com/style/code-samples> and
+  <https://developers.google.com/style/code-syntax>.
+- SchedMD records `Slurm` as the preferred spelling, OpenSSH documents modern
+  `scp` syntax and SFTP transport, and veraPDF limits PDF/UA claims to
+  machine-verifiable checks:
+  <https://slurm.schedmd.com/faq.html>, <https://man.openbsd.org/scp.1>, and
+  <https://docs.verapdf.org/validation/>.
+
+No phase requires the UTC VPN or HPC. Reopen live-site validation only if a
+new authoritative source changes an isolated UTC fact under the existing
+live-site rule.

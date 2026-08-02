@@ -20,8 +20,9 @@ The current Ubuntu 24.04 x86_64 toolchain pins:
 - [veraPDF 1.30.2](https://software.verapdf.org/rel/1.30/) with its built-in
   `ua2` profile; and
 - exact expected versions of qpdf, Poppler, Tesseract English OCR, and
-  Fontconfig, plus revision- and archive-digest-pinned Noto Sans for body and
-  display text and DejaVu Sans Mono for code.
+  Fontconfig, MuPDF, and fontTools, plus revision- and archive-digest-pinned
+  Noto Sans for body and display text, DejaVu Sans Mono for compact inline
+  code, and Fira Code for fenced terminal and script blocks.
 
 The frozen TeX Live repository supplies the Noto archive at revision `77677`.
 The lock records that it has no catalogue version and binds its container to
@@ -30,6 +31,15 @@ SHA-512
 The bootstrap rejects a different revision, digest, or an unexpected catalogue
 version. Font files must resolve from the locked TeX trees; unrecorded host
 font substitution is not a release build.
+
+Fenced code uses the official static Fira Code 6.2 Regular face at
+`9.1/11.5 pt`. The toolchain lock retains the official release tag and commit,
+archive URL, archive member names, byte sizes, SHA-256 values, PostScript
+names, and exact OFL license bytes for both Regular and Bold. The complete
+fontspec ligature denylist and its raw OpenType equivalents are mandatory,
+including `ContextualOff` and `-calt`; a missing option fails before the PDF is
+built. Bold is validated in a tagged, test-only semantic fixture and is not
+forced into the guide when canonical content does not use it.
 
 The bootstrap requires Ubuntu 24.04 x86_64, Python 3, GnuPG, Perl, network
 access, and the exact host QA packages recorded in the lock. It downloads into
@@ -55,8 +65,11 @@ define one release toolchain.
 ## Presentation and Tagging Contract
 
 The polished presentation remains part of the source-generated tagged build,
-not a second hand-maintained Markdown or TeX document. The PDF uses Noto Sans,
-DejaVu Sans Mono, and this reviewed palette:
+not a second hand-maintained Markdown or TeX document. The PDF intentionally
+uses Noto Sans for prose and headings, DejaVu Sans Mono for compact inline
+code, and Fira Code for fenced code. This semantic distinction keeps short
+identifiers visually integrated with prose while terminal and script blocks
+retain the selected code face. The document uses this reviewed palette:
 
 - navy `#112E51` for the cover and primary navigation text;
 - ink `#172033` for body and code text on white;

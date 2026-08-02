@@ -9,6 +9,7 @@ from unittest import mock
 
 from scripts.write_pdf_toolchain_record import (
     ci_context,
+    code_font_record_lines,
     parse_check_log,
     record_preamble,
     require_exact_line,
@@ -16,6 +17,7 @@ from scripts.write_pdf_toolchain_record import (
     texlive_package_version,
     validate_tlmgr_package,
 )
+from scripts.code_font import load_code_font
 
 
 PDF_SHA256 = "1" * 64
@@ -205,6 +207,29 @@ class LockedFontSourceTests(unittest.TestCase):
                             filename=external.name,
                             texmf_dist=texmf_dist,
                         )
+
+
+class CodeFontRecordTests(unittest.TestCase):
+    def test_records_complete_selected_font_provenance_and_roles(self) -> None:
+        lines = code_font_record_lines(load_code_font(ROOT))
+        self.assertIn("source=fira-code-6.2", lines)
+        self.assertIn("release_tag=6.2", lines)
+        self.assertIn(
+            "release_commit=eee6db993696aba61ff4eef03698e2987d79910c",
+            lines,
+        )
+        self.assertIn("font_size_pt=9.1", lines)
+        self.assertIn("leading_pt=11.5", lines)
+        self.assertIn("prose_family=NotoSans", lines)
+        self.assertIn("inline_code_family=DejaVuSansMono", lines)
+        self.assertIn("regular.postscript_name=FiraCode-Regular", lines)
+        self.assertIn("bold.postscript_name=FiraCode-Bold", lines)
+        self.assertTrue(
+            any(
+                line.startswith("archive_sha256=0949915b")
+                for line in lines
+            )
+        )
 
 
 class RecordPreambleTests(unittest.TestCase):

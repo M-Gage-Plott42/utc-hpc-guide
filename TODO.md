@@ -392,7 +392,7 @@ Reopen live validation only under the existing live-site rule above.
 
 ## v1.2.2-rc.2 Fira Canonicalization and Publication Plan
 
-Status: Phase 0 complete — RC.2 boundary established; Phase 1 has not started
+Status: Phase 1 complete — selected Fira profile promoted; Phase 2 has not started
 
 Plan date: August 1, 2026
 
@@ -526,27 +526,67 @@ Phase 0 evidence recorded August 1, 2026:
 
 ### Phase 1: Promote Only the Selected Fira Profile
 
-- [ ] Bring over only `FiraCode-Regular.ttf`, `FiraCode-Bold.ttf`, the OFL
+- [x] Bring over only `FiraCode-Regular.ttf`, `FiraCode-Bold.ttf`, the OFL
   license, and the Fira 6.2 source entry from the proof lock.
-- [ ] Preserve the exact upstream release tag and commit, archive URL, archive
+- [x] Preserve the exact upstream release tag and commit, archive URL, archive
   byte size and SHA-256, archive members, local file sizes and SHA-256 values,
   PostScript names, license URL, license size, and license SHA-256.
-- [ ] Fold the selected-font provenance and permanent MuPDF/fontTools host
+- [x] Fold the selected-font provenance and permanent MuPDF/fontTools host
   requirements into the canonical toolchain contract and build record; do not
   retain a multi-profile proof lock.
-- [ ] Replace proof-parameterized font selection with one focused canonical
+- [x] Replace proof-parameterized font selection with one focused canonical
   Fira code-font configuration at `9.1/11.5 pt`.
-- [ ] Apply the complete named and raw ligature denylist above to the canonical
+- [x] Apply the complete named and raw ligature denylist above to the canonical
   Fira family and reject an unresolved or missing option.
-- [ ] Keep DejaVu Sans Mono as the inline-code family and Noto Sans as the
+- [x] Keep DejaVu Sans Mono as the inline-code family and Noto Sans as the
   prose/heading family; document this as an intentional semantic distinction.
-- [ ] Add a small test-only semantic font fixture that exercises Regular and
+- [x] Add a small test-only semantic font fixture that exercises Regular and
   Bold Fira, the ambiguous-glyph string, indentation, and interior spaces.
   Never append that fixture to the canonical guide or upload it as a release
   artifact.
-- [ ] Require the release PDF to embed exactly the Unicode-mapped faces its
+- [x] Require the release PDF to embed exactly the Unicode-mapped faces its
   canonical content actually uses. Validate unused Fira Bold in the fixture
   rather than forcing it into the release artifact.
+
+Phase 1 evidence recorded August 1, 2026:
+
+- The branch contains only the official Fira Code 6.2 static Regular and Bold
+  TTFs and exact upstream OFL bytes. Their SHA-256 values are respectively
+  `5992ab9640e2df491b2f609467b1de60e8bc39b2c28db184342a0592d98f6117`,
+  `41f6554e845e2f5b70adad3950122334b866aac436793b7742ade600067701be`,
+  and `1d41e10031ab125302780a05ec4c91d218e47db0c7e37cf315cce5e608cdc25c`.
+  No Cascadia, enlarged-DejaVu, specimen, matrix, proof configuration, or
+  proof orchestration file was transferred.
+- The canonical lock records release tag `6.2`, upstream commit
+  `eee6db993696aba61ff4eef03698e2987d79910c`, the 2,462,987-byte release
+  archive and SHA-256
+  `0949915ba8eb24d89fd93d10a7ff623f42830d7c5ffc3ecbf960e4ecad3e3e79`,
+  exact archive members, local sizes and hashes, PostScript names, and license
+  provenance. Its SHA-256 is
+  `e6821c9177e7160333a273c8b466fbb87be4b35ef9a9dc9525dfab2412bfce31`.
+- Fenced code now uses Fira Code at `9.1/11.5 pt`; compact inline code remains
+  DejaVu Sans Mono and prose/headings remain Noto Sans. Every named and raw
+  ligature-disable option is generated from the validated lock, and a missing
+  `ContextualOff`, `-calt`, or other required control fails closed.
+- The isolated one-page fixture was tagged PDF 2.0 and passed qpdf, exact
+  Regular/Bold Unicode font checks, exact four-space indentation and two-space
+  extraction, one default cmap glyph for each of the 59 literal characters in
+  both faces, and one clean veraPDF 1.30.2 `ua2` job. It was generated only in
+  a temporary directory and was not added to the guide or release artifacts.
+- `npm ci` reported no vulnerabilities. The final lock-attested toolchain
+  verified seven Ubuntu packages and all pinned tools. `make release-check`
+  passed 164 routine/unit tests, Bash, ShellCheck, reproducibility, qpdf,
+  every-page 150-DPI OCR, structural checks, and veraPDF PDF/UA-2. The
+  separate complete discovery run passed all 171 tests, including the focused
+  selected-font and fixture failure paths. The
+  canonical 27-page PDF was byte-identical at SHA-256
+  `1e1a9b02b0587eeb5db395c3c059d87cba15890c9ecbd1782348cb8e57a4cbd2`
+  and embedded exactly Noto Sans Regular/Bold, DejaVu Sans Mono Regular/Bold,
+  and Fira Code Regular. Fira Bold appeared only in the fixture.
+- A real local build-record smoke run captured the complete selected-font
+  provenance, configuration, host-package pins, tool versions, and both face
+  hashes. No Phase 2 assembly or rail change, VPN/HPC activity, PR transition,
+  merge, tag, release, Windows copy, or stable-asset change occurred.
 
 ### Phase 2: Correct Appendix Assembly and Code Rails
 

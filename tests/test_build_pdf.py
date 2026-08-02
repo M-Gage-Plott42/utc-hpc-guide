@@ -12,6 +12,7 @@ from unittest import mock
 from scripts.build_pdf import (
     assemble_markdown,
     build_once,
+    code_font_replacements,
     cover_variables,
     locked_font_variables,
 )
@@ -36,6 +37,7 @@ XRSAGH+NotoSans-Bold                 CID TrueType      Identity-H       yes yes 
 VZFBDX+NotoSans-Regular              CID TrueType      Identity-H       yes yes yes     54  0
 KIHLRP+DejaVuSansMono                CID TrueType      Identity-H       yes yes yes     55  0
 RBAFGN+DejaVuSansMono-Bold           CID TrueType      Identity-H       yes yes yes   1398  0
+ABCDEF+FiraCode-Regular              CID TrueType      Identity-H       yes yes yes   1399  0
 """
 
 
@@ -303,6 +305,15 @@ class PdfAssemblyTests(unittest.TestCase):
                     return_value=[],
                 ),
                 mock.patch(
+                    "scripts.build_pdf.code_font_replacements",
+                    return_value={
+                        "@CODE_FONT_DEFINITION@": "",
+                        "@CODE_FONT_COMMAND@": r"\ttfamily",
+                        "@CODE_FONT_SIZE@": "9.1",
+                        "@CODE_FONT_LEADING@": "11.5",
+                    },
+                ),
+                mock.patch(
                     "scripts.build_pdf.subprocess.run",
                     return_value=completed,
                 ) as run_mock,
@@ -368,6 +379,34 @@ class PdfAssemblyTests(unittest.TestCase):
             "tcolorbox",
         ):
             self.assertNotIn(f"\\usepackage{{{incompatible}}}", header)
+
+    def test_canonical_fira_definition_disables_every_ligature_path(self) -> None:
+        replacements = code_font_replacements(ROOT)
+        definition = replacements["@CODE_FONT_DEFINITION@"]
+        self.assertEqual(replacements["@CODE_FONT_COMMAND@"], r"\GuideCodeFont")
+        self.assertEqual(replacements["@CODE_FONT_SIZE@"], "9.1")
+        self.assertEqual(replacements["@CODE_FONT_LEADING@"], "11.5")
+        self.assertIn("UprightFont=*Regular", definition)
+        self.assertIn("BoldFont=*Bold", definition)
+        for feature in (
+            "RequiredOff",
+            "CommonOff",
+            "ContextualOff",
+            "DiscretionaryOff",
+            "HistoricOff",
+            "TeXOff",
+        ):
+            self.assertEqual(definition.count(f"Ligatures={feature}"), 1)
+        for feature in (
+            "-calt",
+            "-liga",
+            "-clig",
+            "-dlig",
+            "-hlig",
+            "-rlig",
+            "-tlig",
+        ):
+            self.assertEqual(definition.count(f"RawFeature={feature}"), 1)
 
     def locked_font_fixture(
         self,
@@ -510,7 +549,7 @@ class PdfAssemblyTests(unittest.TestCase):
 
 class PdfFontQaTests(unittest.TestCase):
     def test_accepts_exact_embedded_pdf_font_families(self) -> None:
-        self.assertEqual(validate_fonts(PDF_FONTS), 4)
+        self.assertEqual(validate_fonts(PDF_FONTS), 5)
 
     def test_rejects_unlocked_embedded_pdf_font_family(self) -> None:
         unexpected = PDF_FONTS.replace(

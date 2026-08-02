@@ -59,11 +59,16 @@
   \tagmcend
 }
 
+% Canonical fenced code uses the selected, hash-locked Fira Code faces.
+% Pandoc's ordinary \texttt remains mapped to DejaVu Sans Mono so compact
+% inline code is visually distinct from terminal and script blocks.
+@CODE_FONT_DEFINITION@
+
 \NewDocumentEnvironment{GuideCode}{}{%
   \par\addvspace{0.55\baselineskip}%
   \tagstructbegin{tag=Code}%
   \begingroup
-  \ttfamily\fontsize{8.8}{11}\selectfont\color{UTCInk}\raggedright
+  @CODE_FONT_COMMAND@\fontsize{@CODE_FONT_SIZE@}{@CODE_FONT_LEADING@}\selectfont\color{UTCInk}\raggedright
   \setlength{\parindent}{0pt}%
   \setlength{\parskip}{0pt}%
   \setlength{\leftskip}{1.05em}%

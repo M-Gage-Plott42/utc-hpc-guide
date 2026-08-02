@@ -13,9 +13,10 @@ import stat
 import subprocess
 import sys
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 try:
+    from .code_font import LockedCodeFont, load_code_font
     from .check_pdf_accessibility import (
         extract_metadata_stream,
         find_catalog,
@@ -31,6 +32,7 @@ try:
     )
     from .pdf_manifest import distribution_status, load_manifest, output_path
 except ImportError:
+    from code_font import LockedCodeFont, load_code_font
     from check_pdf_accessibility import (
         extract_metadata_stream,
         find_catalog,
@@ -324,6 +326,48 @@ def record_preamble(manifest: dict[str, object]) -> list[str]:
     ]
 
 
+def code_font_record_lines(font: LockedCodeFont) -> list[str]:
+    """Return the complete selected-font configuration and provenance record."""
+    source = font.source
+    license_entry = source["license_file"]
+    return [
+        "[code-font]",
+        f"source={font.source_id}",
+        f"project={record_value(source['project'])}",
+        f"project_url={source['project_url']}",
+        f"release={source['release']}",
+        f"release_tag={source['release_tag']}",
+        f"release_commit={source['release_commit']}",
+        f"release_url={source['release_url']}",
+        f"archive_url={source['archive_url']}",
+        f"archive_size={source['archive_size']}",
+        f"archive_sha256={source['archive_sha256']}",
+        f"font_size_pt={font.font_size_pt:g}",
+        f"leading_pt={font.leading_pt:g}",
+        f"extraction_pitch={font.extraction_pitch:g}",
+        f"prose_family={font.prose_family}",
+        f"inline_code_family={font.inline_code_family}",
+        f"fontspec_ligatures={','.join(font.ligatures)}",
+        f"raw_features={','.join(font.raw_features)}",
+        f"license.path={license_entry['path']}",
+        f"license.upstream_url={license_entry['upstream_url']}",
+        f"license.upstream_size={license_entry['upstream_size']}",
+        f"license.upstream_sha256={license_entry['upstream_sha256']}",
+        f"license.size={license_entry['size']}",
+        f"license.sha256={license_entry['sha256']}",
+        f"regular.path={font.regular.relative_path}",
+        f"regular.archive_member={font.regular.archive_member}",
+        f"regular.size={font.regular.size}",
+        f"regular.sha256={font.regular.sha256}",
+        f"regular.postscript_name={font.regular.postscript_name}",
+        f"bold.path={font.bold.relative_path}",
+        f"bold.archive_member={font.bold.archive_member}",
+        f"bold.size={font.bold.size}",
+        f"bold.sha256={font.bold.sha256}",
+        f"bold.postscript_name={font.bold.postscript_name}",
+    ]
+
+
 def write_record(
     *,
     root: Path,
@@ -360,6 +404,11 @@ def write_record(
         or host_lock.get("version_id") != "24.04"
     ):
         raise ValueError("PDF toolchain lock host must be Ubuntu 24.04")
+    try:
+        lock_relative = PurePosixPath(lock_path.relative_to(root).as_posix())
+    except ValueError as exc:
+        raise ValueError("PDF toolchain lock must stay inside the repository") from exc
+    code_font = load_code_font(root, lock_relative)
     lock_digest = sha256(lock_path)
     stamp = toolchain_root / LOCK_STAMP_NAME
     require_regular_file(stamp, "PDF toolchain lock attestation")
@@ -685,6 +734,7 @@ def write_record(
         f"{filename}.sha256={font_hashes[filename]}"
         for filename in FONT_FILES
     )
+    lines.extend(("", *code_font_record_lines(code_font)))
     lines.extend(("", "[host-qa-packages]"))
     lines.extend(
         f"{name}={host_packages[name]}"

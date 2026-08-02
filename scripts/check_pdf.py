@@ -28,6 +28,7 @@ EXPECTED_EMBEDDED_FONTS = {
     "NotoSans-Regular",
     "DejaVuSansMono",
     "DejaVuSansMono-Bold",
+    "FiraCode-Regular",
 }
 
 
@@ -60,7 +61,10 @@ def parse_info(text: str) -> dict[str, str]:
     return info
 
 
-def validate_fonts(output: str) -> int:
+def validate_fonts(
+    output: str,
+    expected_fonts: set[str] | frozenset[str] = EXPECTED_EMBEDDED_FONTS,
+) -> int:
     rows = [
         line
         for line in output.splitlines()[2:]
@@ -80,11 +84,11 @@ def validate_fonts(output: str) -> int:
             raise RuntimeError(f"font lacks a Unicode map: {row}")
         font_name = row.split(maxsplit=1)[0]
         observed_fonts.add(font_name.split("+", 1)[-1])
-    if observed_fonts != EXPECTED_EMBEDDED_FONTS:
+    if observed_fonts != set(expected_fonts):
         raise RuntimeError(
             "PDF embedded font families changed: "
             f"observed {sorted(observed_fonts)}, "
-            f"expected {sorted(EXPECTED_EMBEDDED_FONTS)}"
+            f"expected {sorted(expected_fonts)}"
         )
     return len(rows)
 

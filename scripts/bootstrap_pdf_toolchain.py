@@ -18,8 +18,13 @@ import tempfile
 import urllib.error
 import urllib.request
 import zipfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
+
+try:
+    from .code_font import load_code_font
+except ImportError:
+    from code_font import load_code_font
 
 
 USER_AGENT = "utc-hpc-guide-pdf-toolchain-bootstrap/1"
@@ -855,6 +860,13 @@ def install_toolchain(
         raise ValueError("PDF toolchain lock must declare its host OS")
     if sys.platform != "linux" or platform.machine() != "x86_64":
         raise RuntimeError("the locked PDF toolchain requires Linux x86_64")
+
+    repository_root = lock_path.parent.parent
+    try:
+        lock_relative = PurePosixPath(lock_path.relative_to(repository_root).as_posix())
+    except ValueError as exc:
+        raise ValueError("PDF toolchain lock must stay inside its repository") from exc
+    load_code_font(repository_root, lock_relative)
 
     lock_digest = sha256(lock_path)
     validate_lock_stamp(tool_root, lock_digest)

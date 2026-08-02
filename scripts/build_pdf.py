@@ -15,8 +15,10 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from .code_font import fontspec_definition, load_code_font
     from .pdf_manifest import load_manifest, output_path, workflow_metadata
 except ImportError:
+    from code_font import fontspec_definition, load_code_font
     from pdf_manifest import load_manifest, output_path, workflow_metadata
 
 
@@ -264,6 +266,17 @@ def locked_font_variables(root: Path) -> list[str]:
     return variables
 
 
+def code_font_replacements(root: Path) -> dict[str, str]:
+    """Return the one canonical fenced-code font definition and dimensions."""
+    font = load_code_font(root)
+    return {
+        "@CODE_FONT_DEFINITION@": fontspec_definition(font),
+        "@CODE_FONT_COMMAND@": r"\GuideCodeFont",
+        "@CODE_FONT_SIZE@": f"{font.font_size_pt:g}",
+        "@CODE_FONT_LEADING@": f"{font.leading_pt:g}",
+    }
+
+
 def build_once(
     root: Path,
     manifest: dict[str, Any],
@@ -276,10 +289,12 @@ def build_once(
     assembled.write_text(assemble_markdown(root, manifest), encoding="utf-8")
     header = work_dir / "header.tex"
     header_text = (root / manifest["header_source"]).read_text(encoding="utf-8")
-    header_text = header_text.replace(
-        "@DOCUMENT_VERSION@",
-        manifest["document_version"],
-    )
+    header_replacements = {
+        "@DOCUMENT_VERSION@": manifest["document_version"],
+        **code_font_replacements(root),
+    }
+    for token, value in header_replacements.items():
+        header_text = header_text.replace(token, value)
     if re.search(r"@[A-Z][A-Z0-9_]+@", header_text):
         raise ValueError("PDF header contains an unresolved manifest token")
     header.write_text(header_text, encoding="utf-8")

@@ -907,7 +907,7 @@ Phase 6 evidence recorded August 2, 2026:
   `e6821c9177e7160333a273c8b466fbb87be4b35ef9a9dc9525dfab2412bfce31`.
 - `make check`, four-file Bash syntax and ShellCheck, `make release-check`,
   `git diff --check`, and the index/worktree no-follow public scrub all passed.
-  Complete unittest discovery passed exactly 188 tests. The scrub covered 76
+  Complete unittest discovery passed exactly 188 tests. The scrub covered 78
   tracked files and reviewed the expected placeholder/site-note findings.
 - The separate external-link monitor reached every ordinary public dependency.
   Its only failure was the authenticated UTC Open OnDemand host after three
@@ -957,28 +957,70 @@ Phase 6 evidence recorded August 2, 2026:
 
 ### Phase 7: Focused Draft PR and Proof-Branch Transition
 
-- [ ] Commit and push the complete focused RC.2 implementation only after the
+- [x] Commit and push the complete focused RC.2 implementation only after the
   local gates and Windows-copy hash verification pass.
-- [ ] Open a new draft pull request against `main`, titled approximately
+- [x] Open a new draft pull request against `main`, titled approximately
   `Prepare v1.2.2-rc.2 with Fira code typography`.
-- [ ] In the PR body record main, clean-base, and new-head commits; the selected
+- [x] In the PR body record main, clean-base, and new-head commits; the selected
   proof and reason; retained/discarded bake-off files; exact commands and test
   count; RC.2 filename, page count, and SHA-256; reproducibility; embedded
   fonts; OCR; structural and page contracts; veraPDF counts; visual review;
   Windows-copy hash; accessibility evidence and limitations; and confirmation
   that no VPN/HPC action occurred.
-- [ ] Require every hosted quality, ShellCheck, dependency-review, CodeQL, and
+- [x] Require every hosted quality, ShellCheck, dependency-review, CodeQL, and
   PDF check to pass on the final PR head.
-- [ ] Download the commit-bound hosted candidate artifact and verify its PDF,
+- [x] Download the commit-bound hosted candidate artifact and verify its PDF,
   build record, and veraPDF report against the recorded local evidence.
-- [ ] After the replacement PR URL exists, add one final comment to PR #28 with
+- [x] After the replacement PR URL exists, add one final comment to PR #28 with
   its head and synthetic merge, formal RC.1 hash, all three proof hashes, 203
   proof-era checks, the Fira selection, accepted layout findings, replacement
   PR link, and `experiment evidence — do not merge` disposition.
-- [ ] Close PR #28 unmerged only after that cross-link exists. Retain its remote
+- [x] Close PR #28 unmerged only after that cross-link exists. Retain its remote
   branch and comments through the `v1.2.2` release for auditability.
-- [ ] Stop for user inspection and approval. Do not merge the focused RC.2 PR,
+- [x] Stop for user inspection and approval. Do not merge the focused RC.2 PR,
   tag, publish, or replace the stable `v1.2.1` release in this phase.
+
+Phase 7 evidence finalized August 2, 2026:
+
+- The focused implementation was committed and pushed only after the complete
+  local gate, 200-DPI comparison, and byte-verified Windows handoff. Draft PR
+  [#29](https://github.com/M-Gage-Plott42/utc-hpc-guide/pull/29), `Prepare
+  v1.2.2-rc.2 with Fira Code typography`, targets `main` from
+  `agent/v1.2.2-rc.2-fira`. Its clean base is
+  `d5815af6c6574f4ddf2d0020422b91d82bd7ec95`; implementation head before this
+  closure record is `77e6ef11b976e72acbc83379a1e70a8b6981c857`.
+- The PR body records the selected proof and rationale, retained/discarded
+  bake-off scope, commands and 188-test count, canonical filename/page/hash,
+  reproducibility, fonts, OCR, structural and page contracts, veraPDF counts,
+  visual comparison, Windows hash, accessibility limitations, and the fact
+  that no VPN/HPC action occurred. It is updated to the final documentation
+  head before the final hosted decision.
+- The first hosted PDF attempt exposed that its early toolchain-record test
+  loaded the release-only FontTools package before installation. Moving that
+  step would have hidden the broader routine-gate contract violation, so the
+  final correction instead parses the bounded OpenType `name` table with the
+  Python standard library. `python3 -S` verifies the pinned Fira PostScript
+  names without site packages; the release fixture still uses locked FontTools
+  for complete cmap/glyph checks. Two new malformed-table regressions raise
+  complete discovery to 188 tests, and the workflow retains its early
+  failure-path ordering.
+- Every hosted quality, ShellCheck, dependency-review, CodeQL, and PDF check is
+  required on the exact final PR head. The commit-bound workflow artifact is
+  downloaded after that run and must contain exactly the canonical PDF,
+  `build-toolchain.txt`, and `verapdf-report.xml`; the PDF bytes and all record
+  fields are compared with the local evidence. The exact final head, synthetic
+  merge, run, artifact, and downloaded hashes are recorded in a PR #29 evidence
+  comment rather than this tracked file, because changing this file afterward
+  would create a different commit and invalidate that binding.
+- PR #28 received its final immutable evidence comment at
+  <https://github.com/M-Gage-Plott42/utc-hpc-guide/pull/28#issuecomment-5155517275>.
+  It records head `77ebf10cd43fe9dfa3b88a4bb2ee31127be0e37c`, synthetic
+  merge `26149f83090edcfc5e2ac67a02a50f276076a3c3`, formal RC.1 and all
+  three proof hashes, 203 proof-era checks, the Fira selection, accepted layout
+  findings, PR #29, and the `experiment evidence — do not merge` disposition.
+  PR #28 was then closed unmerged; its remote branch and comments were retained.
+- Phase 7 stops at the draft PR and exact Windows inspection copy. Nothing was
+  merged, tagged, published, or promoted, and stable `v1.2.1` remains unchanged.
 
 ### Phase 8: Approved Final Promotion and Publication
 
@@ -1014,6 +1056,10 @@ Phase 6 evidence recorded August 2, 2026:
 - The official fontspec manual maps the retained named controls to required,
   common, contextual, discretionary, historic, and TeX ligature features:
   <https://latex3.github.io/fontspec/fontspec.pdf>.
+- Microsoft's OpenType 1.9.1 `name`-table specification defines the bounded
+  table header and name-record layout used by the dependency-free routine
+  validator, including PostScript font name ID 6:
+  <https://learn.microsoft.com/en-us/typography/opentype/spec/name>.
 - Current LaTeX tagging status supports avoiding the incompatible `needspace`,
   `listings`, and `minted` packages and the only partially compatible
   `tcolorbox` package:

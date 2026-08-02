@@ -392,8 +392,8 @@ Reopen live validation only under the existing live-site rule above.
 
 ## v1.2.2-rc.2 Fira Canonicalization and Publication Plan
 
-Status: Phase 3 complete — heading pagination and PDF-only heading typography
-corrected; Phase 4 has not started
+Status: Phase 4 complete — canonical wrapping, terminology, placeholders, and
+transfer guidance corrected; Phase 5 has not started
 
 Plan date: August 1, 2026
 
@@ -717,32 +717,82 @@ Phase 3 evidence recorded August 1, 2026:
 
 ### Phase 4: Canonical Source Wrapping and Focused Usability Edits
 
-- [ ] Replace the long `sacct --format` argument in canonical Markdown with the
+- [x] Replace the long `sacct --format` argument in canonical Markdown with the
   reviewed readable `SACCT_FIELDS` composition and quoted use.
-- [ ] Replace the long `pip download` line in canonical Markdown with the
+- [x] Replace the long `pip download` line in canonical Markdown with the
   reviewed shell continuation, ending every nonfinal command line with `\`.
-- [ ] Keep the 83-character immutable Miniconda SHA-256 assignment on one line.
+- [x] Keep the 83-character immutable Miniconda SHA-256 assignment on one line.
   Record it as the sole exact code-width exception because splitting an opaque
   digest is less understandable and more error-prone for beginners.
-- [ ] Apply the approximately 80-character width audit to the formal candidate,
+- [x] Apply the approximately 80-character width audit to the formal candidate,
   not through hidden proof-time replacements. Reject any new or unexplained
   exception.
-- [ ] Add near first use: `Slurm is the cluster workload manager and job
+- [x] Add near first use: `Slurm is the cluster workload manager and job
   scheduler that allocates compute resources and queues jobs.`
-- [ ] Use `Slurm` in current ordinary prose and headings. Preserve exact
+- [x] Use `Slurm` in current ordinary prose and headings. Preserve exact
   `SLURM_*` environment variables, code, source output, historical quotations,
   URLs, and immutable prior-release evidence.
-- [ ] Add one compact terms sentence defining HPC, SSH, OOD, CPU, and GPU; do
+- [x] Add one compact terms sentence defining HPC, SSH, OOD, CPU, and GPU; do
   not add a long glossary.
-- [ ] Explain that angle-bracket placeholders are prose/path notation, while
+- [x] Explain that angle-bracket placeholders are prose/path notation, while
   runnable shell uses `REPLACE_WITH_*` because unquoted angle brackets are
   shell redirection operators.
-- [ ] Remove `<group>` because it has no use in the current guide.
-- [ ] Under Transfer Methods, add one-file `scp` upload and download examples
+- [x] Remove `<group>` because it has no use in the current guide.
+- [x] Under Transfer Methods, add one-file `scp` upload and download examples
   using the existing placeholder variables, then place the incremental
   `rsync` examples underneath and remove the thin standalone `rsync` section.
-- [ ] Keep every edit cluster-agnostic. Do not change the UTC table, field-note
+- [x] Keep every edit cluster-agnostic. Do not change the UTC table, field-note
   boundaries, screenshots, site facts, or live-validation evidence.
+
+Phase 4 evidence recorded August 2, 2026:
+
+- The two formal-candidate command edits are the exact token-preserving forms
+  reviewed during the bake-off: `SACCT_FIELDS` is composed in two readable
+  assignments and passed quoted to `sacct`, while `pip download` uses a valid
+  shell continuation with its sole nonfinal line ending in `\`. The focused
+  regression evaluates the composed accounting field list and compares the
+  wrapped pip token stream with the original commands.
+- The assembled canonical Markdown now has no fenced-code line above 80
+  characters except the exact 83-character immutable
+  `INSTALLER_SHA256=...` assignment. The focused regression allows that one
+  full-digest line and rejects any new or changed exception; no hidden proof
+  transform participates in the formal build.
+- The overview now defines Slurm near first use and defines HPC, SSH, OOD, CPU,
+  and GPU in one compact sentence. Current core prose and headings use the
+  preferred `Slurm` spelling while exact `SLURM_*` code tokens remain intact.
+  Placeholder guidance distinguishes prose/path angle brackets from runnable
+  `REPLACE_WITH_*` shell markers and removes the unused `<group>` entry.
+- Transfer Methods now gives explicit one-file `scp` upload and download
+  examples in documented source-then-destination order, followed by the
+  incremental `rsync` examples using the same `HPC_USER`, `LOGIN_HOST`, and
+  `SCRATCH_PATH` variables. The standalone `rsync` subsection was removed and
+  the manifest's exact TOC-derived heading, link, list-item, code, TOCI, and
+  reference role counts were updated to the resulting structure.
+- `npm ci` found no vulnerabilities. It emitted the known nonfatal engine
+  warning because local Node `v24.14.0` precedes the transitive `ini@7.0.0`
+  `^24.15.0` range; the locked install and all repository checks completed.
+  The focused build/OCR suite passed 39 tests, complete discovery passed all
+  180 tests, and the final `make release-check` passed 173 routine/unit tests,
+  scrub, assets, local links, placeholders, Bash syntax, ShellCheck,
+  whitespace, deterministic double build, qpdf, exact text/font/heading QA,
+  all-page 150-DPI OCR, structural checks, and veraPDF 1.30.2 `ua2`.
+- The canonical PDF remains a 27-page tagged, unencrypted US Letter PDF 2.0
+  with exactly Noto Sans Regular/Bold, DejaVu Sans Mono Regular, and Fira Code
+  Regular embedded with Unicode maps. Repeated builds are byte-identical at
+  SHA-256
+  `3aba1172a34e3ae28a2290143fc3e132c2e383e11b1276aa8643017eac58b4e3`.
+  It has 81 validated headings and 2,596 validated structure roles. The
+  veraPDF report SHA-256 is
+  `38baa40ffa3b196660b0718e3bd568514d68bb8e1117cf69d0fb069a857f8a99`
+  and records one compliant job, 1,727 passed rules, 182,043 passed checks,
+  and no failed rules or checks.
+- Focused 160-DPI review of physical pages 2, 3, 6, 8, and 13 through 15 found
+  a complete one-page contents, legible new definitions, intact Slurm
+  headings, valid accounting and pip continuations, safe transfer-block page
+  flow, and no clipping, overlap, malformed rail, broken glyph, or heading
+  orphan. No `docs/sites/` content, UTC table, field-note boundary,
+  screenshot, live-validation evidence, VPN/HPC state, PR, merge, tag,
+  release, Windows copy, or later-phase implementation changed.
 
 ### Phase 5: Permanent QA, Pipeline, and Documentation Cleanup
 

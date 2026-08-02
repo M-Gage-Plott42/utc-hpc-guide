@@ -56,10 +56,10 @@ class PdfOcrCheckerTests(unittest.TestCase):
             )
 
     def test_rejects_missing_required_phrase(self) -> None:
-        with self.assertRaisesRegex(RuntimeError, "SLURM Basics"):
+        with self.assertRaisesRegex(RuntimeError, "Slurm Basics"):
             validate_ocr_pages(
                 ["Practical HPC Onboarding Guide " * 3],
-                ["SLURM Basics"],
+                ["Slurm Basics"],
                 40,
             )
 

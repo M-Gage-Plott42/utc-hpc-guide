@@ -1,11 +1,16 @@
 # 00 Overview
 
-This guide provides a Python-first path for onboarding to a SLURM-based HPC environment using:
+This guide provides a Python-first path for onboarding to an HPC environment using:
 
 - SSH for terminal access
 - Open OnDemand (OOD) for interactive sessions
-- SLURM for CPU/GPU scheduling
+- Slurm for CPU/GPU scheduling
 - Reproducible Python environments for batch workflows
+
+Slurm is the cluster workload manager and job scheduler that allocates compute
+resources and queues jobs. Here, HPC means high-performance computing, SSH is
+the Secure Shell protocol, OOD is Open OnDemand, and CPU and GPU mean central
+processing unit and graphics processing unit, respectively.
 
 ## Audience
 
@@ -46,7 +51,10 @@ Replace these with site-specific values:
 - `<cpu-partition>`
 - `<gpu-partition>`
 - `<account>`
-- `<group>`
 - `<home-path>`
 - `<scratch-path>`
 - `<project-path>`
+
+Angle-bracket placeholders are prose and path notation, not literal shell
+input. Runnable shell examples use `REPLACE_WITH_*` markers because unquoted
+angle brackets are shell redirection operators.

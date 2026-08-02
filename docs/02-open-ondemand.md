@@ -1,6 +1,6 @@
 # 02 Open OnDemand
 
-Open OnDemand (OOD) provides browser-based interactive sessions that run as standard SLURM jobs.
+Open OnDemand (OOD) provides browser-based interactive sessions that run as standard Slurm jobs.
 
 ## 1. Launch an Interactive Session
 
@@ -23,11 +23,11 @@ This screenshot is illustrative only. Labels and default values vary by institut
 - CPU workflows: use desktop/terminal sessions on a CPU partition.
 - GPU workflows: launch a GPU-capable session and request GPUs explicitly.
 
-If you request GPUs inside a CPU-only allocation, SLURM will reject the step.
+If you request GPUs inside a CPU-only allocation, Slurm will reject the step.
 
-## 3. Map OOD Session to SLURM Job ID
+## 3. Map OOD Session to Slurm Job ID
 
-Most OOD interfaces show the SLURM job ID directly. You can also discover it from SSH:
+Most OOD interfaces show the Slurm job ID directly. You can also discover it from SSH:
 
 ```bash
 squeue -u "$USER" -o "%.18i %.30j %R" | egrep -i "desktop|ondemand|jupyter"

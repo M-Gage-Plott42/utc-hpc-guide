@@ -3,6 +3,8 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import re
+import shlex
 import subprocess
 import tempfile
 import unittest
@@ -281,6 +283,114 @@ class PdfAssemblyTests(unittest.TestCase):
             )
             self.assertIn(expected, assembled)
             self.assertTrue(source.startswith("#!/bin/bash -l\n"))
+
+    def test_canonical_phase4_usability_and_width_contract(self) -> None:
+        assembled = assemble_markdown(ROOT, CURRENT_MANIFEST)
+        fence_marker: str | None = None
+        fence_length = 0
+        overlong: list[tuple[int, str]] = []
+        for line in assembled.splitlines():
+            match = re.match(r"^[ ]{0,3}(`{3,}|~{3,})", line)
+            if fence_marker is None:
+                if match:
+                    token = match.group(1)
+                    fence_marker = token[0]
+                    fence_length = len(token)
+                continue
+            if match:
+                token = match.group(1)
+                if token[0] == fence_marker and len(token) >= fence_length:
+                    fence_marker = None
+                    fence_length = 0
+                    continue
+            width = len(line.expandtabs(4))
+            if width > 80:
+                overlong.append((width, line))
+        self.assertIsNone(fence_marker)
+        self.assertEqual(
+            overlong,
+            [
+                (
+                    83,
+                    'INSTALLER_SHA256="ecb43ee4ae30a7a5af87737e9548ceb21'
+                    'f0a10ec55b8dc40d247aa925b80bfec"',
+                )
+            ],
+        )
+
+        overview = (ROOT / "docs/00-overview.md").read_text(encoding="utf-8")
+        normalized_overview = " ".join(overview.split())
+        self.assertIn(
+            "Slurm is the cluster workload manager and job scheduler that "
+            "allocates compute resources and queues jobs.",
+            normalized_overview,
+        )
+        self.assertNotIn("<group>", overview)
+        self.assertIn(
+            "unquoted angle brackets are shell redirection operators",
+            normalized_overview,
+        )
+
+        for path in CURRENT_MANIFEST["core_sources"]:
+            source = (ROOT / path).read_text(encoding="utf-8")
+            prose_lines: list[str] = []
+            in_fence = False
+            for line in source.splitlines():
+                if re.match(r"^[ ]{0,3}(`{3,}|~{3,})", line):
+                    in_fence = not in_fence
+                elif not in_fence:
+                    prose_lines.append(re.sub(r"`[^`]*`", "", line))
+            self.assertNotRegex(
+                "\n".join(prose_lines),
+                r"\bSLURM\b",
+                msg=f"ordinary prose must use Slurm in {path}",
+            )
+
+        slurm = (ROOT / "docs/03-slurm-basics.md").read_text(encoding="utf-8")
+        assignments = (
+            'SACCT_FIELDS="JobID,JobName,Partition,ReqMem,AllocTRES,AllocCPUS"\n'
+            'SACCT_FIELDS="${SACCT_FIELDS},Elapsed,State,ExitCode,MaxRSS"'
+        )
+        result = subprocess.run(
+            ["bash", "-c", assignments + '; printf %s "$SACCT_FIELDS"'],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(
+            result.stdout,
+            "JobID,JobName,Partition,ReqMem,AllocTRES,AllocCPUS,"
+            "Elapsed,State,ExitCode,MaxRSS",
+        )
+        self.assertIn(assignments, slurm)
+        self.assertIn('sacct -j "$JOB_ID" --format="$SACCT_FIELDS"', slurm)
+
+        python_envs = (ROOT / "docs/05-python-envs.md").read_text(
+            encoding="utf-8"
+        )
+        wrapped_pip = (
+            "python -m pip download --only-binary=:all: --no-deps \\\n"
+            '  "numpy==2.2.6" -d /tmp/wheels_test'
+        )
+        self.assertIn(wrapped_pip, python_envs)
+        self.assertEqual(
+            shlex.split(wrapped_pip.replace("\\\n", "")),
+            shlex.split(
+                'python -m pip download --only-binary=:all: --no-deps '
+                '"numpy==2.2.6" -d /tmp/wheels_test'
+            ),
+        )
+
+        transfer = (ROOT / "docs/06-data-transfer.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("scp ./data/input.csv \\", transfer)
+        self.assertIn("# Download one file to the current local directory", transfer)
+        self.assertLess(
+            transfer.index("scp ./data/input.csv"),
+            transfer.index("rsync -avhP"),
+        )
+        self.assertNotIn("## 4. rsync Example", transfer)
 
     def test_appendix_block_rejects_invalid_source_edges(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

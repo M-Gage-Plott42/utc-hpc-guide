@@ -1,6 +1,6 @@
-# 03 SLURM Basics
+# 03 Slurm Basics
 
-SLURM allocates compute resources for interactive and batch workloads.
+Slurm allocates compute resources for interactive and batch workloads.
 
 ## 1. Two Primary Modes
 
@@ -71,8 +71,9 @@ sbatch examples/slurm_cpu_example.sbatch
 ```bash
 JOB_ID="REPLACE_WITH_JOB_ID"
 squeue -u "$USER"
-sacct -j "$JOB_ID" \
-  --format=JobID,JobName,Partition,ReqMem,AllocTRES,AllocCPUS,Elapsed,State,ExitCode,MaxRSS
+SACCT_FIELDS="JobID,JobName,Partition,ReqMem,AllocTRES,AllocCPUS"
+SACCT_FIELDS="${SACCT_FIELDS},Elapsed,State,ExitCode,MaxRSS"
+sacct -j "$JOB_ID" --format="$SACCT_FIELDS"
 ```
 
 `sacct` normally prints a primary row for the whole job and separate rows for

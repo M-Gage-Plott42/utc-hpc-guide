@@ -343,7 +343,7 @@ def build_once(
         "--metadata",
         f"lang={manifest['language']}",
         "--metadata",
-        "subject=Practical SLURM, Open OnDemand, SSH, Python, and GPU onboarding",
+        "subject=Practical Slurm, Open OnDemand, SSH, Python, and GPU onboarding",
         "--variable",
         "papersize=letter",
         "--variable",

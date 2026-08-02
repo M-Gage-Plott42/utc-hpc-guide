@@ -17,10 +17,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   the exact embedded font-family set, and page contracts for document-title
   display, structure tab order, contiguous structure-parent identifiers, and
   distinct cover, contents, and body page labels.
+- Selected official static Fira Code 6.2 for canonical fenced code, with exact
+  Regular/Bold font and license provenance, a complete ligature/contextual
+  denylist, and an isolated tagged semantic fixture that validates default
+  glyphs and meaningful source spacing without entering release artifacts.
+- Added fail-closed chapter-opener, Appendix-template, heading-font, code-rail,
+  and canonical 80-character source-width contracts.
 
 ### Changed
 
-- Redesigned the `v1.2.2-rc.1` printable candidate through the locked,
+- Redesigned the `v1.2.2-rc.2` printable candidate through the locked,
   reproducible Pandoc/LuaLaTeX PDF/UA-2 path while retaining tagging-aware
   standard title, section, contents, list, table, figure, link, and code
   structures.
@@ -35,6 +41,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Assigned the physical cover the unique `Cover` label, used lowercase Roman
   labels for contents and Arabic labels for the body, and kept cover, header,
   footer, rule, and code-rail decoration out of logical reading order.
+- Corrected generated Appendix B source boundaries, kept chapter and template
+  headings with their opening content, normalized PDF-only heading typography,
+  wrapped long canonical commands, added concise terminology and placeholder
+  guidance, and added one-file `scp` examples ahead of incremental `rsync`.
+- Reduced the permanent pipeline to the canonical RC.2 and temporary selected-
+  Fira fixture. The completed three-font comparison remains historical
+  review-only evidence on draft PR #28 and is not a release artifact.
 
 ## [1.2.1] - 2026-07-30
 

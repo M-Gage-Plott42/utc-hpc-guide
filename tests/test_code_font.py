@@ -4,6 +4,7 @@ import json
 import shutil
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from scripts.check_code_font_fixture import (
@@ -11,6 +12,7 @@ from scripts.check_code_font_fixture import (
     EXTRACTION_LINES,
     extract_unique_span,
     fixture_tex,
+    validate_glyph_trace,
 )
 from scripts.code_font import (
     REQUIRED_LIGATURES,
@@ -81,6 +83,52 @@ class CheckedInCodeFontTests(unittest.TestCase):
     def test_extracts_exact_indentation_and_interior_spaces(self) -> None:
         text = "\n".join(f"      {line}" for line in EXTRACTION_LINES)
         self.assertEqual(extract_unique_span(text), EXTRACTION_LINES)
+
+    def glyph_trace(self) -> tuple[str, dict[str, tuple[int, ...]]]:
+        root = ET.Element("page")
+        expected: dict[str, tuple[int, ...]] = {}
+        for font_name in ("FiraCode-Regular", "FiraCode-Bold"):
+            span = ET.SubElement(root, "span", font=f"PREFIX+{font_name}")
+            glyph_ids = tuple(range(1, len(AMBIGUOUS_GLYPHS) + 1))
+            expected[font_name] = glyph_ids
+            for character, glyph_id in zip(AMBIGUOUS_GLYPHS, glyph_ids):
+                ET.SubElement(
+                    span,
+                    "g",
+                    unicode=character,
+                    glyph=str(glyph_id),
+                )
+        return ET.tostring(root, encoding="unicode"), expected
+
+    def test_glyph_trace_requires_one_default_glyph_per_character(self) -> None:
+        trace, expected = self.glyph_trace()
+        validate_glyph_trace(trace, expected)
+
+        root = ET.fromstring(trace)
+        bold = root.findall("span")[1]
+        bold.findall("g")[4].set("glyph", "999")
+        with self.assertRaisesRegex(RuntimeError, "contextual alternate"):
+            validate_glyph_trace(
+                ET.tostring(root, encoding="unicode"),
+                expected,
+            )
+
+    def test_glyph_trace_rejects_multi_character_substitution(self) -> None:
+        trace, expected = self.glyph_trace()
+        root = ET.fromstring(trace)
+        regular = root.findall("span")[0]
+        glyphs = regular.findall("g")
+        glyphs[0].set(
+            "unicode",
+            (glyphs[0].get("unicode") or "")
+            + (glyphs[1].get("unicode") or ""),
+        )
+        regular.remove(glyphs[1])
+        with self.assertRaisesRegex(RuntimeError, "multiple characters"):
+            validate_glyph_trace(
+                ET.tostring(root, encoding="unicode"),
+                expected,
+            )
 
 
 class CodeFontFailureTests(unittest.TestCase):

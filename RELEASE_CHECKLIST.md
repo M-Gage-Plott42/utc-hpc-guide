@@ -70,6 +70,8 @@ repository is free of private data.
 - Check that README links to all docs and examples; `make check-links` must
   resolve inline Markdown, reference-style, raw HTML, and heading-anchor links.
 - Confirm commands render correctly in Markdown and copy/paste cleanly.
+- Confirm printable fenced-code lines are at most 80 characters except for the
+  one exact reviewed 83-character Miniconda SHA-256 assignment.
 - Confirm placeholders are consistent across docs.
 - Run `make check-placeholders` and confirm shell snippets and sbatch templates
   contain no angle-bracket placeholders that a shell could parse as redirects.
@@ -95,6 +97,17 @@ repository is free of private data.
   byte-identical rebuilds plus passing structure, metadata, font,
   text-extraction, rendering, every-page OCR, and
   `make check-pdf-accessibility` checks.
+- Confirm the permanent gate builds only the manifest-selected guide and the
+  small test-only selected-Fira fixture. Reject proof matrices, unselected
+  fonts, proof transforms, comparison PDFs, or proof uploads in the canonical
+  pipeline.
+- Confirm the exact selected Fira Regular/Bold bytes, OFL license, provenance,
+  PostScript names, ligature/contextual denylist, and build-record fields pass.
+  In the temporary fixture, require one default glyph per literal ambiguous
+  character in both faces, exact four-space indentation and meaningful
+  two-space separators in locked Poppler extraction, qpdf success, and one
+  clean veraPDF `ua2` job. Do not describe extraction as universal clipboard
+  fidelity.
 - Confirm `pdfinfo` reports `Tagged: yes` and PDF 2.0.
 - Confirm the catalog has a structure tree, marked-content metadata, `en-US`,
   and the expected PDF/UA-2 identification.
@@ -116,6 +129,11 @@ repository is free of private data.
 - Confirm cover graphics, repeated headers, footers, rules, page numbers, and
   code rails are layout artifacts and do not interrupt logical reading order
   or appear as `Artifact` structure roles.
+- Confirm every real source line has one code rail, deliberate interior blank
+  lines retain one rail, and no synthetic leading or trailing rail exists.
+- Confirm each chapter opener stays with its introduction and first subsection,
+  each Appendix B heading stays with its first shebang, body headings use the
+  Noto heading face, and no heading ends a page without semantic content below.
 - Confirm the PDF has no encryption, forms, JavaScript, attachments, embedded
   files, or other active content rejected by the accessibility checker.
 - Run the locked veraPDF `ua2` profile with no allowlist and confirm
@@ -148,7 +166,8 @@ repository is free of private data.
   `verapdf-report.xml` from the same workflow artifact and confirm the recorded
   PDF SHA-256 matches. `pdf/toolchain.lock.json` is the declared toolchain lock;
   the artifact record is run traceability, not signed provenance, and the
-  artifact is transient.
+  artifact is transient. Confirm that those are the only three uploaded files;
+  the test-only font fixture and historical proof PDFs must be absent.
 - For final promotion, review the successful artifact built from the exact
   final `main` commit and confirm its SHA-256 before tagging. Bind every manual
   result to that same hash. A successful candidate build is necessary review

@@ -796,68 +796,164 @@ Phase 4 evidence recorded August 2, 2026:
 
 ### Phase 5: Permanent QA, Pipeline, and Documentation Cleanup
 
-- [ ] Do not bring over Cascadia files, the larger DejaVu proof profile,
+- [x] Do not bring over Cascadia files, the larger DejaVu proof profile,
   `font-proof-specimen.md`, the three-profile matrix/configuration, proof
   source transforms, proof orchestrator, proof-only checksum bundle, proof
   Make targets, or proof artifact upload.
-- [ ] Retain only focused reusable selected-font logic for exact source files
+- [x] Retain only focused reusable selected-font logic for exact source files
   and license, provenance, PostScript names, embedded fonts, Unicode maps,
   default-cmap glyphs, extraction, and width checks.
-- [ ] Require the fixture's Regular and Bold rows to map every literal character
+- [x] Require the fixture's Regular and Bold rows to map every literal character
   in `0 O o 1 l I | < > <= >= == != -> -- _ ~ \ / ' " ( ) [ ] { }` to one
   visible default glyph, with no multi-character ligature or contextual
   alternate.
-- [ ] Require exact four-space indentation and meaningful two-space separators
+- [x] Require exact four-space indentation and meaningful two-space separators
   in locked Poppler extraction, while documenting that this does not prove
   clipboard behavior in every PDF viewer.
-- [ ] Retain PDF 2.0, PDF/UA-2, page-label, destination, `/Tabs /S`, contiguous
+- [x] Retain PDF 2.0, PDF/UA-2, page-label, destination, `/Tabs /S`, contiguous
   structure-parent, exact structure-role, alt-text, link, table, figure,
   metadata, font, active-content, render, OCR, and reproducibility contracts.
-- [ ] Add the rail, chapter-opener, Appendix-heading, heading-font, canonical
+- [x] Add the rail, chapter-opener, Appendix-heading, heading-font, canonical
   width, and selected-Fira contracts to routine/unit and release gates.
-- [ ] Make `release-check` validate only the canonical RC.2 and the small
+- [x] Make `release-check` validate only the canonical RC.2 and the small
   test-only selected-font fixture; it must not build three full guide proofs.
-- [ ] Make CI upload only the manifest-derived canonical candidate, canonical
+- [x] Make CI upload only the manifest-derived canonical candidate, canonical
   build record, and canonical veraPDF report.
-- [ ] Update README, CONTRIBUTING, `docs/pdf-guide.md`, CHANGELOG,
+- [x] Update README, CONTRIBUTING, `docs/pdf-guide.md`, CHANGELOG,
   RELEASE_CHECKLIST, Make help, workflow comments, toolchain records, and this
   TODO so no active instruction treats the bake-off matrix as permanent.
-- [ ] Retain the historical proof hashes and PR #28 link as evidence, clearly
+- [x] Retain the historical proof hashes and PR #28 link as evidence, clearly
   labelled as completed review-only inputs rather than release artifacts.
+
+Phase 5 evidence recorded August 2, 2026:
+
+- The focused permanent implementation adds no Cascadia bytes, expanded
+  DejaVu profile, proof specimen, comparison matrix, proof transform,
+  orchestrator, proof checksum bundle, proof Make target, or proof upload.
+  README and `docs/pdf-guide.md` preserve only the three historical proof
+  hashes and PR #28 link, explicitly as completed review-only evidence.
+- `scripts/check_code_width.py` enforces the 80-character canonical fenced-code
+  contract and permits only the exact 83-character immutable Miniconda digest
+  line. The canonical assembler applies the exception only when the relevant
+  core source is present, while arbitrary fixtures receive no exception.
+- The temporary semantic fixture checks the exact official Fira Code 6.2
+  Regular/Bold files, license, provenance, PostScript names, embedded Unicode
+  maps, disabled required/common/contextual/discretionary/historic/TeX
+  ligatures, and raw OpenType feature denylist. Each face maps the complete
+  59-character ambiguity row to one visible default-cmap glyph per source
+  character; synthetic regressions reject contextual alternates and
+  multi-character substitutions.
+- Locked Poppler extraction must preserve the fixture's exact four-space
+  indentation and meaningful two-space separator. Contributor and PDF-build
+  documentation explicitly state that this does not prove clipboard behavior
+  in every viewer.
+- `make check` now includes focused code-width and selected-font suites.
+  `make check-pdf` and therefore `make release-check` build only the canonical
+  PDF plus the small fixture in temporary storage. The workflow uploads exactly
+  the canonical PDF, `build-toolchain.txt`, and `verapdf-report.xml`.
+- The toolchain-record parser now requires the expanded canonical heading,
+  chapter-opener, heading-code-literal, and Fira-fixture success markers; this
+  also repairs the stale parser contract exposed by the Phase 3 PDF-QA marker.
+  Focused affected suites passed 62 tests, the fixture passed with 59 glyphs
+  per Regular/Bold row and one clean veraPDF `ua2` job, and full discovery
+  passed all 186 tests.
+- README, CONTRIBUTING, `docs/pdf-guide.md`, CHANGELOG,
+  RELEASE_CHECKLIST, Make help, workflow comments, and this TODO now describe
+  the selected-Fira permanent pipeline and retain all earlier PDF 2.0,
+  PDF/UA-2, extraction, font, rail, heading, structure, active-content,
+  rendering, OCR, and reproducibility contracts.
 
 ### Phase 6: Complete RC.2 Validation and Windows Handoff
 
-- [ ] Run `npm ci`.
-- [ ] Run `make setup-pdf-tools` and verify all locked inputs before building.
-- [ ] Run `make check`.
-- [ ] Run the separate network-dependent `make check-external-links` monitor
+- [x] Run `npm ci`.
+- [x] Run `make setup-pdf-tools` and verify all locked inputs before building.
+- [x] Run `make check`.
+- [x] Run the separate network-dependent `make check-external-links` monitor
   and distinguish transient/restricted results from repository correctness.
-- [ ] Run `make check-shell-syntax` and `make check-shell-lint`.
-- [ ] Run `make release-check`.
-- [ ] Run `python3 -m unittest discover -s tests` and record the exact count.
-- [ ] Run `git diff --check` and the repository public scrub across index and
+- [x] Run `make check-shell-syntax` and `make check-shell-lint`.
+- [x] Run `make release-check`.
+- [x] Run `python3 -m unittest discover -s tests` and record the exact count.
+- [x] Run `git diff --check` and the repository public scrub across index and
   worktree boundaries.
-- [ ] Require two byte-identical canonical builds and record the RC.2 SHA-256,
+- [x] Require two byte-identical canonical builds and record the RC.2 SHA-256,
   page count, PDF properties, exact embedded-font set, toolchain-record hash,
   and veraPDF-report hash.
-- [ ] Require qpdf success, exact metadata and required text, no prohibited
+- [x] Require qpdf success, exact metadata and required text, no prohibited
   active content, exact extraction, default-glyph checks, every-page rendering,
   complete 150-DPI OCR, cover OCR, and one compliant veraPDF 1.30.2 `ua2` job
   with no failures or exceptions.
-- [ ] Render every RC.2 page at 200 DPI and inspect the cover, complete contents,
+- [x] Render every RC.2 page at 200 DPI and inspect the cover, complete contents,
   chapter 1-to-2 transition, every code-block opening and page transition,
   B.1 through B.4, UTC table, all three screenshots, ambiguous glyphs, long
   commands, wrapped continuations, links, figures, tables, labels, and contrast.
-- [ ] Compare RC.2 with the immutable formal RC.1 and selected Fira proof.
+- [x] Compare RC.2 with the immutable formal RC.1 and selected Fira proof.
   Explain every pagination difference and reject missing content, empty rails,
   heading or decoration orphans, clipping, overlap, malformed commands, broken
   glyphs, displaced figures/tables, or unintended low-contrast text.
-- [ ] Preserve the exact manual-accessibility evidence actually performed and
+- [x] Preserve the exact manual-accessibility evidence actually performed and
   disclose every untested screen-reader/viewer, keyboard, reflow, or other
   assistive-technology pairing without making WCAG or UTC-approval claims.
-- [ ] Copy only the passing canonical RC.2 PDF, plus any deliberately retained
+- [x] Copy only the passing canonical RC.2 PDF, plus any deliberately retained
   inspection TeX, to the Windows Desktop with an unambiguous RC.2 filename.
   Verify the copied bytes against the reviewed local SHA-256.
+
+Phase 6 evidence recorded August 2, 2026:
+
+- `npm ci` completed with zero vulnerabilities. It emitted the known nonfatal
+  engine warning because local Node `v24.14.0` precedes the transitive
+  `ini@7.0.0` `^24.15.0` range; the locked install and all repository checks
+  completed. `make setup-pdf-tools` verified all seven host prerequisites and
+  every locked input at lock SHA-256
+  `e6821c9177e7160333a273c8b466fbb87be4b35ef9a9dc9525dfab2412bfce31`.
+- `make check`, four-file Bash syntax and ShellCheck, `make release-check`,
+  `git diff --check`, and the index/worktree no-follow public scrub all passed.
+  Complete unittest discovery passed exactly 186 tests. The scrub covered 76
+  tracked files and reviewed the expected placeholder/site-note findings.
+- The separate external-link monitor reached every ordinary public dependency.
+  Its only failure was the authenticated UTC Open OnDemand host after three
+  retries because this environment returned DNS `URLError [Errno -2]`. This is
+  recorded as restricted/transient network monitoring, not a repository gate;
+  no allowlist or correctness check was weakened.
+- Repeated locked builds produced a byte-identical 27-page US Letter, tagged,
+  unencrypted PDF 2.0 at SHA-256
+  `3aba1172a34e3ae28a2290143fc3e132c2e383e11b1276aa8643017eac58b4e3`.
+  It embeds exactly Unicode-mapped Noto Sans Regular/Bold, DejaVu Sans Mono
+  Regular, and Fira Code Regular. The local worktree toolchain record SHA-256
+  is `7ea2c71ef35998617e352e736f3a6627036dab0b34c99187c95dd00fd92d58f4`;
+  its commit-bound hosted replacement is a Phase 7 artifact.
+- qpdf, exact metadata/text/extraction/font/heading/page-label/destination,
+  prohibited-active-content, structure, and default-glyph checks passed. OCR
+  covered all 27 pages at 150 DPI with at least 200 alphanumeric characters
+  per page and the separate cover requirements. The PDF has 81 headings, all
+  11 chapter-opener contracts, all 11 heading-code literals, and 2,596 logical
+  structure roles.
+- veraPDF 1.30.2 reported one compliant `ua2` job, 1,727 passed rules,
+  182,043 passed checks, no failed rules or checks, and no exceptions. The
+  local report SHA-256 is
+  `247d4ec0ae07d356fc0e21677c59c09829b47cfce2996a9d8eb4e8a496521041`.
+- Every RC.2 page was rendered and reviewed at 200 DPI. The cover, complete
+  contents, chapter transitions, three sanitized screenshots, UTC table, every
+  code opening and continuation, ambiguous glyphs, wrapped commands, links,
+  figures, labels, and B.1 through B.4 show no missing content, empty rail,
+  orphan, clipping, overlap, malformed command, broken glyph, displaced
+  figure/table, or unintended low-contrast text.
+- RC.2 remains 27 pages like formal RC.1. The chapter-opener keep moved Access
+  from physical page 3 to 4 and its local continuation content forward; the
+  Fira metrics and added concise terminology moved selected Python, transfer,
+  troubleshooting, and best-practice headings forward by one page. The new
+  one-file `scp` material replaces the standalone `rsync` heading while
+  retaining the commands. Appendix A and B still open on physical pages 19
+  and 23. The selected Fira proof is otherwise the reviewed typography/layout
+  input and has only its explicit, noncanonical proof specimen as page 28.
+- Manual review here covered visual reading order, heading/content adjacency,
+  legibility, contrast, link/table/figure placement, and code differentiation.
+  No screen reader or PDF-viewer assistive-technology pairing, keyboard-only
+  navigation, or reflow session was performed. The evidence therefore makes
+  no WCAG 2.1 AA, universal clipboard/accessibility, or UTC-approval claim.
+- The passing PDF alone was copied to
+  `C:\\Users\\Gage\\Desktop\\UTC_HPC_Guide_v1.2.2-rc.2.pdf`; no inspection
+  TeX was deliberately retained. Its Windows copy has the same reviewed
+  SHA-256 `3aba1172a34e3ae28a2290143fc3e132c2e383e11b1276aa8643017eac58b4e3`.
 
 ### Phase 7: Focused Draft PR and Proof-Branch Transition
 

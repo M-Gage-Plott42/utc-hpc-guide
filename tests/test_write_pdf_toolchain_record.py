@@ -33,7 +33,8 @@ def passing_log(pdf: Path) -> str:
             f"pdf_reproducible sha256={PDF_SHA256}",
             f"pdf_built path={pdf} sha256={PDF_SHA256}",
             (
-                "pdf_qa_passed pages=24 fonts=7 "
+                "pdf_qa_passed pages=24 fonts=7 headings=81 "
+                "chapter_openers=11 heading_code_literals=11 "
                 f"sha256={PDF_SHA256}"
             ),
             "pdf_ocr_passed pages=24 dpi=150 min_page_alnum=200",
@@ -41,6 +42,10 @@ def passing_log(pdf: Path) -> str:
                 "pdf_accessibility_qa_passed "
                 "structure_roles=900 figures=3 "
                 "verapdf_profile=ua2 verapdf_jobs=1"
+            ),
+            (
+                "code_font_fixture_passed regular=FiraCode-Regular "
+                "bold=FiraCode-Bold glyphs_per_row=59 verapdf_profile=ua2"
             ),
         )
     )
@@ -62,6 +67,11 @@ class CheckLogTests(unittest.TestCase):
         self.assertEqual(checks["accessibility"], "passed")
         self.assertEqual(checks["verapdf"], "passed")
         self.assertEqual(checks["pages"], "24")
+        self.assertEqual(checks["headings"], "81")
+        self.assertEqual(checks["chapter_openers"], "11")
+        self.assertEqual(checks["heading_code_literals"], "11")
+        self.assertEqual(checks["code_font_fixture"], "passed")
+        self.assertEqual(checks["fixture_glyphs_per_row"], "59")
 
     def test_rejects_missing_gate_marker(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

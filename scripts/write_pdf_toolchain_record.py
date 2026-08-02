@@ -175,7 +175,10 @@ def parse_check_log(
         "pdf_qa_passed ",
         re.compile(
             rf"pdf_qa_passed pages=([1-9][0-9]*) "
-            rf"fonts=([1-9][0-9]*) sha256=({HEX_SHA256})"
+            rf"fonts=([1-9][0-9]*) headings=([1-9][0-9]*) "
+            rf"chapter_openers=([1-9][0-9]*) "
+            rf"heading_code_literals=([1-9][0-9]*) "
+            rf"sha256=({HEX_SHA256})"
         ),
     )
     ocr = one_marker(
@@ -195,8 +198,17 @@ def parse_check_log(
             r"verapdf_profile=ua2 verapdf_jobs=1"
         ),
     )
+    fixture = one_marker(
+        lines,
+        "code_font_fixture_passed ",
+        re.compile(
+            r"code_font_fixture_passed "
+            r"regular=FiraCode-Regular bold=FiraCode-Bold "
+            r"glyphs_per_row=([1-9][0-9]*) verapdf_profile=ua2"
+        ),
+    )
 
-    hashes = (reproducible.group(1), built.group(2), qa.group(3))
+    hashes = (reproducible.group(1), built.group(2), qa.group(6))
     if any(value != pdf_sha256 for value in hashes):
         raise RuntimeError(
             "PDF check markers do not match the final PDF SHA-256"
@@ -217,8 +229,13 @@ def parse_check_log(
         "verapdf": "passed",
         "pages": qa.group(1),
         "fonts": qa.group(2),
+        "headings": qa.group(3),
+        "chapter_openers": qa.group(4),
+        "heading_code_literals": qa.group(5),
         "ocr_dpi": ocr.group(2),
         "structure_roles": accessibility.group(1),
+        "code_font_fixture": "passed",
+        "fixture_glyphs_per_row": fixture.group(1),
     }
 
 
@@ -753,6 +770,9 @@ def write_record(
             f"sha256={pdf_digest}",
             f"pages={checks['pages']}",
             f"fonts={checks['fonts']}",
+            f"headings={checks['headings']}",
+            f"chapter_openers={checks['chapter_openers']}",
+            f"heading_code_literals={checks['heading_code_literals']}",
             f"pdf_version={info['PDF version']}",
             f"Tagged={info['Tagged']}",
             "StructTreeRoot=present",
@@ -771,6 +791,8 @@ def write_record(
             f"ocr={checks['ocr']}",
             f"ocr_dpi={checks['ocr_dpi']}",
             f"accessibility={checks['accessibility']}",
+            f"code_font_fixture={checks['code_font_fixture']}",
+            f"fixture_glyphs_per_row={checks['fixture_glyphs_per_row']}",
             f"verapdf={checks['verapdf']}",
             f"verapdf_jobs={vera.total_jobs}",
             f"verapdf_compliant_jobs={vera.compliant_jobs}",

@@ -15,9 +15,17 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from .check_code_width import (
+        CANONICAL_WIDTH_EXCEPTIONS,
+        validate_fenced_code_width,
+    )
     from .code_font import fontspec_definition, load_code_font
     from .pdf_manifest import load_manifest, output_path, workflow_metadata
 except ImportError:
+    from check_code_width import (
+        CANONICAL_WIDTH_EXCEPTIONS,
+        validate_fenced_code_width,
+    )
     from code_font import fontspec_definition, load_code_font
     from pdf_manifest import load_manifest, output_path, workflow_metadata
 
@@ -126,6 +134,12 @@ def assemble_markdown(root: Path, manifest: dict[str, Any]) -> str:
     for appendix in appendix_sections:
         document += "\n\n\\newpage\n\n" + appendix.strip()
     document += "\n\n\\newpage\n\n" + "\n\n".join(example_sections)
+    allowed_widths = (
+        CANONICAL_WIDTH_EXCEPTIONS
+        if "docs/05-python-envs.md" in manifest["core_sources"]
+        else ()
+    )
+    validate_fenced_code_width(document, allowed=allowed_widths)
     return document + "\n"
 
 

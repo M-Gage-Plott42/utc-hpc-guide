@@ -19,6 +19,10 @@ from scripts.build_pdf import (
     cover_variables,
     locked_font_variables,
 )
+from scripts.check_code_width import (
+    CANONICAL_WIDTH_EXCEPTIONS,
+    overlong_fenced_code_lines,
+)
 from scripts.check_pdf import (
     AppendixCodeHeading,
     ChapterOpener,
@@ -286,36 +290,14 @@ class PdfAssemblyTests(unittest.TestCase):
 
     def test_canonical_phase4_usability_and_width_contract(self) -> None:
         assembled = assemble_markdown(ROOT, CURRENT_MANIFEST)
-        fence_marker: str | None = None
-        fence_length = 0
-        overlong: list[tuple[int, str]] = []
-        for line in assembled.splitlines():
-            match = re.match(r"^[ ]{0,3}(`{3,}|~{3,})", line)
-            if fence_marker is None:
-                if match:
-                    token = match.group(1)
-                    fence_marker = token[0]
-                    fence_length = len(token)
-                continue
-            if match:
-                token = match.group(1)
-                if token[0] == fence_marker and len(token) >= fence_length:
-                    fence_marker = None
-                    fence_length = 0
-                    continue
-            width = len(line.expandtabs(4))
-            if width > 80:
-                overlong.append((width, line))
-        self.assertIsNone(fence_marker)
         self.assertEqual(
-            overlong,
-            [
-                (
-                    83,
-                    'INSTALLER_SHA256="ecb43ee4ae30a7a5af87737e9548ceb21'
-                    'f0a10ec55b8dc40d247aa925b80bfec"',
+            tuple(
+                (width, line)
+                for _line_number, width, line in overlong_fenced_code_lines(
+                    assembled
                 )
-            ],
+            ),
+            CANONICAL_WIDTH_EXCEPTIONS,
         )
 
         overview = (ROOT / "docs/00-overview.md").read_text(encoding="utf-8")

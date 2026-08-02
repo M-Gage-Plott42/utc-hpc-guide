@@ -100,10 +100,10 @@ Build the manifest-selected document:
 make pdf
 ```
 
-The review-only `v1.2.2-rc.1` manifest produces:
+The review-only `v1.2.2-rc.2` manifest produces:
 
 ```text
-dist/UTC_HPC_Guide_v1.2.2-rc.1.pdf
+dist/UTC_HPC_Guide_v1.2.2-rc.2.pdf
 ```
 
 The published `v1.2.1` stable asset remains unchanged while this candidate is
@@ -113,6 +113,12 @@ Run the accessibility gate against an existing build:
 
 ```bash
 make check-pdf-accessibility
+```
+
+Run only the isolated selected-font semantic fixture:
+
+```bash
+make check-code-font-fixture
 ```
 
 Run the complete PDF gate:
@@ -136,9 +142,14 @@ The PDF gate:
 - generates PDF 2.0 through Pandoc's supported LuaLaTeX
   `pdfstandard=ua-2` path;
 - validates basic PDF structure with qpdf;
-- checks US Letter page size, title, author, encryption state, the exact
-  embedded Noto Sans and DejaVu Sans Mono family set, and Unicode mappings with
-  Poppler;
+- checks US Letter page size, title, author, encryption state, the exact used
+  Noto Sans Regular/Bold, DejaVu Sans Mono Regular, and Fira Code Regular
+  family set, and Unicode mappings with Poppler;
+- validates the exact Fira Regular/Bold source bytes, license, PostScript
+  names, provenance, fontspec denylist, and build-record fields;
+- requires canonical fenced-code lines to stay at or below 80 characters,
+  except for the one exact 83-character immutable Miniconda SHA-256
+  assignment;
 - requires `Tagged: yes`, a structure tree, marked content, `en-US`, and the
   expected PDF/UA-2 identification;
 - requires representative heading, list, table, table-header, table-cell,
@@ -151,6 +162,13 @@ The PDF gate:
   display the document title;
 - requires one physical `Cover` label, lowercase Roman contents labels
   starting at `i`, and Arabic body labels restarting at `1`;
+- requires every chapter heading, its introduction, and first subsection to
+  share a physical page; every Appendix B template heading must share a page
+  with its first shebang line; and every body heading must use the Noto heading
+  face and have same-page semantic content below it;
+- requires one layout-artifact code rail per real source line, preserves rails
+  for deliberate interior blank lines, and rejects synthetic leading or
+  trailing rails;
 - renders screenshots as non-floating, source-position figures with nearby
   contextual labels, and rejects detached caption structures that could move
   ahead of their headings or figures in logical reading order;
@@ -165,7 +183,13 @@ The PDF gate:
 - runs Tesseract against every rendered page, enforces the per-page text
   threshold, checks representative headings in the combined OCR output, and
   separately requires `Practical HPC Onboarding Guide` and
-  `Release candidate for v1.2.2` to be legible on physical page 1.
+  `Release candidate for v1.2.2` to be legible on physical page 1; and
+- builds a one-page, test-only tagged fixture using Fira Code Regular and Bold,
+  checks the complete ambiguous-glyph row against each face's default Unicode
+  cmap with one visible glyph per literal character, verifies four-space
+  indentation and meaningful two-space separators in locked Poppler
+  extraction, and requires one clean veraPDF `ua2` job. The fixture exists
+  only in a temporary directory and is not a guide or workflow artifact.
 
 The [Pandoc LaTeX variables](https://pandoc.org/demo/example33/19.1-latex.html)
 enable the source-generated PDF-standard path. The
@@ -175,7 +199,8 @@ describe the underlying tagging support, and the
 the independent machine validator.
 
 The OCR check is a legibility regression test, not proof of privacy,
-redaction, or accessibility. Likewise, a tagged PDF and passing veraPDF report
+redaction, or accessibility. Exact Poppler extraction does not prove clipboard
+fidelity in every viewer. Likewise, a tagged PDF and passing veraPDF report
 cover machine-verifiable requirements only. They do not certify WCAG 2.1 AA,
 prove usable reading order, or constitute UTC accessibility approval.
 
@@ -308,9 +333,25 @@ signed or hermetic provenance.
 After PDF QA passes, the hosted workflow uploads these files together:
 
 - the manifest-selected PDF, currently
-  `UTC_HPC_Guide_v1.2.2-rc.1.pdf`;
+  `UTC_HPC_Guide_v1.2.2-rc.2.pdf`;
 - `build-toolchain.txt`; and
 - `verapdf-report.xml`.
+
+No font proof, font matrix, comparison PDF, or semantic fixture is uploaded.
+The fixture is generated and destroyed inside the validation job. The
+three-profile typography experiment remains historical review evidence on
+draft PR [#28](https://github.com/M-Gage-Plott42/utc-hpc-guide/pull/28):
+
+- DejaVu Sans Mono proof SHA-256:
+  `fbb826b7514a09a816973220f7b87543088052cac601b09a382e67679590b719`;
+- Cascadia Mono proof SHA-256:
+  `99297697eab91ce8ee5ac743fda21e35767628e9cd57ddf06a51e7bdf31f9371`;
+- selected Fira Code proof SHA-256:
+  `263371523226872363b9f67c311e6eac6d6d187f0292f53d1761545cea440534`.
+
+Those proof hashes document the completed selection input. They are not
+release artifacts, and the permanent pipeline contains no proof profile,
+proof transform, proof orchestrator, or unselected font.
 
 The toolchain record captures the commit and workflow run, runner image,
 toolchain-lock digest, observed tool versions, structural and accessibility

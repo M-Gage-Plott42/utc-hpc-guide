@@ -24,9 +24,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Test toolchain-record failure paths
-        run: python3 -m unittest tests.test_write_pdf_toolchain_record
-
       - name: Install exact host PDF QA packages
         shell: bash
         run: |
@@ -50,6 +47,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends \
             "${qa_packages[@]}"
+
+      - name: Test toolchain-record failure paths
+        run: python3 -m unittest tests.test_write_pdf_toolchain_record
 
       - name: Bootstrap and verify locked PDF toolchain
         run: |

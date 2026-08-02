@@ -87,7 +87,7 @@ class PdfManifestTests(unittest.TestCase):
             )
             self.assertEqual(
                 output_path(root, manifest),
-                root / "dist/UTC_HPC_Guide_v1.2.2-rc.1.pdf",
+                root / "dist/UTC_HPC_Guide_v1.2.2-rc.2.pdf",
             )
         self.assertEqual(manifest["release_status"], "candidate")
 
@@ -129,8 +129,8 @@ class PdfManifestTests(unittest.TestCase):
 
     def test_final_trailer_id_has_documented_deterministic_derivation(self) -> None:
         self.assertEqual(
-            derive_pdf_trailer_id("1.2.2-rc.1", 1785585600),
-            "8c74b718755dd021a095af382e30cec1",
+            derive_pdf_trailer_id("1.2.2-rc.2", 1785628800),
+            "f4ea8ec5e9282eabbe16cc4597130260",
         )
         self.assertEqual(
             CURRENT_MANIFEST["pdf_trailer_id"],
@@ -160,10 +160,10 @@ class PdfManifestTests(unittest.TestCase):
         self.assertEqual(
             metadata,
             {
-                "path": "dist/UTC_HPC_Guide_v1.2.2-rc.1.pdf",
-                "document_version": "1.2.2-rc.1",
+                "path": "dist/UTC_HPC_Guide_v1.2.2-rc.2.pdf",
+                "document_version": "1.2.2-rc.2",
                 "release_status": "candidate",
-                "artifact_label": "utc-hpc-guide-v1.2.2-rc.1-candidate",
+                "artifact_label": "utc-hpc-guide-v1.2.2-rc.2-candidate",
             },
         )
 

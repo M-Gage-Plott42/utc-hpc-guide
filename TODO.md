@@ -392,7 +392,7 @@ Reopen live validation only under the existing live-site rule above.
 
 ## v1.2.2-rc.2 Fira Canonicalization and Publication Plan
 
-Status: planned — Fira Code selected; implementation has not started
+Status: Phase 0 complete — RC.2 boundary established; Phase 1 has not started
 
 Plan date: August 1, 2026
 
@@ -468,32 +468,61 @@ content, pipeline, and release-boundary findings as reconciled below.
 
 ### Phase 0: Guard, Evidence, and RC.2 Boundary
 
-- [ ] Confirm the worktree and index are clean before fetching or branching.
-- [ ] Fetch `origin` with pruning and verify the guarded commits above. Require
+- [x] Confirm the worktree and index are clean before fetching or branching.
+- [x] Fetch `origin` with pruning and verify the guarded commits above. Require
   `e1c6f68822522dbf8e3d4c31e02dc4bde47bcf00` to be an ancestor of
   `origin/agent/polished-pdf-redesign`, and require
   `git diff --name-only e1c6f68822522dbf8e3d4c31e02dc4bde47bcf00..origin/agent/polished-pdf-redesign`
   to report only `TODO.md`. Stop rather than rebasing, merging, or guessing if
   either guard fails.
-- [ ] Create `agent/v1.2.2-rc.2-fira` directly from
+- [x] Create `agent/v1.2.2-rc.2-fira` directly from
   `aefc676200acc09df044be9a5f7039b9e093d878`.
-- [ ] Run
+- [x] Run
   `git restore --source origin/agent/polished-pdf-redesign -- TODO.md`, verify
   that the resulting worktree change is only `TODO.md`, and commit the durable
   plan transfer before implementation. This keeps the complete plan and proof
   evidence on the clean-base branch without importing proof implementation.
-- [ ] Keep PR #28 open, draft, unmerged, and unchanged while RC.2 is built so
+- [x] Keep PR #28 open, draft, unmerged, and unchanged while RC.2 is built so
   its proof artifacts and comments remain reachable as comparison evidence.
-- [ ] Before any other PDF-changing edit, promote the manifest boundary to:
+- [x] Before any other PDF-changing edit, promote the manifest boundary to:
   - `release_status`: `candidate`
   - `release_target`: `1.2.2`
   - `document_version`: `1.2.2-rc.2`
   - `output_filename`: `UTC_HPC_Guide_v1.2.2-rc.2.pdf`
-- [ ] Select a new deterministic source epoch and engine-compatible trailer
+- [x] Select a new deterministic source epoch and engine-compatible trailer
   identifier, and update candidate-owned required PDF and OCR text from RC.1
   to RC.2.
-- [ ] Keep the current `1.2.2` changelog material under `[Unreleased]`; do not
+- [x] Keep the current `1.2.2` changelog material under `[Unreleased]`; do not
   assign a stable release date during candidate work.
+
+Phase 0 evidence recorded August 1, 2026:
+
+- The pre-branch worktree and index were clean. After a pruned fetch,
+  `origin/main` was exactly
+  `d5815af6c6574f4ddf2d0020422b91d82bd7ec95`, and
+  `e1c6f68822522dbf8e3d4c31e02dc4bde47bcf00` remained an ancestor of
+  `origin/agent/polished-pdf-redesign`. The guarded range changed only
+  `TODO.md`.
+- `agent/v1.2.2-rc.2-fira` was created directly from
+  `aefc676200acc09df044be9a5f7039b9e093d878`. The exact source-branch
+  `TODO.md` was transferred alone and committed before implementation as
+  `acf61dc221d17d5f895a5f42da1e943026f71f9a`.
+- PR #28 remained open, draft, unmerged, and unchanged at
+  `77ebf10cd43fe9dfa3b88a4bb2ee31127be0e37c`.
+- The manifest now identifies review-only `v1.2.2-rc.2`, writes
+  `UTC_HPC_Guide_v1.2.2-rc.2.pdf`, and uses deterministic epoch
+  `1785628800` (`2026-08-02 00:00:00 UTC`) with derived trailer identifier
+  `f4ea8ec5e9282eabbe16cc4597130260`. Exact RC.2 text is required in PDF
+  extraction and physical-cover OCR.
+- The `1.2.2` changelog remains under `[Unreleased]`. No VPN/HPC activity,
+  proof implementation, merge, tag, release, or stable-asset change occurred.
+- `npm ci` completed with no reported vulnerabilities, the locked PDF
+  toolchain verified, and `make release-check` passed 162 tests plus Bash,
+  ShellCheck, reproducibility, qpdf, four-font, every-page 150-DPI OCR, and
+  veraPDF 1.30.2 `ua2` gates. The 27-page boundary-validation build was
+  byte-identical at SHA-256
+  `c9cefd2cf74bfff086e60557794aa5ba03f873ac310b745f06fd78d5f9853072`;
+  it is not the later selected-Fira inspection candidate.
 
 ### Phase 1: Promote Only the Selected Fira Profile
 

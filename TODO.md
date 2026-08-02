@@ -392,8 +392,8 @@ Reopen live validation only under the existing live-site rule above.
 
 ## v1.2.2-rc.2 Fira Canonicalization and Publication Plan
 
-Status: Phase 2 complete — Appendix assembly and source-owned code rails
-corrected; Phase 3 has not started
+Status: Phase 3 complete — heading pagination and PDF-only heading typography
+corrected; Phase 4 has not started
 
 Plan date: August 1, 2026
 
@@ -646,29 +646,74 @@ Phase 2 evidence recorded August 1, 2026:
 
 ### Phase 3: Heading Pagination and PDF-Only Heading Typography
 
-- [ ] Implement a tagging-safe chapter-opener keep rule with core LaTeX
+- [x] Implement a tagging-safe chapter-opener keep rule with core LaTeX
   penalties/no-break controls, not a new package or a boxed long code block.
-- [ ] Require each top-level chapter heading, its short introductory paragraph,
+- [x] Require each top-level chapter heading, its short introductory paragraph,
   and its first subsection heading to share a physical page. If a source shape
   cannot satisfy that bounded opener, fail the contract and resolve that case
   explicitly rather than silently weakening the rule.
-- [ ] Require each B.1 through B.4 script heading to share a physical page with
+- [x] Require each B.1 through B.4 script heading to share a physical page with
   its first nonblank source line.
-- [ ] Require that no heading end a page followed only by a code rail or other
+- [x] Require that no heading end a page followed only by a code rail or other
   decoration.
-- [ ] Add deterministic text-to-page mapping tests for every chapter opener,
+- [x] Add deterministic text-to-page mapping tests for every chapter opener,
   every Appendix B heading/shebang pair, and specifically `2. Access and SSH`
   with `2.1 Account and Network Prerequisites`.
-- [ ] For PDF output only, convert inline `Code` nodes contained in `Header`
+- [x] For PDF output only, convert inline `Code` nodes contained in `Header`
   nodes to ordinary literal heading text without interpreting punctuation or
   changing spaces.
-- [ ] Assert unchanged heading text, identifiers, destinations, outline text,
+- [x] Assert unchanged heading text, identifiers, destinations, outline text,
   hierarchy, and structure roles while requiring the normal Noto heading face.
-- [ ] Render the complete two-column contents page after the transformation.
+- [x] Render the complete two-column contents page after the transformation.
   Shorten only entries that still wrap excessively; do not shrink the whole
   contents page to accommodate isolated long entries.
-- [ ] Reject heading-only bottoms, excessive new whitespace, three-line TOC
+- [x] Reject heading-only bottoms, excessive new whitespace, three-line TOC
   entries, terminal-style heading text, or new clipping and overlap.
+
+Phase 3 evidence recorded August 1, 2026:
+
+- The PDF Lua filter now wraps each bounded H1-through-first-H2 opener in the
+  core LaTeX `samepage` environment and emits `\nopagebreak[4]` after every
+  H2. It preserves the standard tagging-aware section commands and adds no
+  heading, code-box, or page-measurement package. A chapter whose first real
+  body block is not a paragraph, or which lacks a first H2, fails closed.
+- All 11 chapter openers satisfy the physical-page contract. Their H1/H2 page
+  pairs are respectively `3/3`, `4/4`, `5/5`, `7/7`, `9/9`, `11/11`,
+  `14/14`, `15/15`, `17/17`, `19/19`, and `23/23`. In particular,
+  `2. Access and SSH`, its introduction, and
+  `2.1 Account and Network Prerequisites` now share physical page 4 without
+  leaving excessive whitespace on physical page 3.
+- B.1, B.2, B.3, and B.4 share their first tracked `#!/bin/bash -l` lines on
+  physical pages 23, 24, 25, and 25. MuPDF structured-text checks also require
+  same-page semantic text below every one of the 82 source headings, excluding
+  running headers, footers, and decorative rails.
+- For LaTeX/PDF output only, all 11 inline `Code` nodes found in source
+  headings become literal `Str` nodes. Source Markdown, literal text,
+  punctuation, spacing, 82 unique identifiers, 11-H1/71-H2 hierarchy, and the
+  exact 82-entry outline remain unchanged. Every body heading uses only Noto
+  Sans Bold. The 2,577-role logical structure, including all 49 semantic
+  `Code` roles, is unchanged.
+- The complete contents remains one two-column physical page. It uses only
+  Noto Sans Regular/Bold, retains every outline entry, and has no entry beyond
+  two visual lines. The release PDF now embeds exactly its four used
+  Unicode-mapped faces: Noto Sans Regular/Bold, DejaVu Sans Mono Regular, and
+  Fira Code Regular; DejaVu Sans Mono Bold remains toolchain-provenanced but is
+  no longer forced into the PDF solely by terminal-styled headings.
+- `npm ci` reported no vulnerabilities. The focused build suite passed 31
+  tests, complete discovery passed all 179 tests, and `make release-check`
+  passed 172 routine/unit tests plus scrub, asset, link, placeholder, Bash,
+  ShellCheck, reproducibility, qpdf, exact extraction, heading/outline/font,
+  every-page 150-DPI OCR, structural, and veraPDF 1.30.2 `ua2` gates.
+- The 27-page canonical PDF is byte-identical across repeated builds at
+  SHA-256
+  `49e19ef5a9548f10d2e6acd2a078236217df3890e90ff1230d718afe4e17d21e`.
+  Focused 160-DPI review of the complete contents, the Overview-to-Access
+  transition, and physical pages 23–25 found no clipping, overlap, malformed
+  heading, excessive gap, empty rail, or decoration orphan. The all-page
+  Phase 6 visual and manual-accessibility reviews remain pending.
+- No canonical Markdown content, UTC fact, field-note boundary, screenshot,
+  VPN/HPC state, PR, merge, tag, release, Windows copy, or later-phase
+  implementation changed.
 
 ### Phase 4: Canonical Source Wrapping and Focused Usability Edits
 

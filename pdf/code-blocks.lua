@@ -95,3 +95,76 @@ function Image(image)
   end
   return image
 end
+
+-- Inline code in a Markdown heading is literal title text, not a terminal
+-- sample. Keep the source AST presentation-neutral, but let the PDF heading
+-- and contents entry inherit the standard Noto heading face.
+function Header(header)
+  if not FORMAT:match("latex") then
+    return nil
+  end
+  header.content = header.content:walk({
+    Code = function(code)
+      return pandoc.Str(code.text)
+    end,
+  })
+  return header
+end
+
+-- Keep each bounded chapter opener (H1 through its first H2) together with
+-- core LaTeX page-breaking controls. The emitted section commands remain the
+-- standard tagging-aware commands; no heading or box package is involved.
+function Pandoc(document)
+  if not FORMAT:match("latex") then
+    return nil
+  end
+
+  local blocks = pandoc.Blocks({})
+  local opener = nil
+  for _, block in ipairs(document.blocks) do
+    if block.t == "Header" and block.level == 1 then
+      if opener then
+        error("chapter opener is missing its first level-two heading")
+      end
+      opener = {
+        title = pandoc.utils.stringify(block.content),
+        first_body_seen = false,
+        intro_seen = false,
+      }
+      blocks:insert(pandoc.RawBlock("latex", "\\begin{samepage}"))
+      blocks:insert(block)
+    elseif opener and not opener.first_body_seen then
+      if block.t == "RawBlock" then
+        blocks:insert(block)
+      elseif block.t ~= "Para" then
+        error(
+          "chapter opener must begin with a short introductory paragraph: "
+            .. opener.title
+        )
+      else
+        opener.first_body_seen = true
+        opener.intro_seen = true
+        blocks:insert(block)
+      end
+    elseif opener and block.t == "Header" and block.level == 2 then
+      if not opener.intro_seen then
+        error("chapter opener is missing its introductory paragraph: " .. opener.title)
+      end
+      blocks:insert(block)
+      blocks:insert(pandoc.RawBlock("latex", "\\end{samepage}"))
+      blocks:insert(pandoc.RawBlock("latex", "\\nopagebreak[4]"))
+      opener = nil
+    else
+      blocks:insert(block)
+      if block.t == "Header" and block.level == 2 then
+        blocks:insert(pandoc.RawBlock("latex", "\\nopagebreak[4]"))
+      end
+    end
+  end
+
+  if opener then
+    error("chapter opener is missing its first level-two heading: " .. opener.title)
+  end
+  document.blocks = blocks
+  return document
+end

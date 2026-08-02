@@ -18,12 +18,20 @@ from scripts.build_pdf import (
     locked_font_variables,
 )
 from scripts.check_pdf import (
+    AppendixCodeHeading,
+    ChapterOpener,
     CODE_FILTER_PROOF_LINES,
     EXACT_CODE_EXTRACTION_SPANS,
+    HeadingContracts,
+    HeadingInfo,
+    TextBlock,
     extract_unique_fixed_span,
     validate_code_filter_output,
     validate_exact_code_extraction,
     validate_fonts,
+    validate_heading_filter_output,
+    validate_heading_layout,
+    validate_outline,
 )
 from scripts.pdf_manifest import (
     derive_pdf_trailer_id,
@@ -44,7 +52,6 @@ name                                 type              encoding         emb sub 
 XRSAGH+NotoSans-Bold                 CID TrueType      Identity-H       yes yes yes     53  0
 VZFBDX+NotoSans-Regular              CID TrueType      Identity-H       yes yes yes     54  0
 KIHLRP+DejaVuSansMono                CID TrueType      Identity-H       yes yes yes     55  0
-RBAFGN+DejaVuSansMono-Bold           CID TrueType      Identity-H       yes yes yes   1398  0
 ABCDEF+FiraCode-Regular              CID TrueType      Identity-H       yes yes yes   1399  0
 """
 
@@ -303,6 +310,118 @@ class PdfAssemblyTests(unittest.TestCase):
         self.assertIn("ipairs(code_lines(block.text))", code_filter)
         self.assertIn('text:sub(1, 1) == "\\n"', code_filter)
         self.assertIn('text:sub(-1) == "\\n"', code_filter)
+
+    def test_heading_filter_uses_pdf_only_core_page_controls(self) -> None:
+        header = (ROOT / "pdf/header.tex").read_text(encoding="utf-8")
+        code_filter = (ROOT / "pdf/code-blocks.lua").read_text(encoding="utf-8")
+        self.assertIn('if not FORMAT:match("latex")', code_filter)
+        self.assertIn("pandoc.Str(code.text)", code_filter)
+        self.assertIn('pandoc.RawBlock("latex", "\\\\begin{samepage}")', code_filter)
+        self.assertIn('pandoc.RawBlock("latex", "\\\\end{samepage}")', code_filter)
+        self.assertIn('pandoc.RawBlock("latex", "\\\\nopagebreak[4]")', code_filter)
+        self.assertIn("chapter opener must begin with", code_filter)
+        for package in ("needspace", "titlesec", "tcolorbox", "listings", "minted"):
+            self.assertNotIn(
+                f"\\usepackage{{{package}}}",
+                (header + code_filter).casefold(),
+            )
+
+    def test_heading_filter_output_preserves_text_and_boundaries(self) -> None:
+        output = """\\begin{samepage}
+\\section{1. Chapter literal\\_name}\\label{chapter-id}
+Intro with \\texttt{body\\_literal}.
+\\subsection{1.1 First sub\\_name}\\label{first-id}
+\\end{samepage}
+\\nopagebreak[4]
+First subsection body.
+\\begin{samepage}
+\\section{2. Second Chapter}\\label{second-id}
+Second intro.
+\\subsection{2.1 Second First}\\label{second-first-id}
+\\end{samepage}
+\\nopagebreak[4]
+Second subsection body.
+"""
+        validate_heading_filter_output(output)
+        with self.assertRaisesRegex(RuntimeError, "terminal styling"):
+            validate_heading_filter_output(
+                output.replace(
+                    "1. Chapter literal\\_name",
+                    "1. Chapter \\texttt{literal\\_name}",
+                )
+            )
+        with self.assertRaisesRegex(RuntimeError, "close both"):
+            validate_heading_filter_output(output.replace("\\end{samepage}", "", 1))
+
+    def test_heading_outline_and_page_contracts_fail_closed(self) -> None:
+        chapter = HeadingInfo(1, "1. Chapter", "chapter")
+        first = HeadingInfo(2, "1.1 First", "first")
+        appendix = HeadingInfo(1, "Appendix B: Templates", "appendix-b")
+        example = HeadingInfo(2, "B.1 example.sbatch", "example-one")
+        headings = (chapter, first, appendix, example)
+        contracts = HeadingContracts(
+            headings,
+            (
+                ChapterOpener(chapter, first),
+                ChapterOpener(appendix, example),
+            ),
+            (AppendixCodeHeading(example, "#!/bin/bash -l"),),
+            1,
+        )
+        outline = """+\t\"1. Chapter\"\t#nameddest=section*.1
+|\t\t\"1.1 First\"\t#nameddest=subsection*.2
++\t\"Appendix B: Templates\"\t#nameddest=section*.3
+|\t\t\"B.1 example.sbatch\"\t#nameddest=subsection*.4
+"""
+        validate_outline(outline, headings)
+        with self.assertRaisesRegex(RuntimeError, "hierarchy"):
+            validate_outline(outline.replace("|\t\t", "+\t", 1), headings)
+        with self.assertRaisesRegex(RuntimeError, "unique"):
+            validate_outline(outline.replace("subsection*.2", "section*.1"), headings)
+
+        noto_bold = frozenset({"NotoSans-Bold"})
+        noto_regular = frozenset({"NotoSans-Regular"})
+        blocks = (
+            TextBlock(2, "Contents entry", noto_regular, 80, 95, 2),
+            TextBlock(3, chapter.text, noto_bold, 50, 65, 1),
+            TextBlock(3, "Intro", noto_regular, 80, 92, 1),
+            TextBlock(3, first.text, noto_bold, 110, 125, 1),
+            TextBlock(3, "First body", noto_regular, 140, 152, 1),
+            TextBlock(4, appendix.text, noto_bold, 50, 65, 1),
+            TextBlock(4, "Appendix intro", noto_regular, 80, 92, 1),
+            TextBlock(4, example.text, noto_bold, 110, 125, 1),
+            TextBlock(4, "#!/bin/bash -l", noto_regular, 140, 152, 1),
+        )
+        validate_heading_layout(blocks, contracts)
+        split = tuple(
+            TextBlock(5, block.text, block.fonts, block.y0, block.y1, block.visual_lines)
+            if block.text == first.text
+            else block
+            for block in blocks
+        )
+        with self.assertRaisesRegex(RuntimeError, "split across pages"):
+            validate_heading_layout(split, contracts)
+        wrong_font = tuple(
+            TextBlock(
+                block.page,
+                block.text,
+                frozenset({"DejaVuSansMono-Bold"}),
+                block.y0,
+                block.y1,
+                block.visual_lines,
+            )
+            if block.text == example.text
+            else block
+            for block in blocks
+        )
+        with self.assertRaisesRegex(RuntimeError, "NotoSans-Bold"):
+            validate_heading_layout(wrong_font, contracts)
+        three_line_toc = (
+            TextBlock(2, "Wrapped entry", noto_regular, 80, 110, 3),
+            *blocks[1:],
+        )
+        with self.assertRaisesRegex(RuntimeError, "three-line"):
+            validate_heading_layout(three_line_toc, contracts)
 
     def test_code_filter_output_has_one_direct_rail_per_real_line(self) -> None:
         output = """\\begin{GuideCode}
@@ -639,7 +758,7 @@ class PdfAssemblyTests(unittest.TestCase):
 
 class PdfFontQaTests(unittest.TestCase):
     def test_accepts_exact_embedded_pdf_font_families(self) -> None:
-        self.assertEqual(validate_fonts(PDF_FONTS), 5)
+        self.assertEqual(validate_fonts(PDF_FONTS), 4)
 
     def test_rejects_unlocked_embedded_pdf_font_family(self) -> None:
         unexpected = PDF_FONTS.replace(

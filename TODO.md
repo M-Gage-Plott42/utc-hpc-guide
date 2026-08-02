@@ -405,15 +405,17 @@ content, pipeline, and release-boundary findings as reconciled below.
 
 - `origin/main` must be
   `d5815af6c6574f4ddf2d0020422b91d82bd7ec95` before the focused work starts.
-- The typeface-evidence branch and draft pull request #28 must remain at
-  `e1c6f68822522dbf8e3d4c31e02dc4bde47bcf00` until the replacement pull
-  request is ready.
+- The immutable typeface-evidence implementation commit is
+  `e1c6f68822522dbf8e3d4c31e02dc4bde47bcf00`. It must remain an ancestor of
+  the draft PR #28 branch; commits after it and before focused RC.2 work may
+  change only this durable plan in `TODO.md`.
 - The focused RC.2 branch must start from the clean polished-candidate commit
   `aefc676200acc09df044be9a5f7039b9e093d878`, not from the proof-matrix tip.
 - The new branch name is `agent/v1.2.2-rc.2-fira`.
-- Before any implementation edit on that branch, cherry-pick the plan-only
-  commit `PLAN_COMMIT_TO_BIND`. Verify that this transfer changes only
-  `TODO.md`; stop if it carries proof implementation files.
+- Before any implementation edit on that branch, restore `TODO.md` from
+  `origin/agent/polished-pdf-redesign` and commit that documentation-only
+  transfer. Verify that the source branch differs from the immutable evidence
+  commit only in `TODO.md`; stop if it carries later implementation files.
 - The selected proof is Fira Code with SHA-256
   `263371523226872363b9f67c311e6eac6d6d187f0292f53d1761545cea440534`.
 - Canonical fenced code uses Fira Code 6.2 at `9.1/11.5 pt`. Compact inline
@@ -467,12 +469,19 @@ content, pipeline, and release-boundary findings as reconciled below.
 ### Phase 0: Guard, Evidence, and RC.2 Boundary
 
 - [ ] Confirm the worktree and index are clean before fetching or branching.
-- [ ] Fetch `origin` with pruning and verify the three guarded commits above.
-  Stop rather than rebasing, merging, or guessing if any ref differs.
+- [ ] Fetch `origin` with pruning and verify the guarded commits above. Require
+  `e1c6f68822522dbf8e3d4c31e02dc4bde47bcf00` to be an ancestor of
+  `origin/agent/polished-pdf-redesign`, and require
+  `git diff --name-only e1c6f68822522dbf8e3d4c31e02dc4bde47bcf00..origin/agent/polished-pdf-redesign`
+  to report only `TODO.md`. Stop rather than rebasing, merging, or guessing if
+  either guard fails.
 - [ ] Create `agent/v1.2.2-rc.2-fira` directly from
   `aefc676200acc09df044be9a5f7039b9e093d878`.
-- [ ] Cherry-pick the bound plan-only commit named above and verify that it
-  changes only `TODO.md`; this keeps the complete plan on the clean-base branch.
+- [ ] Run
+  `git restore --source origin/agent/polished-pdf-redesign -- TODO.md`, verify
+  that the resulting worktree change is only `TODO.md`, and commit the durable
+  plan transfer before implementation. This keeps the complete plan and proof
+  evidence on the clean-base branch without importing proof implementation.
 - [ ] Keep PR #28 open, draft, unmerged, and unchanged while RC.2 is built so
   its proof artifacts and comments remain reachable as comparison evidence.
 - [ ] Before any other PDF-changing edit, promote the manifest boundary to:

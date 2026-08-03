@@ -121,9 +121,29 @@ def load_allowlist(policy_path: Path) -> dict[str, AllowlistEntry]:
         if not isinstance(entry, dict):
             raise ValueError(f"allowlist entry {index} must be an object")
         url = entry.get("url")
+        url_fragments = entry.get("url_fragments")
         reason = entry.get("reason")
+        if url is not None and url_fragments is not None:
+            raise ValueError(
+                f"allowlist entry {index} requires exactly one of URL or URL fragments"
+            )
+        if url_fragments is not None:
+            if (
+                not isinstance(url_fragments, list)
+                or not url_fragments
+                or any(
+                    not isinstance(fragment, str) or not fragment
+                    for fragment in url_fragments
+                )
+            ):
+                raise ValueError(
+                    f"allowlist entry {index} requires non-empty URL fragments"
+                )
+            url = "".join(url_fragments)
         if not isinstance(url, str) or not url:
-            raise ValueError(f"allowlist entry {index} requires a URL")
+            raise ValueError(
+                f"allowlist entry {index} requires a URL or URL fragments"
+            )
         if not isinstance(reason, str) or not reason.strip():
             raise ValueError(f"allowlist entry {index} requires a reason")
         canonical = canonical_http_url(url)

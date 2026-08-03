@@ -1,13 +1,19 @@
 from __future__ import annotations
 
+from contextlib import redirect_stderr, redirect_stdout
+from io import StringIO
 import json
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest import mock
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 
+from scripts import check_external_links as external_links
 from scripts.check_external_links import (
     CheckResult,
+    Source,
     canonical_http_url,
     check_url,
     check_urls,
@@ -94,6 +100,7 @@ class ExternalLinkCheckerTests(unittest.TestCase):
             )
             allowlist = load_allowlist(policy)
             self.assertEqual(list(allowlist), ["https://example.com/page"])
+            self.assertNotIn("https://example.com/page/status", allowlist)
 
             policy.write_text(
                 json.dumps(
@@ -108,6 +115,162 @@ class ExternalLinkCheckerTests(unittest.TestCase):
             )
             with self.assertRaisesRegex(ValueError, "requires a reason"):
                 load_allowlist(policy)
+
+    def test_allowlist_joins_fragments_into_one_exact_url(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            policy = Path(temp_dir) / "policy.json"
+            policy.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "allowlist": [
+                            {
+                                "url_fragments": [
+                                    "https://private.",
+                                    "example.com/",
+                                ],
+                                "reason": "Requires a private network path.",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            allowlist = load_allowlist(policy)
+
+            self.assertEqual(list(allowlist), ["https://private.example.com/"])
+            self.assertNotIn("https://private.example.com/status", allowlist)
+
+    def test_main_excludes_only_exact_allowlist_url(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            policy = root / "policy.json"
+            allowed_url = "https://example.com/private/"
+            nearby_url = allowed_url + "status"
+            policy.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "allowlist": [
+                            {
+                                "url": allowed_url,
+                                "reason": "Requires a private network path.",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            links = {
+                allowed_url: {Source("README.md", 1)},
+                nearby_url: {Source("README.md", 2)},
+            }
+            args = SimpleNamespace(
+                policy=policy,
+                timeout=4.0,
+                retries=1,
+                workers=2,
+            )
+            result = CheckResult(nearby_url, True, 1, "HTTP 200")
+
+            stdout = StringIO()
+            with (
+                mock.patch.object(external_links, "parse_args", return_value=args),
+                mock.patch.object(
+                    external_links.subprocess,
+                    "run",
+                    return_value=SimpleNamespace(stdout=f"{root}\n"),
+                ),
+                mock.patch.object(
+                    external_links, "tracked_markdown_paths", return_value=[]
+                ),
+                mock.patch.object(
+                    external_links,
+                    "collect_external_links",
+                    return_value=(links, []),
+                ),
+                mock.patch.object(
+                    external_links, "check_urls", return_value=[result]
+                ) as checker,
+                redirect_stdout(stdout),
+            ):
+                return_code = external_links.main()
+
+            self.assertEqual(return_code, 0)
+            checker.assert_called_once_with(
+                [nearby_url],
+                timeout=4.0,
+                retries=1,
+                workers=2,
+            )
+            self.assertIn("checked_urls=1 allowlisted_urls=1", stdout.getvalue())
+
+    def test_main_rejects_stale_allowlist_entry(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            policy = root / "policy.json"
+            stale_url = "https://example.com/private/"
+            policy.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "allowlist": [
+                            {
+                                "url": stale_url,
+                                "reason": "Requires a private network path.",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            args = SimpleNamespace(
+                policy=policy,
+                timeout=4.0,
+                retries=1,
+                workers=2,
+            )
+
+            stderr = StringIO()
+            with (
+                mock.patch.object(external_links, "parse_args", return_value=args),
+                mock.patch.object(
+                    external_links.subprocess,
+                    "run",
+                    return_value=SimpleNamespace(stdout=f"{root}\n"),
+                ),
+                mock.patch.object(
+                    external_links, "tracked_markdown_paths", return_value=[]
+                ),
+                mock.patch.object(
+                    external_links,
+                    "collect_external_links",
+                    return_value=({}, []),
+                ),
+                mock.patch.object(external_links, "check_urls") as checker,
+                redirect_stderr(stderr),
+            ):
+                return_code = external_links.main()
+
+            self.assertEqual(return_code, 2)
+            checker.assert_not_called()
+            self.assertIn(
+                f"stale external-link allowlist entry: {stale_url}",
+                stderr.getvalue(),
+            )
+
+    def test_production_allowlist_matches_utc_appendix(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        allowlist = load_allowlist(root / "scripts/external_link_policy.json")
+        links, failures = collect_external_links(
+            root,
+            [root / "docs/sites/utc-mocshpc.md"],
+        )
+
+        self.assertEqual(failures, [])
+        self.assertEqual(len(allowlist), 1)
+        self.assertTrue(set(allowlist).issubset(links))
 
     def test_retries_transport_and_transient_http_failures(self) -> None:
         url = "https://example.com/"

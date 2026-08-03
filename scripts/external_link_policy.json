@@ -1,4 +1,9 @@
 {
   "version": 1,
-  "allowlist": []
+  "allowlist": [
+    {
+      "url_fragments": ["https://ondemand.", "mocshpc.", "utc.edu/"],
+      "reason": "UTC's public login documentation identifies this authenticated endpoint and directs off-campus users through UTC VPN. This repository's standard GitHub-hosted runner has no configured UTC private-network path; availability is verified out of band."
+    }
+  ]
 }

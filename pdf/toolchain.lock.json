@@ -22,18 +22,18 @@
   "texlive": {
     "release": "2025",
     "repository_revision": "78234",
-    "repository_url": "http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/tlnet-final",
+    "repository_url": "https://ftp.tu-chemnitz.de/pub/tug/historic/systems/texlive/2025/tlnet-final",
     "repository_database": {
-      "url": "http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/tlnet-final/tlpkg/texlive.tlpdb",
+      "url": "https://ftp.tu-chemnitz.de/pub/tug/historic/systems/texlive/2025/tlnet-final/tlpkg/texlive.tlpdb",
       "sha256": "74b5744d2ff1386138d5361d3af49179f921dbbc953e449324d99448af092f41"
     },
     "installer": {
-      "url": "http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/tlnet-final/install-tl-unx.tar.gz",
+      "url": "https://ftp.tu-chemnitz.de/pub/tug/historic/systems/texlive/2025/tlnet-final/install-tl-unx.tar.gz",
       "sha256": "311df9f1477fd90c520159d1feddc2d6270f010d8349d1f6bdb9461a93b48a5c",
       "sha512": "a307d7d11bcbd1f054ad0b0d476f7f12bc1a40d07445020edef8713b44453831d18a2f1722c3d2b0ea2e4fe6c06183a79d1c4049495113f412a9f5a570a8614d",
-      "checksum_url": "http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/tlnet-final/install-tl-unx.tar.gz.sha512",
+      "checksum_url": "https://ftp.tu-chemnitz.de/pub/tug/historic/systems/texlive/2025/tlnet-final/install-tl-unx.tar.gz.sha512",
       "checksum_sha256": "348534f96ed5597c0f8d57e34e41e5cf96860480aa63de477da71e70ec066398",
-      "signature_url": "http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/tlnet-final/install-tl-unx.tar.gz.sha512.asc",
+      "signature_url": "https://ftp.tu-chemnitz.de/pub/tug/historic/systems/texlive/2025/tlnet-final/install-tl-unx.tar.gz.sha512.asc",
       "signature_sha256": "1eb1082b566781fbd2d4808b8805125f2fb7a4c0413aaf9bfd7243ec9ddcf50e"
     },
     "signing_key": {

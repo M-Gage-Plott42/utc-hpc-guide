@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import io
 import json
 import re
 import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
 
 from scripts.bootstrap_pdf_toolchain import (
     LOCK_STAMP_NAME,
+    download_to_temporary,
     require_exact_output_line,
     validate_lock_stamp,
     validate_signed_sha512,
@@ -20,10 +23,100 @@ from scripts.bootstrap_pdf_toolchain import (
 SHA512 = "a" * 128
 INSTALLER = "install-tl-unx.tar.gz"
 REPOSITORY = (
-    "http://ftp.math.utah.edu/pub/tex/historic/"
+    "https://ftp.tu-chemnitz.de/pub/tug/historic/"
     "systems/texlive/2025/tlnet-final"
 )
 ROOT = Path(__file__).resolve().parents[1]
+
+
+class DownloadRetryTests(unittest.TestCase):
+    def test_retries_timeout_then_replaces_partial_content(self) -> None:
+        attempts = 0
+
+        def opener(_request: object, *, timeout: int) -> io.BytesIO:
+            nonlocal attempts
+            attempts += 1
+            self.assertEqual(timeout, 7)
+            if attempts == 1:
+                raise urllib.error.URLError(TimeoutError("timed out"))
+            return io.BytesIO(b"complete")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            destination = Path(temporary) / "download.partial"
+            destination.write_bytes(b"stale")
+            delays: list[float] = []
+            download_to_temporary(
+                "https://example.test/artifact",
+                destination,
+                attempts=3,
+                timeout=7,
+                opener=opener,
+                sleeper=delays.append,
+            )
+            self.assertEqual(destination.read_bytes(), b"complete")
+
+        self.assertEqual(attempts, 2)
+        self.assertEqual(delays, [1.0])
+
+    def test_retries_retryable_http_status(self) -> None:
+        responses: list[object] = [
+            urllib.error.HTTPError(
+                "https://example.test/artifact",
+                503,
+                "Service Unavailable",
+                None,
+                None,
+            ),
+            io.BytesIO(b"complete"),
+        ]
+
+        def opener(_request: object, *, timeout: int) -> io.BytesIO:
+            self.assertEqual(timeout, 60)
+            response = responses.pop(0)
+            if isinstance(response, Exception):
+                raise response
+            return response
+
+        with tempfile.TemporaryDirectory() as temporary:
+            destination = Path(temporary) / "download.partial"
+            delays: list[float] = []
+            download_to_temporary(
+                "https://example.test/artifact",
+                destination,
+                opener=opener,
+                sleeper=delays.append,
+            )
+            self.assertEqual(destination.read_bytes(), b"complete")
+
+        self.assertEqual(delays, [1.0])
+
+    def test_does_not_retry_nonretryable_http_status(self) -> None:
+        attempts = 0
+
+        def opener(_request: object, *, timeout: int) -> io.BytesIO:
+            nonlocal attempts
+            attempts += 1
+            self.assertEqual(timeout, 60)
+            raise urllib.error.HTTPError(
+                "https://example.test/missing",
+                404,
+                "Not Found",
+                None,
+                None,
+            )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            destination = Path(temporary) / "download.partial"
+            with self.assertRaises(urllib.error.HTTPError):
+                download_to_temporary(
+                    "https://example.test/missing",
+                    destination,
+                    opener=opener,
+                    sleeper=lambda _delay: self.fail("unexpected retry"),
+                )
+            self.assertFalse(destination.exists())
+
+        self.assertEqual(attempts, 1)
 
 
 class ExactVersionTests(unittest.TestCase):
@@ -72,6 +165,26 @@ class SignedChecksumTests(unittest.TestCase):
                     specification["container_sha512"],
                     re.compile(r"^[0-9a-f]{128}$"),
                 )
+
+    def test_every_texlive_download_uses_one_https_repository(self) -> None:
+        lock = json.loads(
+            (ROOT / "pdf/toolchain.lock.json").read_text(encoding="utf-8")
+        )
+        texlive = lock["texlive"]
+        urls = [
+            texlive["repository_url"],
+            texlive["repository_database"]["url"],
+            texlive["installer"]["url"],
+            texlive["installer"]["checksum_url"],
+            texlive["installer"]["signature_url"],
+        ]
+        self.assertEqual(texlive["repository_url"], REPOSITORY)
+        for url in urls:
+            with self.subTest(url=url):
+                self.assertTrue(
+                    url.startswith(REPOSITORY + "/") or url == REPOSITORY
+                )
+                self.assertTrue(url.startswith("https://"))
 
     def test_rejects_unexpected_installer_name(self) -> None:
         with self.assertRaisesRegex(RuntimeError, "unexpected installer"):

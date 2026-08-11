@@ -10,11 +10,13 @@ import os
 import platform
 import re
 import shutil
+import socket
 import stat
 import subprocess
 import sys
 import tarfile
 import tempfile
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -29,6 +31,9 @@ except ImportError:
 
 USER_AGENT = "utc-hpc-guide-pdf-toolchain-bootstrap/1"
 LOCK_STAMP_NAME = "lock-attestation.txt"
+DOWNLOAD_ATTEMPTS = 3
+DOWNLOAD_RETRY_BASE_SECONDS = 1.0
+RETRYABLE_HTTP_STATUS = frozenset({408, 429, 500, 502, 503, 504})
 SHA512_CHECKSUM = re.compile(
     r"^([0-9A-Fa-f]{128})[ \t]+\*?([^ \t].*)$"
 )
@@ -134,6 +139,51 @@ def run(
     )
 
 
+def retryable_download_error(error: Exception) -> bool:
+    """Return whether a download failure is plausibly transient."""
+    if isinstance(error, urllib.error.HTTPError):
+        return error.code in RETRYABLE_HTTP_STATUS
+    if isinstance(error, urllib.error.URLError):
+        return isinstance(
+            error.reason,
+            (ConnectionError, OSError, TimeoutError),
+        )
+    return isinstance(error, (ConnectionError, socket.timeout, TimeoutError))
+
+
+def download_to_temporary(
+    url: str,
+    temporary: Path,
+    *,
+    attempts: int = DOWNLOAD_ATTEMPTS,
+    timeout: int = 60,
+    opener: Any = urllib.request.urlopen,
+    sleeper: Any = time.sleep,
+) -> None:
+    """Download one URL with bounded retry for transport failures only."""
+    if attempts < 1:
+        raise ValueError("download attempts must be at least one")
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    for attempt in range(1, attempts + 1):
+        temporary.unlink(missing_ok=True)
+        try:
+            with opener(request, timeout=timeout) as response:
+                with temporary.open("wb") as handle:
+                    shutil.copyfileobj(response, handle)
+            return
+        except Exception as error:
+            temporary.unlink(missing_ok=True)
+            if attempt == attempts or not retryable_download_error(error):
+                raise
+            delay = DOWNLOAD_RETRY_BASE_SECONDS * (2 ** (attempt - 1))
+            print(
+                "download_retry "
+                f"attempt={attempt}/{attempts} delay_seconds={delay:g} "
+                f"error={type(error).__name__} url={url}"
+            )
+            sleeper(delay)
+
+
 def download(url: str, destination: Path, expected_sha256: str) -> Path:
     if destination.is_file() and sha256(destination) == expected_sha256:
         print(f"download_verified cached={destination.name}")
@@ -141,12 +191,9 @@ def download(url: str, destination: Path, expected_sha256: str) -> Path:
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_suffix(destination.suffix + ".partial")
     temporary.unlink(missing_ok=True)
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     print(f"downloading url={url}")
     try:
-        with urllib.request.urlopen(request, timeout=60) as response:
-            with temporary.open("wb") as handle:
-                shutil.copyfileobj(response, handle)
+        download_to_temporary(url, temporary)
         actual = sha256(temporary)
         if actual != expected_sha256:
             raise RuntimeError(
@@ -170,12 +217,9 @@ def download_sha512(
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_suffix(destination.suffix + ".partial")
     temporary.unlink(missing_ok=True)
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     print(f"downloading url={url}")
     try:
-        with urllib.request.urlopen(request, timeout=60) as response:
-            with temporary.open("wb") as handle:
-                shutil.copyfileobj(response, handle)
+        download_to_temporary(url, temporary)
         actual = sha512(temporary)
         if actual != expected_sha512:
             raise RuntimeError(

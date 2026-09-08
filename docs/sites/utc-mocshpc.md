@@ -7,7 +7,7 @@ Official public references:
 - [First time login instructions](https://utc.teamdynamix.com/TDClient/2717/Portal/KB/Article/163777/Research-Institute-First-Time-Login-Instructions)
 - [Slurm partitions](https://utc.teamdynamix.com/TDClient/2717/Portal/KB/Article/163830/HPC-Cluster-Slurm-Partitions)
 - [Node types and stats](https://utc.teamdynamix.com/TDClient/2717/Portal/KB/Article/163829/HPC-Cluster-Node-Types-and-Stats)
-- [CUDA and NVIDIA](https://utc.teamdynamix.com/TDClient/2717/Portal/KB/Article/163891/CUDA-and-NVIDIA)
+- [Research Applications index](https://utc.teamdynamix.com/TDClient/2717/Portal/KB/Category/25773/Research-Applications)
 - [Jobstats](https://utc.teamdynamix.com/TDClient/2717/Portal/KB/Article/171575/Job-resource-utilization-monitoring-Jobstats)
 
 Validation status, July 30, 2026: the public UTC pages above were rechecked,
@@ -19,6 +19,11 @@ authentication and confirmed the final dashboard origin and
 corroborating the public partition page for that supported workflow. No
 session data was retained, and no job, allocation, workload, account, or user
 record was queried or created.
+
+Public-source update, September 7, 2026: the former CUDA and NVIDIA article
+returns HTTP 404, including its ID-based URLs, and is absent from the live
+Research Applications index. The index is a navigation reference; current
+CUDA availability must be checked through available modules or UTC support.
 
 Read-only `scontrol` and `sinfo` views nevertheless advertised 128 CPUs per
 node for `epyc-cpu`. Use 120 as the supported request ceiling. Treat 128 as an
@@ -220,10 +225,12 @@ PY
 /usr/bin/time -v python "$SCRIPT_PATH"
 ```
 
-UTC's CUDA page currently lists CUDA 11.8 and 12.2 availability on `epyc`, and
-shows `module load cuda/12.2` for NVCC. For an older TensorFlow environment
-that logs a missing `libcudart.so.11.0`, trying `cuda/11.8` is reasonable
-before rebuilding. In the single field result that motivated this note, the
+At the July 30, 2026 public-source check, UTC's CUDA article listed CUDA 11.8
+and 12.2 on `epyc`, with `module load cuda/12.2` for NVCC. That article is now
+unavailable. Check `module avail cuda` and the environment's CUDA requirements
+before using the example's historical `cuda/11.8` choice. A missing
+`libcudart.so.11.0` message calls for checking compatibility before rebuilding.
+In the single field result that motivated this note, the
 environment did not need to be rebuilt once the job requested `--mem=64G`;
 that observation does not establish a general memory minimum.
 

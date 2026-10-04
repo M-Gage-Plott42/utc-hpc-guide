@@ -7,6 +7,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed
+
+- Allow patched `js-yaml` 5.x releases through a `markdownlint-cli` dependency
+  override and refresh the lockfile to resolve GHSA-r3ph-w7gj-g6xm. The CLI's
+  upstream `~5.2.1` constraint previously blocked the security update.
+
 ## [1.2.2] - 2026-08-02
 
 ### Added

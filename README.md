@@ -35,6 +35,14 @@ link, reference-link, and heading-anchor validation, and link-parser
 failure-path tests. It also rejects angle-bracket placeholders in shell
 snippets and runnable templates.
 
+The quality-tool dependency override requires `js-yaml` 5.4.1 or a later 5.x
+release under `markdownlint-cli`, whose current dependency range excludes the
+patched version. The lockfile records the exact installed release. This fixes
+[GHSA-r3ph-w7gj-g6xm](https://github.com/advisories/GHSA-r3ph-w7gj-g6xm).
+Remove the override when the CLI's own dependency range includes a patched
+release, then regenerate the lockfile and rerun `npm ci`, `make check`, and
+`npm audit`.
+
 For a release-affecting change, install ShellCheck, use the documented Ubuntu
 24.04 x86_64 host, bootstrap the locked PDF toolchain, and run the complete
 local gate:

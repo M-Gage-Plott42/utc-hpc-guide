@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mapfile -t qa_packages < <(
+          qa_package_lines="$(
             python3 -c '
           import json
           from pathlib import Path
@@ -39,16 +39,23 @@ jobs:
           lock = json.loads(
               Path("pdf/toolchain.lock.json").read_text(encoding="utf-8")
           )
-          for package, version in lock["ubuntu_24_04_qa_packages"].items():
+          qa_packages = lock["ubuntu_24_04_qa_packages"]
+          for package, version in qa_packages.items():
               print(f"{package}={version}")
+          # Poppler requires its library at exactly the same source version.
+          print("libpoppler134=" + qa_packages["poppler-utils"])
           '
-          )
-          if (( ${#qa_packages[@]} == 0 )); then
+          )"
+          if [[ -z "$qa_package_lines" ]]; then
             echo "The PDF toolchain lock contains no host QA packages." >&2
             exit 1
           fi
-          sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends \
+          mapfile -t qa_packages <<< "$qa_package_lines"
+          # Live mirrors discard older exact versions; keep the reviewed pins retrievable.
+          qa_snapshot=20261004T000000Z
+          sudo apt-get --snapshot "$qa_snapshot" --error-on=any update
+          sudo apt-get --snapshot "$qa_snapshot" install \
+            --yes --no-install-recommends --allow-downgrades \
             "${qa_packages[@]}"
 
       - name: Bootstrap and verify locked PDF toolchain

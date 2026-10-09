@@ -53,6 +53,21 @@ versions:
 make setup-pdf-tools
 ```
 
+The hosted workflow retrieves the exact host QA packages from Ubuntu snapshot
+`20261004T000000Z`, because the live archive no longer retains every locked
+version. Use that same [Ubuntu snapshot](https://snapshot.ubuntu.com/) when
+preparing a local Ubuntu 24.04 environment; do not replace the locked versions
+with the live mirror's newer candidates. The workflow also selects
+`libpoppler134` at the locked `poppler-utils` version so a newer preinstalled
+library cannot block the exact package selection.
+
+When using a container from a deeply nested checkout, mount it at a short path
+such as `/tmp/work` and keep that mount path for later builds. This path also
+fits the qpdf AppArmor profile used on newer Ubuntu hosts. GnuPG's agent sockets
+have a path-length limit, and the verified toolchain records absolute paths.
+An interrupted, unattested cache must still be moved aside before a fresh
+bootstrap; shortening the path does not waive signatures or attestation.
+
 After a complete verification, the cache receives an attestation containing
 the exact lock-file digest. A missing or different attestation fails closed;
 move the old cache aside and bootstrap again rather than reusing it under a

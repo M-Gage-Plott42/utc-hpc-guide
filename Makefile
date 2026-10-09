@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help setup setup-pdf-tools lint scrub test-scrub check-assets test-assets check-links test-links test-external-links check-external-links check-placeholders test-placeholders test-code-width test-code-font test-build-pdf test-pdf-ocr test-pdf-accessibility test-pdf-toolchain-bootstrap test-pdf-toolchain-record check-shell-syntax check-shell-lint check-whitespace pdf check-code-font-fixture check-pdf-ocr check-pdf-accessibility check-pdf check release-check
+.PHONY: help setup setup-pdf-tools lint scrub test-scrub check-assets test-assets check-links test-links test-external-links check-external-links check-placeholders test-placeholders test-code-width test-code-font test-build-pdf test-pdf-ocr test-pdf-accessibility test-pdf-toolchain-bootstrap test-pdf-toolchain-record test-shell-checks check-shell-syntax check-shell-lint check-whitespace pdf check-code-font-fixture check-pdf-ocr check-pdf-accessibility check-pdf check release-check
 
 ASSET_CHECK_SCRIPT := scripts/check_assets.py
 MARKDOWNLINT := ./node_modules/.bin/markdownlint
@@ -43,6 +43,7 @@ help:
 	@echo "  make test-pdf-accessibility - Run PDF accessibility failure-path tests"
 	@echo "  make test-pdf-toolchain-bootstrap - Run locked-bootstrap failure-path tests"
 	@echo "  make test-pdf-toolchain-record - Run PDF build-record failure-path tests"
+	@echo "  make test-shell-checks - Run shell-target failure-propagation tests"
 	@echo "  make check-shell-syntax - Run bash syntax checks on tracked sbatch examples"
 	@echo "  make check-shell-lint - Run ShellCheck on tracked sbatch examples"
 	@echo "  make check-whitespace - Check staged/unstaged lines for whitespace errors"
@@ -115,31 +116,14 @@ test-pdf-toolchain-bootstrap:
 test-pdf-toolchain-record:
 	@python3 -m unittest tests.test_write_pdf_toolchain_record
 
+test-shell-checks:
+	@python3 -m unittest tests.test_check_shell_examples
+
 check-shell-syntax:
-	@mapfile -d '' shell_files < <(git ls-files -z -- 'examples/*.sbatch'); \
-	if (( $${#shell_files[@]} == 0 )); then \
-		echo "No tracked sbatch examples found."; \
-		exit 0; \
-	fi; \
-	for shell_file in "$${shell_files[@]}"; do \
-		bash -n -- "$$shell_file"; \
-	done; \
-	echo "shell_syntax_clean files=$${#shell_files[@]}"
+	@python3 scripts/check_shell_examples.py syntax
 
 check-shell-lint:
-	@command -v shellcheck >/dev/null 2>&1 || { \
-		echo "ShellCheck not found; install it (for example, 'sudo apt-get install shellcheck') and retry." >&2; \
-		exit 1; \
-	}
-	@mapfile -d '' shell_files < <(git ls-files -z -- 'examples/*.sbatch'); \
-	if (( $${#shell_files[@]} == 0 )); then \
-		echo "No tracked sbatch examples found."; \
-		exit 0; \
-	fi; \
-	for shell_file in "$${shell_files[@]}"; do \
-		shellcheck -s bash -- "$$shell_file"; \
-	done; \
-	echo "shell_lint_clean files=$${#shell_files[@]}"
+	@python3 scripts/check_shell_examples.py lint
 
 check-whitespace:
 	@git diff --check
@@ -164,6 +148,6 @@ check-pdf: setup-pdf-tools
 	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(PDF_ACCESSIBILITY_CHECK_SCRIPT) --manifest $(PDF_MANIFEST) --verapdf "$(PDF_TOOLCHAIN_BIN)/verapdf" --report dist/verapdf-report.xml
 	@PATH="$(PDF_TOOLCHAIN_BIN):$$PATH" python3 $(CODE_FONT_FIXTURE_SCRIPT)
 
-check: lint scrub test-scrub check-assets test-assets check-links test-links test-external-links check-placeholders test-placeholders test-code-width test-code-font test-build-pdf test-pdf-ocr test-pdf-accessibility test-pdf-toolchain-bootstrap test-pdf-toolchain-record
+check: lint scrub test-scrub check-assets test-assets check-links test-links test-external-links check-placeholders test-placeholders test-code-width test-code-font test-build-pdf test-pdf-ocr test-pdf-accessibility test-pdf-toolchain-bootstrap test-pdf-toolchain-record test-shell-checks
 
 release-check: check check-shell-syntax check-shell-lint check-pdf check-whitespace

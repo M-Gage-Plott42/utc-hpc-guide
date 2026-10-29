@@ -71,3 +71,10 @@ Markdownlint 0.42.0 pins the affected 2.8.6 release upstream; the scoped overrid
 keeps Markdownlint CLI 0.50.0 without downgrading the approved tooling. Remove
 this override when the upstream dependency resolves to a patched release, then
 regenerate the lockfile and rerun the quality checks and dependency audit.
+
+The same lint-only override also pins `katex` to `0.18.2` beneath
+`micromark-extension-math`, addressing
+[GHSA-238p-pmpm-9mq7](https://github.com/advisories/GHSA-238p-pmpm-9mq7).
+This prevents inherited renderer options from bypassing KaTeX trust restrictions.
+Remove this override when the upstream math extension resolves a patched
+KaTeX release, after rerunning the quality checks and dependency audit.

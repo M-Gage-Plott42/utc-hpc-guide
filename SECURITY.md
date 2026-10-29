@@ -61,3 +61,13 @@ settings before release; neither feature is confirmed by `make scrub`.
 - Local link validation checks repository paths and anchors. A separate
   scheduled/manual workflow monitors external HTTP(S) destinations because
   network availability is unsuitable for the pull-request gate.
+
+## Temporary Lint Dependency Override
+
+The quality-tooling manifest pins `re2js` to `2.8.7` under
+`markdownlint-cli` → `markdownlint` to address
+[GHSA-gg6h-894w-4m9c](https://github.com/advisories/GHSA-gg6h-894w-4m9c).
+Markdownlint 0.42.0 pins the affected 2.8.6 release upstream; the scoped override
+keeps Markdownlint CLI 0.50.0 without downgrading the approved tooling. Remove
+this override when the upstream dependency resolves to a patched release, then
+regenerate the lockfile and rerun the quality checks and dependency audit.
